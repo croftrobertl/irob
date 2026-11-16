@@ -78,6 +78,25 @@ h1{margin:12px 0 0;font:700 24px/1.15 Georgia,"Iowan Old Style","Times New Roman
 .app.chatting h1{font-size:18px;margin-top:6px}
 .app.chatting .breath-hint{display:none}
 
+/* Croatia memory card + viewer */
+.memory{position:relative;display:block;width:min(240px,72vw);margin-top:2px;border-radius:16px;overflow:hidden;background:#dbe7f2;border:1px solid var(--line);box-shadow:0 4px 14px rgba(15,60,100,.12);text-align:left}
+.memory img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#dbe7f2}
+.memory .cap{display:block;padding:8px 11px 9px;background:#fff;font-size:13px;line-height:1.3;color:var(--ink-soft)}
+.memory .cap b{display:block;color:var(--blue-deep);font-size:14px}
+.memory .playbadge{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:rgba(10,30,50,.55);display:grid;place-items:center}
+.memory .playbadge svg{width:22px;height:22px;fill:#fff;margin-left:3px}
+.viewer{position:absolute;inset:0;z-index:40;background:#0b1620;color:#fff;display:none;flex-direction:column;padding:calc(var(--safe-t) + 8px) 0 calc(var(--safe-b) + 12px)}
+.viewer.show{display:flex}
+.viewer .vtop{display:flex;align-items:center;padding:0 8px 6px 18px}
+.viewer .vtop b{flex:1;font:600 17px/1.25 Georgia,serif}
+.viewer .vtop small{display:block;font:13px -apple-system,Helvetica,sans-serif;opacity:.8;margin-top:2px}
+.viewer .icon-btn{color:#fff}
+.viewer .stage{position:relative;flex:1;min-height:0;overflow:hidden;display:grid;place-items:center}
+.viewer .stage img,.viewer .stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#0b1620}
+.viewer .vbtns{position:relative;z-index:1;display:flex;gap:10px;padding:12px 16px 0}
+.viewer .vbtns .btn{flex:1;text-align:center;text-decoration:none}
+.viewer .vbtns .ghost{background:rgba(255,255,255,.14);color:#fff}
+.viewer .vmsg{opacity:.85;text-align:center;padding:20px}
 /* breathing pacer */
 .avatar-wrap{z-index:0}
 h1,.status{position:relative;z-index:1}
@@ -235,6 +254,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     <header><h2>Menu</h2></header>
     <div class="body">
       <button class="menu-item" data-open="sheetPocket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><span>Pocket of Good Thoughts<small>Words worth keeping</small></span></button>
+      <button class="menu-item" id="memoryBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 9"/></svg><span>A memory from Croatia<small>A random moment from our best trip</small></span></button>
       <button class="menu-item" data-open="sheetLedger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M8 15h3"/></svg><span>Good Things Ledger<small>Proof that things go right</small></span></button>
       <button class="menu-item" id="endChatBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 18h14M8 21h8"/><path d="M8 15a4 4 0 1 1 8 0"/></svg><span>Wrap up with a card<small>One thought to carry with you</small></span></button>
       <button class="menu-item" data-open="sheetSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings<small>Voice, photo, start fresh</small></span></button>
@@ -287,6 +307,12 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     </div>
   </section>
 
+  <section class="viewer" id="viewer" role="dialog" aria-label="A memory from Croatia">
+    <div class="vtop"><b id="vTitle">Croatia<small id="vSub"></small></b><button class="icon-btn" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="stage" id="vStage"></div>
+    <div class="vbtns"><button class="btn" id="vAnother">Another one</button><a class="btn ghost" id="vTrip" href="https://croftrobertl.github.io/croatia/" target="_blank" rel="noopener">Whole trip</a></div>
+  </section>
+
   <div class="toast" id="toast" role="status"></div>
 </div>
 
@@ -310,12 +336,13 @@ How you respond:
 - Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
 - Keep it short: 2–5 sentences. No lists, headings, or markdown. No emojis unless she uses them.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
+- You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
-const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Tell me something good'];
+const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Make me smile','Tell me something good'];
 
 /* ================= Storage (safe) ================= */
-const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', auto:'try_auto', voice:'try_voice'};
+const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', auto:'try_auto', voice:'try_voice', recent:'try_recent'};
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { toast('Storage is full on this phone'); return false; } };
 
@@ -423,11 +450,13 @@ function msgNode(m){
   if (m.role === 'assistant'){
     const acts = document.createElement('div'); acts.className = 'acts';
     const play = document.createElement('button'); play.className = 'act'; play.innerHTML = ICON.play; play.setAttribute('aria-label', 'Read aloud');
-    play.onclick = () => speak(m.content);
+    play.onclick = () => speak(m.content.replace(/Here's a little piece of Croatia.*$/, ''));
     const star = document.createElement('button'); star.className = 'act'; star.innerHTML = ICON.star;
     const sync = () => { const on = pocket.some(p => p.src === m.id); star.classList.toggle('on', on); star.setAttribute('aria-label', on ? 'Remove from Pocket' : 'Save to Pocket'); star.setAttribute('aria-pressed', on); };
     star.onclick = () => { togglePocket(m); sync(); };
-    sync(); acts.append(play, star); wrap.appendChild(acts);
+    sync(); acts.append(play, star);
+    if (m.memory) wrap.appendChild(memoryCard(m.memory));
+    wrap.appendChild(acts);
   }
   return wrap;
 }
@@ -459,11 +488,25 @@ async function send(text){
   const slow = setTimeout(() => { if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) statusEl.textContent = 'Still here — finding the right words…'; }, 12000);
   let reply = await askAI(chat);
   clearTimeout(slow);
-  if (!reply){ reply = localReply(text); }
+  let wantMemory = false;
+  if (reply){
+    if (/\[\[?\s*croatia\s*\]?\]/i.test(reply)){ wantMemory = true; reply = reply.replace(/\s*\[\[?\s*croatia\s*\]?\]\s*/ig, ' ').trim(); }
+  } else {
+    reply = localReply(text);
+  }
+  // The app decides too (the free model rarely uses the tag): always when she asks to smile, sometimes when she's low.
+  if (/(smile|something good|cheer me|happy memory)/i.test(text)) wantMemory = true;
+  else if (/(sad|cry|lonely|alone|down|blue|heavy|tired|rough|hard day|miss|stress|anxious|worried)/i.test(text) && Math.random() < 0.4) wantMemory = true;
+  // keep it special: at most one memory every 4 replies (unless she asked to smile)
+  const sinceLast = [...chat].reverse().filter(m => m.role === 'assistant').findIndex(m => m.memory);
+  if (wantMemory && sinceLast !== -1 && sinceLast < 3 && !/(smile|cheer|something good)/i.test(text)) wantMemory = false;
+  const memory = wantMemory ? await randomMemory() : null;
+  if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   const wait = Math.max(0, 900 - (Date.now() - started)); // never feel instant/robotic
   await new Promise(r => setTimeout(r, wait));
   tn.remove();
   const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
+  if (memory) am.memory = memory;
   chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
   chatEl.appendChild(msgNode(am)); scrollDown();
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
@@ -501,10 +544,12 @@ async function callAI(messages, timeout){
   return {busy:true};
 }
 async function askAI(history){
+  askAI.lastWasAI = false;
   if (navigator.onLine === false){ setOnline(false); return null; }
   const messages = [{role:'system', content:PERSONA}, ...history.slice(-HISTORY_TURNS).map(m => ({role:m.role, content:m.content}))];
   const res = await callAI(messages, AI_TIMEOUT);
   setOnline(!res.fail);
+  askAI.lastWasAI = !!res.text;
   return res.text || null;
 }
 function clean(t){
@@ -565,6 +610,72 @@ function localReply(text){
   return pick(DEFAULTS, 'd');
 }
 
+/* ================= Croatia memories ================= */
+// Reads the public trip site's own index (trip.json). Croatia days only (Sep 12–26),
+// self-hosted photos and videos only (GoPro clips live on Google Drive and are skipped).
+const TRIP = 'https://croftrobertl.github.io/croatia/';
+let tripPool = null;
+function loadTrip(){
+  if (tripPool) return tripPool;
+  tripPool = fetch(TRIP + 'trip.json').then(r => { if (!r.ok) throw 0; return r.json(); }).then(d => {
+    const pool = [];
+    (d.days || []).forEach(day => {
+      if (!(day.index >= 3 && day.index <= 17)) return;
+      (day.places || []).forEach(pl => (pl.items || []).forEach(it => {
+        if (/^in-flight/i.test(it.city || '')) return;
+        const place = it.city || pl.name || day.area || 'Croatia';
+        if (it.kind === 'photo' && it.full && it.src) pool.push({k:'p', id:it.full, full:TRIP + it.full, thumb:TRIP + it.src, place, date:day.date, time:it.time || ''});
+        else if (it.kind === 'video' && it.type === 'self_hosted' && it.url && it.poster) pool.push({k:'v', id:it.url, url:TRIP + it.url, thumb:TRIP + it.poster, place, date:day.date, time:it.time || ''});
+      }));
+    });
+    if (!pool.length) throw 0;
+    return pool;
+  }).catch(() => { tripPool = null; return null; });
+  return tripPool;
+}
+async function randomMemory(){
+  const pool = await loadTrip(); if (!pool) return null;
+  const recent = load(K.recent, []);
+  let it, tries = 0;
+  do { it = pool[Math.floor(Math.random() * pool.length)]; } while (recent.includes(it.id) && ++tries < 25);
+  save(K.recent, [it.id, ...recent.filter(x => x !== it.id)].slice(0, 60));
+  return it;
+}
+function memDate(m){ const [y, mo, d] = m.date.split('-').map(Number); return new Date(y, mo - 1, d).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'}); }
+function memoryCard(m){
+  const b = document.createElement('button'); b.className = 'memory'; b.type = 'button';
+  b.setAttribute('aria-label', (m.k === 'v' ? 'Play video from ' : 'Open photo from ') + m.place);
+  const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.src = m.thumb;
+  img.onerror = () => { b.remove(); };
+  const cap = document.createElement('span'); cap.className = 'cap';
+  const t = document.createElement('b'); t.textContent = m.place; cap.append(t, document.createTextNode(memDate(m)));
+  b.append(img, cap);
+  if (m.k === 'v'){ const pb = document.createElement('span'); pb.className = 'playbadge'; pb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>'; b.appendChild(pb); }
+  b.onclick = () => openViewer(m);
+  return b;
+}
+function openViewer(m){
+  stopSpeaking(); close();
+  const v = $('viewer'), st = $('vStage');
+  st.innerHTML = '';
+  if (!m){ const p = document.createElement('p'); p.className = 'vmsg'; p.textContent = 'I couldn\'t reach the Croatia photos just now. Try again in a moment.'; st.appendChild(p); }
+  else {
+    $('vTitle').firstChild.textContent = m.place;
+    $('vSub').textContent = memDate(m) + (m.time ? ' · ' + m.time : '');
+    let el;
+    if (m.k === 'v'){ el = document.createElement('video'); el.src = m.url; el.poster = m.thumb; el.controls = true; el.playsInline = true; el.setAttribute('playsinline', ''); el.preload = 'metadata'; }
+    else { el = document.createElement('img'); el.src = m.full; el.alt = 'Photo from ' + m.place; }
+    el.onerror = () => { st.innerHTML = '<p class="vmsg">This one didn\'t load. Tap “Another one”.</p>'; };
+    st.appendChild(el);
+    if (m.k === 'v') el.play().catch(() => {});
+  }
+  v.classList.add('show');
+}
+function closeViewer(){ const v = $('viewer'); if (!v.classList.contains('show')) return; v.querySelectorAll('video').forEach(x => x.pause()); v.classList.remove('show'); $('vStage').innerHTML = ''; }
+$('vClose').onclick = closeViewer;
+$('vAnother').onclick = async () => { $('vStage').innerHTML = '<p class="vmsg">Finding another…</p>'; openViewer(await randomMemory()); };
+$('memoryBtn').onclick = async () => { close(); toast('Finding a memory…'); const m = await randomMemory(); clearTimeout(toastT); $('toast').classList.remove('show'); openViewer(m); };
+
 /* ================= Voice (iPhone built-in) ================= */
 const synth = window.speechSynthesis;
 let voices = [];
@@ -619,7 +730,7 @@ $('menuBtn').onclick = () => open('sheetMenu');
 $('scrim').onclick = () => close();
 document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => open(b.dataset.open));
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => close());
-addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ closeViewer(); close(); } });
 // swipe down to close
 document.querySelectorAll('.sheet').forEach(s => {
   let y0 = null;
