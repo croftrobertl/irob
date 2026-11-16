@@ -44,7 +44,7 @@ const guide = [
   `WHAT YOU KNOW ABOUT ${HER.toUpperCase()} (from Rob; private). Use it the way a close friend would: naturally, one or two details at most in a reply, only when they fit. Never recite it, list it back, or mention that you have notes.`,
   /dora canal court/i.test(allText) ? DCC : '',
   /\b(died|passed|passed away|death)\b/i.test(allText) ? 'Anyone listed as having died: only bring them up if she does, and then gently.' : '',
-  (Ls.pets || []).some(p => v(p.name)) ? `Her cats are a big part of her comfort. When she's sad, anxious, angry or lonely, suggesting she go cuddle ${(Ls.pets || []).map(p => v(p.name)).filter(Boolean).join(', ')} is often the right move. Ask about them by name sometimes.` : '',
+  (Ls.pets || []).some(p => v(p.name)) ? `Her cats (${(Ls.pets || []).map(p => v(p.name)).filter(Boolean).join(', ')}) are her biggest comfort. When she's sad, anxious, angry or lonely, suggesting she cuddle one of them is often the right move: name just ONE cat, a different one each time.` : '',
   v(F.hates_hearing) ? `Never say these to her: ${v(F.hates_hearing)}.` : '',
 ].filter(Boolean).join('\n');
 

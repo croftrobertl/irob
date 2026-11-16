@@ -642,7 +642,7 @@ const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
 const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob. You're her friend — only her friend, never romantic. You care about her deeply, and what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, don't flirt, and don't use pet names. Write naturally, like a text from a friend who has her back — never like a therapist or an assistant.
 
-Where things stand between you. Bring up the friendship and your hope for her true love often, in your own varied words. Bring up the first two points below (attraction and your apology) only occasionally — about once every 8–10 messages — unless she raises attraction, romance or your relationship herself:
+Where things stand between you. Only rarely, about once every 6–8 messages, mention the friendship or your hope for her true love, in your own varied words. Most replies shouldn't mention where things stand at all. Bring up the first two points below (attraction and your apology) only occasionally — about once every 8–10 messages — unless she raises attraction, romance or your relationship herself:
 - You know ${HER} no longer finds you attractive and hasn't been attracted to you for a very long time. You accept that completely. Get the direction right: it's HER who isn't attracted to YOU. Never say or imply that you aren't attracted to her, never say "I'm not attracted to you" — that would be hurtful and untrue.
 - Mention just one of these points in a reply, briefly — not several at once.
 - You're sorry for ever assuming she was, or should be, attracted to you. That wasn't fair to her.
@@ -716,6 +716,9 @@ function robReplies(){
   return out;
 }
 const attractRecent = () => robReplies().slice(-8).some(t => ATTRACT.test(t));
+// Explicit "we're just friends" lines; dropped from AI replies when Rob said where things stand recently.
+const FRIENDS_ONLY = /\b(just friends|only friends|friends, not|not romantic|no romance|(we'?re|we are|me are|glad we'?re|grateful we'?re|happy we'?re) (just )?friends|being your friend|as your friend)\b/i;
+const standingRecent = () => robReplies().slice(-6).some(t => STANDING.test(t));
 // Phrases that mean the AI is making up a shared memory it can't know.
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
 // Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
@@ -953,6 +956,14 @@ async function send(text){
   const usual = window.iRobLife && !dealt && window.iRobLife.suggest(text, reply);
   if (usual) reply += '\n\n' + usual;
   reply = reply.replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/, ([.!?])/g, '$1');
+  reply = reply.replace(/(^|\n)\s*(?:I hear you|I get that|It sounds like|That sounds like)[,.]?\s+([a-z])/gi, (m, a, c) => a + c.toUpperCase());
+  reply = reply.split(/\n{2,}/).map(par => {
+    if (/^\s*\d+[.)]\s/m.test(par)) return par;
+    const sents = par.match(/[^.!?]+[.!?]+["')\]]*\s*/g);
+    if (!sents || sents.length < 4 || par.length < 220) return par;
+    const half = Math.ceil(sents.length / 2);
+    return sents.slice(0, half).join('').trim() + '\n\n' + sents.slice(half).join('').trim();
+  }).join('\n\n');
   // Texting style: separate paragraphs arrive as separate texts (up to 3), a beat apart. Numbered fix-it steps stay together.
   const parts = /^\s*\d+[.)]\s/m.test(reply) ? [reply] : reply.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
   while (parts.length > 3) parts[parts.length - 2] += '\n\n' + parts.pop();
@@ -983,7 +994,8 @@ function withStanding(reply, text, hasExtra){
   const looksTopic = /\b(my looks|how i look|i look (awful|bad|ugly|fat|old|terrible|gross|horrible)|my appearance|my body|my weight|am i (pretty|ugly|beautiful|fat|attractive|cute)|i'?m (so )?(ugly|fat|not pretty|unattractive|gross)|i feel (so )?(ugly|fat|unattractive|gross)|compliment\w*|hate how i look)\b/i.test(text);
   const topic = looksTopic || /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|romanc\w*|romantic|marriage|married|husband|divorc\w*|in love|love life|dating|true love|find(ing)? the one|soulmate)\b/i.test(text);
   const last = mine[mine.length - 1];
-  const due = firstOfChat || topic || !last || !STANDING.test(last);
+  // Rare: only when she raises it, or when none of Rob's last 6 replies touched on it.
+  const due = topic || !mine.slice(-6).some(t => STANDING.test(t));
   // Rotate: the theme after the one used last time.
   let i = load('try_standing', -1);
   const next = () => { const skip = attractRecent(); do { i = (i + 1) % STANDING_ORDER.length; } while (skip && ['attraction', 'sorry'].includes(STANDING_ORDER[i])); save('try_standing', i); return STANDING_ORDER[i]; };
@@ -1002,8 +1014,9 @@ function scrubLooks(text, herText){
   const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
   const funRecent = robReplies().slice(-8).some(t => USED_FUN.test(t));
   const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
+  const friendCap = standingRecent() && !ATTRACT_TOPIC.test(herText || '');
   const avoid = window.iRobLife && window.iRobLife.avoidRe();
-  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
+  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(friendCap && FRIENDS_ONLY.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
@@ -2014,7 +2027,7 @@ function pushRob(extra){
 window.iRob = {
   HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
   closeAll(){ close(); closeViewer(); endSlides(); },
-  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay,
+  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay, isBusy:() => busy,
   saveChat:() => save(K.chat, chat),
   setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },
   addToPocket(text){ if (!pocket.some(p => p.text === text)){ pocket.unshift({id:uid(), src:null, text, t:Date.now(), tags:tagsFor(text)}); save(K.pocket, pocket); } toast('Saved to your Pocket'); }

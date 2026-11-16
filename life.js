@@ -41,7 +41,9 @@ const ready = loadProfile().then(p => { profile = p; if (p && justKeyed && R()) 
 // ---------- 1. Memory notebook ----------
 let lastLearn = 0;
 async function learn(text){
-  if (!text || text.split(/\s+/).length < 6 || Date.now() - lastLearn < 20000 || !R() || !R().relay) return;
+  if (!text || text.split(/\s+/).length < 6 || !R() || !R().relay) return;
+  const wait = 6000 - (Date.now() - lastLearn);
+  if (wait > 0){ await new Promise(res => setTimeout(res, wait)); }
   if (/(hurt myself|kill myself|suicid)/i.test(text)) return;
   lastLearn = Date.now();
   const notes = get(NOTES, []);
@@ -151,14 +153,15 @@ function suggest(text, reply){
   const used = get(SUGG, {}), now = Date.now(), fresh = k => !used[k] || now - used[k] > 6 * 3600e3;
   const mark = k => { used[k] = now; put(SUGG, used); };
   const mentions = s => s && reply.toLowerCase().includes(s.toLowerCase().split(/\s+/)[0]);
+  const foody = /\b(eat|bite|snack|pizza|chocolate|dinner|lunch|food|order|meal|takeout|cheesecake|pasta|alfredo)\b/i.test(reply);
   if (/\b(hungry|starving|dinner|lunch|what (should|do) i eat|nothing to eat|takeout|take-out|order (food|in|out)|feed me)\b/i.test(text) && fresh('food')){
     const o = profile.orders || [];
-    if (o.length && !o.some(x => mentions(x.place))){ const x = o[Math.floor(Math.random() * o.length)]; mark('food'); return `Dinner idea: your usual from ${x.place}. ${x.order.charAt(0).toUpperCase() + x.order.slice(1)}. Just saying.`; }
+    if (o.length && !foody && !o.some(x => mentions(x.place))){ const x = o[Math.floor(Math.random() * o.length)]; mark('food'); return `Dinner idea: your usual from ${x.place}. ${x.order.charAt(0).toUpperCase() + x.order.slice(1)}. Just saying.`; }
   }
-  if (/\b(coffee|caffeine|so tired this morning|need energy)\b/i.test(text) && profile.coffee && fresh('coffee') && !/iced coffee/i.test(reply)){
+  if (/\b(coffee|caffeine|so tired this morning|need energy)\b/i.test(text) && profile.coffee && fresh('coffee') && !/coffee/i.test(reply) && new Date().getHours() < 15){
     mark('coffee'); return `Go get yourself an ${profile.coffee.replace(/^an? /i, '')}. Friend's orders.`;
   }
-  if (/\b(craving|something sweet|chocolate|dessert|treat myself)\b/i.test(text) && (profile.sweet || profile.dessert) && fresh('sweet')){
+  if (/\b(craving|something sweet|chocolate|dessert|treat myself)\b/i.test(text) && (profile.sweet || profile.dessert) && fresh('sweet') && !foody){
     mark('sweet'); return `This feels like a ${profile.sweet || profile.dessert} situation.`;
   }
   return null;
@@ -177,7 +180,7 @@ function tapback(text){
 // ---------- Prompt pieces ----------
 function prompt(){
   let p = '';
-  if (profile && profile.prompt) p += '\n\n[[PRIVATE]]\n' + profile.prompt;
+  if (profile && profile.prompt) p += '\n\n[[PRIVATE]]\nHOW TO USE WHAT YOU KNOW: at most ONE personal detail per reply, and plenty of replies should use none. Never name more than one cat, one food or one fact in the same reply, and never stack suggestions. No coffee or caffeine suggestions after 3 PM. Talk about her, not about the list.\n\n' + profile.prompt;
   const notes = get(NOTES, []);
   if (notes.length) p += `${profile ? '' : '\n\n[[PRIVATE]]'}\n\nTHINGS SHE'S TOLD YOU (newest last; bring one up when it genuinely fits, like a friend who remembers):\n- ` + notes.slice(-25).map(n => n.text).join('\n- ');
   if (p) p += '\n[[/PRIVATE]]';
@@ -192,9 +195,10 @@ function avoidRe(){
 async function refresh(){ await Promise.all([ready, refreshAlerts()]); }
 async function autoPost(){
   await ready;
-  let posted = postDates();
+  const busy = () => R() && R().isBusy && R().isBusy();
+  let posted = !busy() && postDates();
   await refreshAlerts();
-  if (postAlerts()) posted = true;
+  if (!busy() && postAlerts()) posted = true;
   return posted;
 }
 
