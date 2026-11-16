@@ -173,3 +173,6 @@
 #sheetDeck .kc > header{padding:0 0 2px!important}
 #sheetDeck .kc > header b{display:none}
 #sheetDeck .kc-body{padding:6px 0 10px}
+/* 44-point tap targets inside cards */
+.kc-alt{min-height:44px}
+.kc-dot{width:30px;height:30px}

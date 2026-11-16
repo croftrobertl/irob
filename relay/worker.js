@@ -2,7 +2,7 @@
 // Order: Groq (fast, free tier) → Cloudflare Workers AI (free daily allowance) → error (the app then falls back on its own).
 // Secrets/bindings set in the Cloudflare dashboard: GROQ_API_KEY (secret), AI (Workers AI binding).
 const ALLOWED_ORIGINS = ['https://croftrobertl.github.io'];
-const GROQ_MODELS = ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'];
+const GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
 const CF_MODELS = ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct-fast', '@cf/meta/llama-3.1-8b-instruct', '@cf/meta/llama-3.2-3b-instruct'];
 const MAX_MESSAGES = 30, MAX_CHARS = 24000, MAX_TOKENS = 600;
 const PER_MINUTE = 20;            // per visitor IP, per Worker instance — keeps strangers from burning the free quota
@@ -66,7 +66,7 @@ export default {
     if (request.method === 'GET') {
       if (url.searchParams.get('deep') !== '1') return json({ ok: true, groq: !!env.GROQ_API_KEY, workersAI: !!env.AI }, 200, origin);
       const probe = [{ role: 'user', content: 'Reply with one short friendly sentence.' }];
-      const g = await tryGroq(env, probe, 40), c = await tryCloudflare(env, probe, 40);
+      const g = await tryGroq(env, probe, 300), c = await tryCloudflare(env, probe, 60);
       return json({ ok: !!(g || c), groq: g ? g.model : null, cloudflare: c ? c.model : null }, g || c ? 200 : 503, origin);
     }
     if (request.method !== 'POST' || url.pathname !== '/chat') return json({ error: 'not_found' }, 404, origin);

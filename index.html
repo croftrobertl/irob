@@ -48,6 +48,8 @@
   }
 }
 [hidden]{display:none!important}
+:focus:not(:focus-visible){outline:none}
+:focus-visible{outline:2px solid var(--bronze);outline-offset:2px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--page);color:var(--ink);
   font:16px/1.5 var(--body)}
@@ -59,7 +61,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 /* ---------- App frame ---------- */
 .app{position:relative;margin:0 auto;max-width:440px;height:var(--app-h);display:flex;flex-direction:column;
   background:linear-gradient(180deg,var(--sky,var(--app-top)) 0%,var(--bg) 38%);overflow:hidden;overflow:clip;transition:background 2s}
-@media (min-width:480px){
+@media (min-width:480px) and (min-height:560px){
   body{display:flex;align-items:center;justify-content:center;min-height:100%}
   .app{height:min(900px,calc(var(--app-h) - 40px));border-radius:32px;box-shadow:0 20px 60px rgba(45,43,43,.18);border:1px solid var(--line)}
 }
@@ -91,7 +93,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .ring.wave::before,.ring.wave::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid var(--coral);animation:wave 1.4s ease-out infinite}
 .ring.wave::after{animation-delay:.7s}
 @keyframes wave{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.25);opacity:0}}
-.cam{position:absolute;right:-2px;bottom:4px;width:40px;height:40px;border-radius:50%;background:var(--surface);color:var(--accent);
+.cam{position:absolute;right:-4px;bottom:2px;width:44px;height:44px;border-radius:50%;background:var(--surface);color:var(--accent);
   display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.15);border:1px solid var(--line)}
 .cam svg{width:20px;height:20px}
 h1{margin:12px 0 0;font:400 25px/1.15 var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--bronze);transition:font-size .35s}
@@ -106,6 +108,26 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .app.chatting h1{font-size:18px;margin-top:6px}
 .app.chatting .breath-hint{display:none}
 
+/* 1A + 2A: short screens (landscape, small phones) and typing on the welcome screen use the slim header */
+@media (max-height:520px){
+  .app .hero{display:none!important}
+  .app .mini{display:flex}.app .pill{display:none}
+  .app:not(.chips-open) .chips.starters{display:none}
+  .app.app:not(.chatting) .spark{display:grid}
+  .app:not(.chatting) .empty{margin:auto 0}
+  .empty .tall{display:none}
+  .empty .short{display:inline!important}
+}
+@media (max-height:700px){
+  .avatar-wrap{width:104px;height:104px}
+  h1.brand{font-size:36px;margin-top:8px}
+  .breath-hint{display:none}
+}
+.app.composing:not(.chatting) .hero{display:none}
+.app.composing:not(.chatting) .mini{display:flex}
+.app.composing:not(.chatting) .pill{display:none}
+.app.composing:not(.chatting):not(.chips-open) .chips.starters{display:none}
+.app.app.composing:not(.chatting) .spark{display:grid}
 /* slim header while chatting (Messages-style) */
 .mini{display:none;flex:1;min-width:0;align-items:center;gap:10px}
 .app.chatting .mini{display:flex}
@@ -185,6 +207,31 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .avatar,.mini-av{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .app.holding .ring.listen{opacity:1;box-shadow:0 0 0 4px rgba(217,162,43,.5),0 0 30px 10px rgba(217,162,43,.35);animation:beat .9s ease-in-out infinite}
 @keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.06)}30%{transform:scale(1)}45%{transform:scale(1.04)}}
+/* 10C day dividers */
+.day-sep{align-self:center;font:400 11px/1 var(--head);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);padding:8px 0 2px}
+/* 10D long-press reactions */
+.rob .bubble{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative}
+.rob.hearted .bubble::after{content:"❤️";position:absolute;right:-8px;bottom:-10px;font-size:18px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2))}
+.react{position:absolute;z-index:35;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--surface);box-shadow:0 6px 24px rgba(0,0,0,.18),inset 0 0 0 1px var(--line);animation:pop .2s ease-out}
+.react button{min-width:44px;height:40px;padding:0 12px;border-radius:999px;font-size:14px;font-weight:600;color:var(--title)}
+.react button:active{background:var(--tint)}
+.msg.flash .bubble{animation:flash 1.6s ease-out}
+@keyframes flash{0%,30%{box-shadow:0 0 0 3px var(--bronze)}100%{box-shadow:none}}
+/* 10E + 10F */
+.fu{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.fu span{flex:1}.fu small{display:block;color:var(--ink-soft);font-size:13px}
+.fu button{color:var(--ink-soft);font-size:13px;padding:10px 6px}
+.fu-add{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.fu-add input{padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:16px;color:var(--ink)}
+.hit{display:block;width:100%;text-align:left;padding:12px 2px;border-bottom:1px solid var(--line)}
+.hit small{display:block;color:var(--ink-soft);font-size:12.5px;margin-bottom:2px}
+.hit mark{background:var(--tint);color:var(--deep);border-radius:3px;padding:0 2px}
+/* 9A desktop backdrop */
+#backdrop{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+body > .app{z-index:1}
+#backdrop img{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(26px) saturate(.9);opacity:0;transition:opacity 3s}
+#backdrop img.on{opacity:.55}
+#backdrop::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--page) 45%,transparent)}
 /* confirm sheet */
 .confirm-msg{font-size:17px;line-height:1.4;margin:10px 2px 6px}
 /* Croatia memory card + viewer */
@@ -247,7 +294,7 @@ h1,.status{position:relative;z-index:1}
 .me .bubble{background:var(--blue);color:#fff;border-bottom-right-radius:6px}
 .rob .bubble{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px;box-shadow:0 2px 8px rgba(45,43,43,.05)}
 .acts{display:flex;gap:2px;margin-left:4px}
-.act{width:36px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--ink-soft)}
+.act{width:44px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--ink-soft)}
 .act svg{width:18px;height:18px}
 .act:active{background:var(--blue-soft)}
 .act.on{color:var(--act-on)}
@@ -261,8 +308,13 @@ h1,.status{position:relative;z-index:1}
 .chips{display:flex;flex-direction:column;gap:7px;padding:4px 0 8px}
 .tray-row{display:flex;gap:8px;overflow-x:auto;padding:0 14px;align-items:center;scrollbar-width:none}
 .tray-row::-webkit-scrollbar{display:none}
+.tray-row{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent)}
+.tray-row.at-end{-webkit-mask-image:none;mask-image:none}
+.tray-wrap{position:relative}
+.tray-more{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--surface);color:var(--title);box-shadow:0 1px 6px rgba(0,0,0,.15),inset 0 0 0 1px var(--line);z-index:1}
+@media (hover:hover) and (pointer:fine){ .tray-more{display:grid;place-items:center} .tray-wrap.at-end .tray-more{display:none} }
 .tray-label{flex:none;font:400 11px/1 var(--head);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);min-width:62px}
-.tray-row .chip{padding:7px 12px;font-size:14px}
+.tray-row .chip{min-height:44px;padding:8px 13px;font-size:14px}
 .chip[aria-pressed="true"]{background:var(--tint);border-color:var(--bronze);color:var(--deep)}
 .chip{flex:none;padding:9px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--title);font-weight:600}
 .chip:active{background:var(--blue-soft)}
@@ -373,13 +425,13 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </div>
 
   <div class="chat" id="chat" aria-live="polite">
-    <p class="empty" id="empty">I'm right here. Tell me anything, or tap one below.</p>
+    <p class="empty" id="empty">I'm right here. Tell me anything<span class="tall">, or tap one below</span><span class="short" style="display:none">, or tap ✦ for ideas</span>.</p>
   </div>
 
   <div class="chips starters" id="chips">
-    <div class="tray-row" id="modeRow" role="group" aria-label="What do you need right now?"><span class="tray-label">I need</span></div>
-    <div class="tray-row" id="weatherRow" role="group" aria-label="How is the weather inside?"><span class="tray-label">Inside it's</span></div>
-    <div class="tray-row" id="ideaRow"></div>
+    <div class="tray-wrap"><div class="tray-row" id="modeRow" role="group" aria-label="What do you need right now?"><span class="tray-label">I need</span></div><button type="button" class="tray-more" aria-label="More" data-row="modeRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
+    <div class="tray-wrap"><div class="tray-row" id="weatherRow" role="group" aria-label="How is the weather inside?"><span class="tray-label">Inside it's</span></div><button type="button" class="tray-more" aria-label="More" data-row="weatherRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
+    <div class="tray-wrap"><div class="tray-row" id="ideaRow"></div><button type="button" class="tray-more" aria-label="More" data-row="ideaRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
   </div>
   <form class="composer" id="form" autocomplete="off">
     <button type="button" class="spark" id="chipsBtn" aria-label="Ideas to talk about" aria-expanded="false" aria-controls="chips"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
@@ -401,6 +453,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <div class="menu-head">For your heart</div>
       <button class="menu-item" id="toolkitBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg><span>Comfort toolkit<small>Cards for a smile, calm, perspective — or Real Rob</small></span></button>
       <button class="menu-item" data-open="sheetLetters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>“Open when…” letters<small>Sealed notes from Rob</small></span></button>
+      <button class="menu-item" data-open="sheetFollow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M8 14l2 2 4-4"/></svg><span>Things Rob will ask about<small>What I'm remembering for you</small></span></button>
       <button class="menu-item" data-open="sheetReasons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M8 3v3a5 5 0 0 0-3 4.6V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8.4A5 5 0 0 0 16 6V3"/><path d="M12 12.5c-1-1.2-3-.6-3 .9 0 1.6 3 3.1 3 3.1s3-1.5 3-3.1c0-1.5-2-2.1-3-.9z"/></svg><span>Reasons jar<small>Pull out a reason you’re amazing</small></span></button>
       <button class="menu-item" data-open="sheetSay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>Help me say it<small>Make a hard message kinder and clearer</small></span></button>
       <div class="menu-head">Croatia</div>
@@ -412,6 +465,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <button class="menu-item" data-open="sheetRoulette"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 6"/></svg><span>Fun roulette<small>Spin for a tiny fun dare</small></span></button>
       <button class="menu-item" id="homeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg><span>Home &amp; fixes<small>This month’s checklist and your fix-it log</small></span></button>
       <div class="menu-head">Keep</div>
+      <button class="menu-item" data-open="sheetSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search<small>Find anything Rob said or you saved</small></span></button>
       <button class="menu-item" data-open="sheetPocket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><span>Pocket of Good Thoughts<small>Words and memories worth keeping</small></span></button>
       <button class="menu-item" data-open="sheetLedger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M8 15h3"/></svg><span>Good Things Ledger<small>Proof that things go right</small></span></button>
       <button class="menu-item" id="endChatBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 18h14M8 21h8"/><path d="M8 15a4 4 0 1 1 8 0"/></svg><span>Wrap up with a card<small>One thought to carry with you</small></span></button>
@@ -524,6 +578,23 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <div id="homeList"></div>
       <div class="menu-head">Fixes you've done</div>
       <div id="fixList"></div>
+    </div>
+  </section>
+  <section class="sheet" id="sheetFollow" aria-label="Things Rob will ask about" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <header><h2>Things Rob will ask about</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+    <div class="body">
+      <p class="note">When you mention something coming up — an appointment, a big day — I remember it and ask how it went. Here's what I'm keeping track of.</p>
+      <div id="fuList"></div>
+      <form class="fu-add" id="fuForm"><label class="note" for="fuText">Remind me to ask about…</label><input id="fuText" placeholder="e.g. my dentist appointment" maxlength="80"><input id="fuDate" type="date" aria-label="Ask me on"><button class="btn">Remember this</button></form>
+    </div>
+  </section>
+  <section class="sheet" id="sheetSearch" aria-label="Search" role="dialog" aria-modal="true">
+    <div class="grab"></div>
+    <header><h2>Search</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+    <div class="body">
+      <input class="search" id="searchIn" type="search" placeholder="Search your chat and Pocket" aria-label="Search your chat and Pocket">
+      <div id="searchOut"></div>
     </div>
   </section>
   <section class="sheet" id="sheetConfirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmMsg">
@@ -695,15 +766,23 @@ const ICON = {
   star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>'
 };
 function renderChat(){
-  chatEl.querySelectorAll('.msg').forEach(n => n.remove());
+  chatEl.querySelectorAll('.msg,.day-sep').forEach(n => n.remove()); lastDay = '';
   $('empty').hidden = chat.length > 0;
   app.classList.toggle('chatting', chat.length > 0);
-  chat.forEach(m => chatEl.appendChild(msgNode(m)));
+  chat.forEach(m => appendMsg(m));
   scrollDown(false);
+}
+let lastDay = '';
+function dayLabel(t){ const d = new Date(t), n = new Date(), diff = Math.round((new Date(n.toDateString()) - new Date(d.toDateString())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}); }
+function appendMsg(m){
+  const k = new Date(m.t || Date.now()).toDateString();
+  if (k !== lastDay){ lastDay = k; const d = document.createElement('div'); d.className = 'day-sep'; d.textContent = dayLabel(m.t || Date.now()); chatEl.appendChild(d); }
+  const n = msgNode(m); chatEl.appendChild(n); return n;
 }
 function msgNode(m){
   const wrap = document.createElement('div');
-  wrap.className = 'msg ' + (m.role === 'user' ? 'me' : 'rob');
+  wrap.className = 'msg ' + (m.role === 'user' ? 'me' : 'rob'); wrap.dataset.id = m.id;
+  if (m.role === 'assistant' && !m.hold && pocket.some(p => p.src === m.id)) wrap.classList.add('hearted');
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = m.content;
   wrap.appendChild(b);
   if (m.hold) wrap.classList.add('hold');
@@ -716,6 +795,7 @@ function msgNode(m){
     star.onclick = () => { togglePocket(m); sync(); };
     sync(); acts.append(play, star);
     if (m.memory) wrap.appendChild(memoryCard(m.memory, () => { delete m.memory; save(K.chat, chat); }));
+    attachReact(b, m, wrap);
     if (m.card && window.iRobCards) wrap.appendChild(window.iRobCards.render(m));
     if (m.fix){
       const fb = document.createElement('button'); fb.className = 'fixbtn'; fb.type = 'button';
@@ -757,14 +837,18 @@ function renderIdeas(){
   add('Help me say something', () => open('sheetSay'));
 }
 renderIdeas();
-function setTray(on){ app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
+function trayEdges(){ document.querySelectorAll('.tray-row').forEach(r => { const end = r.scrollLeft + r.clientWidth >= r.scrollWidth - 4; r.classList.toggle('at-end', end); r.parentElement.classList.toggle('at-end', end); }); }
+document.querySelectorAll('.tray-row').forEach(r => r.addEventListener('scroll', trayEdges, {passive:true}));
+document.querySelectorAll('.tray-more').forEach(b => b.onclick = () => $(b.dataset.row).scrollBy({left:200, behavior:'smooth'}));
+addEventListener('resize', trayEdges);
+function setTray(on){ setTimeout(trayEdges, 30); app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
 $('chipsBtn').onclick = () => setTray(!app.classList.contains('chips-open'));
 
 /* ================= Composer ================= */
 const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 130) + 'px'; sendBtn.disabled = !input.value.trim() || busy; };
 input.addEventListener('input', () => { grow(); if (!busy) setState(input.value.trim() ? 'listening' : 'idle'); });
-input.addEventListener('focus', () => { if (!busy) setState('listening'); setTimeout(() => scrollDown(), 300); });
-input.addEventListener('blur', () => { if (!busy && app.dataset.state === 'listening') setState('idle'); });
+input.addEventListener('focus', () => { app.classList.add('composing'); if (!busy) setState('listening'); setTimeout(() => scrollDown(), 300); });
+input.addEventListener('blur', () => { setTimeout(() => { if (document.activeElement !== input) app.classList.remove('composing'); }, 150); if (!busy && app.dataset.state === 'listening') setState('idle'); });
 input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !matchMedia('(pointer:coarse)').matches){ e.preventDefault(); $('form').requestSubmit(); } });
 $('form').onsubmit = e => { e.preventDefault(); send(input.value); };
 
@@ -776,7 +860,7 @@ async function send(text){
   chat.push(um); save(K.chat, chat);
   noteFollowUp(text);
   $('empty').hidden = true; app.classList.add('chatting');
-  chatEl.appendChild(msgNode(um));
+  appendMsg(um);
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
   setState('thinking');
   const started = Date.now();
@@ -799,7 +883,6 @@ async function send(text){
     const safety = /(hurt myself|kill myself|suicid|end it|can'?t go on|gas|spark|smok|burning)/i.test(text);
     reply = (!safety && mode === 'distract') ? pick(DISTRACT, 'distract') : (!safety && mode === 'hype') ? pick(HYPE, 'hype') : localReply(text);
   }
-  reply = withCompliment(reply, text);
   // The app decides too (the free model rarely uses the tag): always when she asks to smile, sometimes when she's low.
   if (/(smile|something good|cheer me|happy memory)/i.test(text)) wantMemory = true;
   else if (/(sad|cry|lonely|alone|down|blue|heavy|tired|rough|hard day|miss|stress|anxious|worried)/i.test(text) && Math.random() < 0.4) wantMemory = true;
@@ -810,6 +893,7 @@ async function send(text){
   const dealt = window.iRobCards ? window.iRobCards.deal(text, {fixing:fixingNow}) : null;
   if (dealt) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
+  reply = withCompliment(reply, text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   const wait = Math.max(0, 900 - (Date.now() - started)); // never feel instant/robotic
   await new Promise(r => setTimeout(r, wait));
@@ -819,24 +903,26 @@ async function send(text){
   if (memory) am.memory = memory;
   if (dealt) Object.assign(am, dealt);
   chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
-  chatEl.appendChild(msgNode(am)); scrollDown();
+  appendMsg(am); scrollDown();
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
 }
 // Compliments come naturally, but at least every third reply (and always in the first one).
 // The "nothing sexual" line comes in the first reply of a conversation and whenever she raises looks/attraction/intimacy.
-function withCompliment(reply, text){
+function withCompliment(reply, text, hasExtra){
   const firstOfChat = !chat.some(m => m.role === 'assistant' && !m.hold && !m.otd && !m.auto);
   const mine = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd && !m.auto);
   const fixing = FIXIT.test(text);
   const recent = mine.slice(-2);
   const dueCompliment = firstOfChat || (recent.length === 2 && !recent.some(m => BEAUTY.test(m.content)));
-  if (dueCompliment && !fixing && !BEAUTY.test(reply)) reply += ' ' + pick(COMPLIMENTS, 'beauty');
+  let added = false;
+  if (!hasExtra && dueCompliment && !fixing && !BEAUTY.test(reply)){ reply += ' ' + pick(COMPLIMENTS, 'beauty'); added = true; }
   const recent3 = mine.slice(-3);
   const dueFun = !firstOfChat && recent3.length === 3 && !recent3.some(m => FUN.test(m.content));
-  if ((dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !fixing && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
+  if (!hasExtra && !added && (dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !fixing && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
   const topic = /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|my looks|how i look|my appearance|my body|beautiful|pretty|ugly)\b/i.test(text);
-  if (((firstOfChat && !fixing) || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
+  const saidBefore = mine.some(m => NONSEXUAL.test(m.content));
+  if (((BEAUTY.test(reply) && !saidBefore && !fixing) || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
   return reply;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
@@ -1183,6 +1269,8 @@ function open(id){
   if (id === 'sheetLetters') renderLetters();
   if (id === 'sheetHome') renderHome();
   if (id === 'sheetSettings') showStorage();
+  if (id === 'sheetFollow') renderFollow();
+  if (id === 'sheetSearch'){ $('searchIn').value = ''; renderSearch(); }
   if (id === 'sheetReasons' && !lastReason) setTimeout(pullReason, 250);
   $('scrim').classList.add('show'); openSheet.classList.add('show'); setInert(true);
   const sheet = openSheet;
@@ -1733,6 +1821,76 @@ function fmtDate(t){ return new Date(t).toLocaleDateString(undefined, {month:'sh
 function fmtDay(t){ const d = new Date(t), now = new Date(); const diff = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'}); }
 let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
 
+/* 10D: long-press (or right-click) a reply → ❤️ Save · Copy · Read aloud */
+let reactBar = null;
+function closeReact(){ if (reactBar){ reactBar.remove(); reactBar = null; } }
+document.addEventListener('pointerdown', e => { if (reactBar && !reactBar.contains(e.target)) closeReact(); }, true);
+function attachReact(bubble, m, wrap){
+  let t = null;
+  const show = () => {
+    closeReact(); if (navigator.vibrate) try { navigator.vibrate(12); } catch {}
+    const bar = document.createElement('div'); bar.className = 'react'; bar.setAttribute('role', 'menu');
+    const saved = pocket.some(p => p.src === m.id);
+    [[saved ? '💔 Unsave' : '❤️ Save', () => { togglePocket(m); wrap.classList.toggle('hearted', pocket.some(p => p.src === m.id)); const fresh = msgNode(m); wrap.replaceWith(fresh); }],
+     ['Copy', async () => { try { await navigator.clipboard.writeText(m.content); toast('Copied'); } catch { toast('Couldn\'t copy on this phone'); } }],
+     ['Read aloud', () => speak(m.content)]].forEach(([label, fn]) => { const b2 = document.createElement('button'); b2.type = 'button'; b2.textContent = label; b2.setAttribute('role', 'menuitem'); b2.onclick = () => { closeReact(); fn(); }; bar.appendChild(b2); });
+    const r = bubble.getBoundingClientRect(), a = app.getBoundingClientRect();
+    bar.style.left = Math.max(8, r.left - a.left) + 'px'; bar.style.top = Math.max(8, r.top - a.top - 54) + 'px';
+    app.appendChild(bar); reactBar = bar; bar.querySelector('button').focus({preventScroll:true});
+  };
+  bubble.addEventListener('pointerdown', e => { if (e.button > 0) return; t = setTimeout(show, 480); });
+  ['pointerup', 'pointerleave', 'pointercancel', 'pointermove'].forEach(ev => bubble.addEventListener(ev, e => { if (ev === 'pointermove' && Math.abs(e.movementY || 0) < 6) return; clearTimeout(t); }));
+  bubble.addEventListener('contextmenu', e => { e.preventDefault(); show(); });
+  bubble.tabIndex = 0; bubble.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); show(); } });
+}
+chatEl.addEventListener('scroll', closeReact, {passive:true});
+
+/* 10E: Things Rob will ask about */
+function renderFollow(){
+  const list = load(K.follow, []).filter(f => !f.asked).sort((a, b) => a.askOn.localeCompare(b.askOn)), box = $('fuList'); box.innerHTML = '';
+  if (!list.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = 'Nothing yet. Mention something coming up and I\'ll remember to ask.'; box.appendChild(n); }
+  list.forEach(f => { const r = document.createElement('div'); r.className = 'fu'; const sp = document.createElement('span'); const [y, mo, d] = f.askOn.split('-').map(Number);
+    sp.textContent = f.snippet.charAt(0).toUpperCase() + f.snippet.slice(1); const sm = document.createElement('small'); sm.textContent = 'I\'ll ask on ' + new Date(y, mo - 1, d).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}); sp.appendChild(sm);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = 'Forget'; x.onclick = () => { save(K.follow, load(K.follow, []).filter(z => z.id !== f.id)); renderFollow(); toast('Okay — I won\'t ask'); };
+    r.append(sp, x); box.appendChild(r); });
+  const dt = new Date(Date.now() + 864e5); $('fuDate').min = dayKey(new Date()); if (!$('fuDate').value) $('fuDate').value = dayKey(dt);
+}
+$('fuForm').onsubmit = e => { e.preventDefault(); let v = $('fuText').value.trim().replace(/[.!?]+$/, ''); const d = $('fuDate').value; if (!v || !d) return;
+  v = v.replace(/^my\b/i, 'your').replace(/^(a|an)\b/i, 'the'); if (!/^(the|your|our|his|her|their)\b/i.test(v)) v = 'the ' + v;
+  const list = load(K.follow, []); list.push({id:uid(), snippet:v.toLowerCase(), askOn:d, asked:false, t:Date.now()}); save(K.follow, list); $('fuText').value = ''; renderFollow(); toast('I\'ll remember'); };
+
+/* 10F: search chat + Pocket */
+const escH = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function snippetOf(text, q){ const i = text.toLowerCase().indexOf(q); const st = Math.max(0, i - 40), part = text.slice(st, i + q.length + 60); const j = part.toLowerCase().indexOf(q);
+  return (st > 0 ? '…' : '') + escH(part.slice(0, j)) + '<mark>' + escH(part.slice(j, j + q.length)) + '</mark>' + escH(part.slice(j + q.length)) + (i + q.length + 60 < text.length ? '…' : ''); }
+function renderSearch(){
+  const q = $('searchIn').value.trim().toLowerCase(), out = $('searchOut'); out.innerHTML = '';
+  if (q.length < 2){ const n = document.createElement('p'); n.className = 'none'; n.textContent = 'Type at least two letters.'; out.appendChild(n); return; }
+  const hits = [];
+  [...chat].reverse().forEach(m => { if (!m.hold && typeof m.content === 'string' && m.content.toLowerCase().includes(q)) hits.push({who:m.role === 'user' ? 'You' : 'Rob', t:m.t, text:m.content, go:() => { close(); const el = chatEl.querySelector(`[data-id="${m.id}"]`); if (el){ el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }}); });
+  pocket.forEach(p => { if (p.text && p.text.toLowerCase().includes(q)) hits.push({who:'Pocket', t:p.t, text:p.text, go:() => open('sheetPocket')}); });
+  if (!hits.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = 'Nothing found.'; out.appendChild(n); return; }
+  hits.slice(0, 40).forEach(h => { const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'hit'; b2.innerHTML = `<small>${h.who} · ${escH(fmtDate(h.t))}</small>` + snippetOf(h.text, q); b2.onclick = h.go; out.appendChild(b2); });
+}
+$('searchIn').addEventListener('input', renderSearch);
+
+/* 10H: press and hold ✦ to open the Comfort toolkit */
+(() => { const sb = $('chipsBtn'); let t = null, held = false;
+  sb.addEventListener('pointerdown', () => { held = false; t = setTimeout(() => { held = true; if (navigator.vibrate) try { navigator.vibrate(15); } catch {} setTray(false); if (window.iRobCards) window.iRobCards.toolkit(); }, 500); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => sb.addEventListener(ev, () => clearTimeout(t)));
+  sb.addEventListener('click', e => { if (held){ e.stopImmediatePropagation(); held = false; } }, true);
+  sb.addEventListener('contextmenu', e => e.preventDefault());
+  sb.title = 'Tap for ideas · press and hold for the Comfort toolkit'; })();
+
+/* 9A: desktop — a softly blurred Croatia photo behind the phone frame */
+async function desktopBackdrop(){
+  if (!matchMedia('(min-width:900px) and (hover:hover)').matches) return;
+  const pool = await loadTrip(); const photos = pool ? pool.filter(m => m.k === 'p') : []; if (!photos.length) return;
+  const bd = document.createElement('div'); bd.id = 'backdrop'; bd.setAttribute('aria-hidden', 'true'); const A1 = new Image(), B1 = new Image(); A1.alt = B1.alt = ''; bd.append(A1, B1); document.body.prepend(bd);
+  let flip = false; const swap = () => { const m = photos[Math.floor(Math.random() * photos.length)], el = flip ? B1 : A1, other = flip ? A1 : B1; el.onload = () => { el.classList.add('on'); other.classList.remove('on'); }; el.src = m.full; flip = !flip; };
+  swap(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(swap, 45000);
+}
+
 function addLedger(text){
   ledger.unshift({id:uid(), text, t:Date.now()}); save(K.ledger, ledger);
   if (window.iRobCards) window.iRobCards.onLedger(ledger.length);
@@ -1757,6 +1915,8 @@ window.iRob = {
 $('toolkitBtn').onclick = () => { if (window.iRobCards) window.iRobCards.toolkit(); else toast('One moment — the cards are still loading'); };
 
 renderChat(); say('');
+desktopBackdrop(); trayEdges();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 autoMessages(); updateSky(); updateHomeDot();
 setInterval(updateSky, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible'){ autoMessages(); updateSky(); renderIdeas(); updateHomeDot(); } });
