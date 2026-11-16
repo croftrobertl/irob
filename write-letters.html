@@ -30,7 +30,7 @@ button.ghost{background:#eae9e9;color:var(--deep);box-shadow:inset 0 0 0 1px var
 </head>
 <body>
 <main>
-  <h1>Seal the letters</h1>
+  <h1>Letters &amp; P.S.</h1>
   <p>Write Erica's “Open when…” letters here. When you seal them, they're locked with a word only the two of you know — the sealed text is safe to send or put in the public repo. Nothing you type here is saved or sent anywhere.</p>
 
   <div class="card">
@@ -45,6 +45,23 @@ button.ghost{background:#eae9e9;color:var(--deep);box-shadow:inset 0 0 0 1px var
   <div id="letters"></div>
   <div class="row"><button class="ghost" id="add" type="button">Add another letter</button></div>
   <div class="row"><button id="seal" type="button">Seal the letters</button></div>
+
+  <div class="card" id="psCard">
+    <h2>Send a P.S.</h2>
+    <p>Write a quick note or a voucher, make a sealed link, and text it to Erica. When she opens it, it appears in her iRob chat. It uses the same word as above.</p>
+    <label for="psType">Kind</label>
+    <select id="psType" style="width:100%;font:inherit;font-size:16px;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#fff"><option value="note">A note</option><option value="voucher">A voucher she can redeem</option></select>
+    <label for="psTitle">Voucher title (only for vouchers)</label>
+    <input id="psTitle" placeholder="e.g. Breakfast in bed this Saturday">
+    <label for="psText">Your message</label>
+    <textarea id="psText" style="min-height:110px" placeholder="P.S. …"></textarea>
+    <div class="row"><button id="psMake" type="button">Make the link</button></div>
+    <div id="psOut" hidden>
+      <label for="psLink">Text this link to Erica</label>
+      <textarea id="psLink" readonly style="min-height:90px;font:13px/1.4 ui-monospace,Menlo,monospace"></textarea>
+      <div class="row"><button class="ghost" id="psShare" type="button">Share</button><button class="ghost" id="psCopy" type="button">Copy</button></div>
+    </div>
+  </div>
 
   <div class="card" id="result" hidden>
     <h2>Sealed</h2>
@@ -81,6 +98,23 @@ button.ghost{background:#eae9e9;color:var(--deep);box-shadow:inset 0 0 0 1px var
     document.getElementById('result').scrollIntoView({behavior:'smooth'});
   };
   document.getElementById('copy').onclick = async () => { const t = document.getElementById('out'); try { await navigator.clipboard.writeText(t.value); alert('Copied.'); } catch { t.select(); document.execCommand('copy'); } };
+  const b64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  document.getElementById('psMake').onclick = async () => {
+    const w1 = document.getElementById('w1').value, w2 = document.getElementById('w2').value;
+    if (!w1.trim()) return alert('Type the word at the top first.');
+    if (w1.normalize('NFKC').trim().toLowerCase() !== w2.normalize('NFKC').trim().toLowerCase()) return alert('The two words don\'t match.');
+    const type = document.getElementById('psType').value, title = document.getElementById('psTitle').value.trim(), text = document.getElementById('psText').value.trim();
+    if (!text) return alert('Write the message first.');
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), n = 250000;
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(w1.normalize('NFKC').trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:n, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt']);
+    const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(JSON.stringify({type, title: type === 'voucher' ? title : '', text})));
+    const raw = {id:b64u(crypto.getRandomValues(new Uint8Array(9))), s:b64u(salt), i:b64u(iv), c:b64u(ct), n};
+    const link = new URL('./#ps=' + b64u(new TextEncoder().encode(JSON.stringify(raw))), location.href).href;
+    document.getElementById('psLink').value = link; document.getElementById('psOut').hidden = false;
+  };
+  document.getElementById('psShare').onclick = async () => { const link = document.getElementById('psLink').value; try { if (navigator.share) return await navigator.share({text:'P.S. 💌 ' + link}); } catch (e) { if (e && e.name === 'AbortError') return; } document.getElementById('psCopy').click(); };
+  document.getElementById('psCopy').onclick = async () => { const t = document.getElementById('psLink'); try { await navigator.clipboard.writeText(t.value); alert('Copied.'); } catch { t.select(); document.execCommand('copy'); } };
   document.getElementById('dl').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([document.getElementById('out').value], {type:'application/json'})); a.download = 'letters.json'; a.click(); };
 })();
 </script>

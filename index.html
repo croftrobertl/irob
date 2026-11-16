@@ -10,6 +10,7 @@
 <meta name="color-scheme" content="light dark">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="stylesheet" href="cards.css">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -398,6 +399,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     <header><h2>Menu</h2></header>
     <div class="body">
       <div class="menu-head">For your heart</div>
+      <button class="menu-item" id="toolkitBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/></svg><span>Comfort toolkit<small>Cards for a smile, calm, perspective — or Real Rob</small></span></button>
       <button class="menu-item" data-open="sheetLetters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>“Open when…” letters<small>Sealed notes from Rob</small></span></button>
       <button class="menu-item" data-open="sheetReasons"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M8 3v3a5 5 0 0 0-3 4.6V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8.4A5 5 0 0 0 16 6V3"/><path d="M12 12.5c-1-1.2-3-.6-3 .9 0 1.6 3 3.1 3 3.1s3-1.5 3-3.1c0-1.5-2-2.1-3-.9z"/></svg><span>Reasons jar<small>Pull out a reason you’re amazing</small></span></button>
       <button class="menu-item" data-open="sheetSay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>Help me say it<small>Make a hard message kinder and clearer</small></span></button>
@@ -451,6 +453,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <div class="row"><span>Add to Home Screen<small>In Safari: Share → Add to Home Screen. Keeps everything saved.</small></span></div>
       <div class="row"><span>Save a backup<small>Chat, Pocket, Ledger and photo in one file</small></span><button class="btn ghost" id="backupBtn">Save</button></div>
       <div class="row"><span>Restore a backup<small>Replaces what's on this phone</small></span><button class="btn ghost" id="restoreBtn">Restore</button><input type="file" id="restoreIn" accept="application/json,.json" hidden></div>
+      <div class="row"><span>Storage used<small id="storageUsed">Checking…</small></span></div>
       <div class="row"><span>Clear everything<small>Chat, Pocket, Ledger, photo — all erased from this phone</small></span><button class="btn warn" id="wipe">Clear</button></div>
     </div>
   </section>
@@ -713,6 +716,7 @@ function msgNode(m){
     star.onclick = () => { togglePocket(m); sync(); };
     sync(); acts.append(play, star);
     if (m.memory) wrap.appendChild(memoryCard(m.memory, () => { delete m.memory; save(K.chat, chat); }));
+    if (m.card && window.iRobCards) wrap.appendChild(window.iRobCards.render(m));
     if (m.fix){
       const fb = document.createElement('button'); fb.className = 'fixbtn'; fb.type = 'button';
       const sync2 = () => { fb.textContent = m.fixed ? 'Logged — nice work 🔧' : '✓ I fixed it'; fb.disabled = !!m.fixed; };
@@ -802,6 +806,9 @@ async function send(text){
   // keep it special: at most one memory every 4 replies (unless she asked to smile)
   const sinceLast = [...chat].reverse().filter(m => m.role === 'assistant' && !m.hold).findIndex(m => m.memory);
   if (wantMemory && sinceLast !== -1 && sinceLast < 3 && !/(smile|cheer|something good)/i.test(text)) wantMemory = false;
+  const fixingNow = FIXIT.test(text);
+  const dealt = window.iRobCards ? window.iRobCards.deal(text, {fixing:fixingNow}) : null;
+  if (dealt) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   const wait = Math.max(0, 900 - (Date.now() - started)); // never feel instant/robotic
@@ -810,9 +817,11 @@ async function send(text){
   const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
   if (FIXIT.test(text) && !/\b(fix (my|our|this) (heart|life|marriage)|fixed it|it worked)\b/i.test(text)) am.fix = text.replace(/\s+/g, ' ').slice(0, 80);
   if (memory) am.memory = memory;
+  if (dealt) Object.assign(am, dealt);
   chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
   chatEl.appendChild(msgNode(am)); scrollDown();
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
+  if (window.iRobCards) window.iRobCards.hardDayExtras(text);
 }
 // Compliments come naturally, but at least every third reply (and always in the first one).
 // The "nothing sexual" line comes in the first reply of a conversation and whenever she raises looks/attraction/intimacy.
@@ -1173,6 +1182,7 @@ function open(id){
   if (id === 'sheetLedger') renderLedger();
   if (id === 'sheetLetters') renderLetters();
   if (id === 'sheetHome') renderHome();
+  if (id === 'sheetSettings') showStorage();
   if (id === 'sheetReasons' && !lastReason) setTimeout(pullReason, 250);
   $('scrim').classList.add('show'); openSheet.classList.add('show'); setInert(true);
   const sheet = openSheet;
@@ -1233,7 +1243,7 @@ function renderPocket(){
   if (pocketView === 'memories'){
     f.hidden = true; list0.innerHTML = '';
     const mems = pocket.filter(p => p.kind === 'memory' && p.memory && (!q || p.memory.place.toLowerCase().includes(q)));
-    if (!mems.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = pocket.some(p => p.kind === 'memory') ? 'Nothing matches that.' : 'Tap the heart on any Croatia photo to keep it here.'; list0.appendChild(n); return; }
+    if (!mems.length){ if (window.iRobCards) window.iRobCards.pocketCritters(list0); const n = document.createElement('p'); n.className = 'none'; n.textContent = pocket.some(p => p.kind === 'memory') ? 'Nothing matches that.' : 'Tap the heart on any Croatia photo to keep it here.'; list0.appendChild(n); return; }
     const g = document.createElement('div'); g.className = 'mgrid';
     mems.forEach(p => {
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Open memory from ' + p.memory.place);
@@ -1241,7 +1251,9 @@ function renderPocket(){
       const c = document.createElement('span'); c.textContent = p.memory.place;
       b.append(i, c); b.onclick = () => openViewer(p.memory); g.appendChild(b);
     });
-    list0.appendChild(g); return;
+    list0.appendChild(g);
+    if (window.iRobCards) window.iRobCards.pocketCritters(list0);
+    return;
   }
   const words = pocket.filter(p => p.kind !== 'memory');
   const used = [...new Set(words.flatMap(p => p.tags || []))];
@@ -1290,7 +1302,7 @@ function renderLedger(){
 }
 $('ledgerForm').onsubmit = e => {
   e.preventDefault(); const v = $('ledgerIn').value.trim(); if (!v) return;
-  ledger.unshift({id:uid(), text:v, t:Date.now()}); save(K.ledger, ledger); $('ledgerIn').value = ''; renderLedger();
+  addLedger(v); $('ledgerIn').value = ''; renderLedger();
 };
 
 /* ================= Closing card ================= */
@@ -1360,14 +1372,15 @@ $('newChat').onclick = async () => {
 };
 $('wipe').onclick = async () => {
   if (!await askConfirm('Erase everything on this phone — chat, Pocket, Ledger and photo? This can\'t be undone.', 'Erase everything', true)) return;
-  stopSpeaking(); Object.values(K).forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  stopSpeaking(); [...Object.values(K), 'try_miles'].forEach(k => { try { localStorage.removeItem(k); } catch {} }); try { if (window.iRobCards) await window.iRobCards.clearAll(); } catch {}
   chat = []; pocket = []; ledger = []; showPhoto(); renderChat(); close(); toast('Everything has been cleared');
 };
 const pad2 = n => String(n).padStart(2, '0');
 $('backupBtn').onclick = async () => {
   const data = {}; Object.values(K).filter(k => k !== K.lpass).forEach(k => { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch {} });
   const d = new Date(), name = `rob-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
-  const blob = new Blob([JSON.stringify({app:'the-rob-you-want', v:1, saved:d.toISOString(), data})], {type:'application/json'});
+  let idb = null; try { if (window.iRobCards) idb = await window.iRobCards.exportData(); } catch {}
+  const blob = new Blob([JSON.stringify({app:'the-rob-you-want', v:2, saved:d.toISOString(), data, idb})], {type:'application/json'});
   const file = new File([blob], name, {type:'application/json'});
   try { if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); toast('Backup ready — keep it in Files'); return; } }
   catch (e) { if (e && e.name === 'AbortError') return; }
@@ -1382,6 +1395,7 @@ $('restoreIn').onchange = async e => {
   if (!await askConfirm(`Replace everything on this phone with the backup from ${fmtDate(j.saved)}?`, 'Restore', true)) return;
   keys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
   try { Object.entries(j.data).forEach(([k, v]) => localStorage.setItem(k, v)); } catch { toast('Not enough space on this phone to restore'); return; }
+  try { if (j.idb && window.iRobCards) await window.iRobCards.importData(j.idb); } catch {}
   location.reload();
 };
 
@@ -1592,12 +1606,12 @@ function spin(){
   setTimeout(() => { spinning = false; currentDare = DARES[i]; $('dareTxt').textContent = DARES[i][0] + ' ' + DARES[i][2]; $('dareBox').hidden = false; wheelTurn = target - target % 360 + 360; }, reduce ? 50 : 3500);
 }
 $('spinBtn').onclick = spin; $('dareAgain').onclick = spin;
-$('dareDone').onclick = () => { if (!currentDare) return; ledger.unshift({id:uid(), text:'Had fun: ' + currentDare[1].toLowerCase(), t:Date.now()}); save(K.ledger, ledger); toast('Added to your Good Things Ledger 🎉'); $('dareBox').hidden = true; };
+$('dareDone').onclick = () => { if (!currentDare) return; addLedger('Had fun: ' + currentDare[1].toLowerCase()); toast('Added to your Good Things Ledger 🎉'); $('dareBox').hidden = true; };
 
 /* ================= D1 + D2: Home & fixes ================= */
 function logFix(what){
   const fixes = load(K.fixes, []); fixes.unshift({id:uid(), text:'“' + what + '”', t:Date.now()}); save(K.fixes, fixes);
-  ledger.unshift({id:uid(), text:'Fixed it: “' + what + '”', t:Date.now()}); save(K.ledger, ledger);
+  addLedger('Fixed it: “' + what + '”');
   toast('Logged — you fixed it! 🔧');
 }
 const HOME_EVERY = ['Change the AC filter (Florida AC works hard)', 'Press the test button on every smoke alarm'];
@@ -1719,11 +1733,35 @@ function fmtDate(t){ return new Date(t).toLocaleDateString(undefined, {month:'sh
 function fmtDay(t){ const d = new Date(t), now = new Date(); const diff = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'}); }
 let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
 
+function addLedger(text){
+  ledger.unshift({id:uid(), text, t:Date.now()}); save(K.ledger, ledger);
+  if (window.iRobCards) window.iRobCards.onLedger(ledger.length);
+}
+async function showStorage(){
+  const el = $('storageUsed');
+  try { const e = await navigator.storage.estimate(); el.textContent = `${(e.usage / 1048576).toFixed(1)} MB used${e.quota ? ` of about ${Math.round(e.quota / 1048576)} MB available` : ''}`; }
+  catch { el.textContent = 'Not available in this browser'; }
+}
+function pushRob(extra){
+  const m = {role:'assistant', t:Date.now(), id:uid(), auto:true, ...extra};
+  chat.push(m); save(K.chat, chat); renderChat(); return m;
+}
+window.iRob = {
+  HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
+  closeAll(){ close(); closeViewer(); endSlides(); },
+  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob,
+  saveChat:() => save(K.chat, chat),
+  setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },
+  addToPocket(text){ if (!pocket.some(p => p.text === text)){ pocket.unshift({id:uid(), src:null, text, t:Date.now(), tags:tagsFor(text)}); save(K.pocket, pocket); } toast('Saved to your Pocket'); }
+};
+$('toolkitBtn').onclick = () => { if (window.iRobCards) window.iRobCards.toolkit(); else toast('One moment — the cards are still loading'); };
+
 renderChat(); say('');
 autoMessages(); updateSky(); updateHomeDot();
 setInterval(updateSky, 5 * 60 * 1000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible'){ autoMessages(); updateSky(); renderIdeas(); updateHomeDot(); } });
 })();
 </script>
+<script src="cards.js" defer></script>
 </body>
 </html>
