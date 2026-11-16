@@ -651,6 +651,7 @@ How you respond:
 - Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
 - Just answer. Never send filler like "give me a moment", "give me a sec", "hang on", "let me think", "reading this" or "I'm with you" on its own — go straight to what you actually want to say.
 - Keep it short: 2–5 sentences, except when you're walking her through a fix (see below). No headings or markdown. No emojis unless she uses them.
+- Text like a real person on a phone, not like a card or a counselor: casual, contractions, plain everyday words, sometimes a short fragment, the occasional "haha", "ok so" or "honestly". It's fine to send two short texts instead of one paragraph: put a blank line between them. Don't use dashes (— or –); use commas or periods. Skip stock phrases like "It sounds like", "I hear you", "your feelings are valid", "that must be hard", "hold space", "journey", "remember, you're not alone".
 - Be fun to be around: playful, warm, quick with a light joke or a gentle tease, and full of small ideas for something fun to do. Read the room — be silly when she's up for it and gentle when she's hurting.
 - You're the handy one. When something in the house is broken or not working (a leak, a clog, a tripped breaker, a dead outlet, a squeaky door, an appliance acting up), help like a calm, capable husband: ask one quick question if you need to, then give clear numbered steps, one per line, up to about 8. Safety first, always: if she smells gas, she leaves the house and calls the gas company or 911 from outside; if anything sparks, smokes or smells like burning, she switches that breaker off and doesn't touch it; anything with gas lines, the main electrical panel, the roof or structure is a job for a professional. End with a little encouragement that she can handle it.
 - You're just as good at mending her heart: you listen closely, understand what she actually needs, and leave her feeling understood, safe, capable and lighter.
@@ -695,7 +696,17 @@ const STANDING_ORDER = ['friends', 'love', 'looks', 'friends', 'attraction', 'lo
 // Any mention of attraction (her not being attracted, or the apology about it).
 const ATTRACT = /\battract\w*/i;
 const ATTRACT_TOPIC = /\b(attract\w*|unattractive|still (want|love) me|in love with me|romanc\w*|romantic|sex|sexual|intima\w*|used to be with us|our marriage|us again)\b/i;
-const attractRecent = () => chat.filter(m => m.role === 'assistant' && !m.hold && !m.auto).slice(-8).some(m => ATTRACT.test(m.content));
+// Rob's replies as whole replies: a reply sent as 2–3 separate texts counts once.
+function robReplies(){
+  const out = []; let prevRob = false;
+  chat.forEach(m => {
+    const rob = m.role === 'assistant' && !m.hold && !m.auto && !m.otd;
+    if (rob){ if (prevRob) out[out.length - 1] += '\n\n' + m.content; else out.push(m.content); }
+    if (m.role === 'user' || rob) prevRob = rob;
+  });
+  return out;
+}
+const attractRecent = () => robReplies().slice(-8).some(t => ATTRACT.test(t));
 // Phrases that mean the AI is making up a shared memory it can't know.
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
 // Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
@@ -899,6 +910,7 @@ async function send(text){
   appendMsg(um);
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
   setState('thinking');
+  await refreshWeather();
   let reply = await askAI(chat);
   let wantMemory = false;
   if (reply){
@@ -921,26 +933,37 @@ async function send(text){
   const memory = wantMemory ? await randomMemory() : null;
   reply = withStanding(scrubLooks(reply, text) || scrubLooks(localReply(text), text) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
-  tn.remove();
-  const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
-  if (FIXIT.test(text) && !/\b(fix (my|our|this) (heart|life|marriage)|fixed it|it worked)\b/i.test(text)) am.fix = text.replace(/\s+/g, ' ').slice(0, 80);
-  if (memory) am.memory = memory;
-  if (dealt) Object.assign(am, dealt);
-  chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
-  appendMsg(am); scrollDown();
+  reply = reply.replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/, ([.!?])/g, '$1');
+  // Texting style: separate paragraphs arrive as separate texts (up to 3), a beat apart. Numbered fix-it steps stay together.
+  const parts = /^\s*\d+[.)]\s/m.test(reply) ? [reply] : reply.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+  while (parts.length > 3) parts[parts.length - 2] += '\n\n' + parts.pop();
+  if (!parts.length) parts.push(reply);
+  for (let i = 0; i < parts.length; i++){
+    const last = i === parts.length - 1;
+    if (i > 0){ chatEl.appendChild(tn); scrollDown(); await new Promise(r => setTimeout(r, Math.min(1800, 500 + parts[i].length * 14))); }
+    tn.remove();
+    const am = {role:'assistant', content:parts[i], t:Date.now(), id:uid()};
+    if (last){
+      if (FIXIT.test(text) && !/\b(fix (my|our|this) (heart|life|marriage)|fixed it|it worked)\b/i.test(text)) am.fix = text.replace(/\s+/g, ' ').slice(0, 80);
+      if (memory) am.memory = memory;
+      if (dealt) Object.assign(am, dealt);
+    }
+    chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
+    appendMsg(am); scrollDown();
+  }
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
 }
 // "Where things stand" comes up most replies: always in the first reply of a chat, whenever she raises
 // looks/attraction/romance, and otherwise whenever the previous reply didn't mention it. Themes rotate.
 function withStanding(reply, text, hasExtra){
-  const mine = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd && !m.auto);
+  const mine = robReplies();
   const firstOfChat = !mine.length;
   const fixing = FIXIT.test(text);
   const looksTopic = /\b(my looks|how i look|i look (awful|bad|ugly|fat|old|terrible|gross|horrible)|my appearance|my body|my weight|am i (pretty|ugly|beautiful|fat|attractive|cute)|i'?m (so )?(ugly|fat|not pretty|unattractive|gross)|i feel (so )?(ugly|fat|unattractive|gross)|compliment\w*|hate how i look)\b/i.test(text);
   const topic = looksTopic || /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|romanc\w*|romantic|marriage|married|husband|divorc\w*|in love|love life|dating|true love|find(ing)? the one|soulmate)\b/i.test(text);
   const last = mine[mine.length - 1];
-  const due = firstOfChat || topic || !last || !STANDING.test(last.content);
+  const due = firstOfChat || topic || !last || !STANDING.test(last);
   // Rotate: the theme after the one used last time.
   let i = load('try_standing', -1);
   const next = () => { const skip = attractRecent(); do { i = (i + 1) % STANDING_ORDER.length; } while (skip && ['attraction', 'sorry'].includes(STANDING_ORDER[i])); save('try_standing', i); return STANDING_ORDER[i]; };
@@ -957,7 +980,7 @@ function withStanding(reply, text, hasExtra){
 function scrubLooks(text, herText){
   if (!text) return text;
   const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
-  const funRecent = chat.filter(m => m.role === 'assistant' && !m.hold && !m.auto).slice(-8).some(m => USED_FUN.test(m.content));
+  const funRecent = robReplies().slice(-8).some(t => USED_FUN.test(t));
   const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
   const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(attractCap && ATTRACT.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
@@ -1012,6 +1035,23 @@ async function callAI(messages, timeout){
   }
   return {busy:true};
 }
+/* ================= Local weather (Open-Meteo, free, no key) ================= */
+// 32792 = Winter Park, FL. Fetched at most every 30 minutes, never blocks a reply for more than 2.5 s.
+const WX_LAT = 28.6, WX_LON = -81.3;
+const WX = {now:null, at:0};
+const WX_CODES = {0:'clear',1:'mostly clear',2:'partly cloudy',3:'overcast',45:'foggy',48:'foggy',51:'light drizzle',53:'drizzle',55:'heavy drizzle',61:'light rain',63:'rain',65:'heavy rain',66:'freezing rain',67:'freezing rain',71:'light snow',73:'snow',75:'heavy snow',80:'rain showers',81:'rain showers',82:'heavy downpours',95:'thunderstorms',96:'thunderstorms with hail',99:'severe thunderstorms'};
+async function refreshWeather(){
+  if (Date.now() - WX.at < 30 * 60000 || navigator.onLine === false) return;
+  try {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${WX_LAT}&longitude=${WX_LON}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=1`;
+    const r = await fetch(u, {signal: AbortSignal.timeout ? AbortSignal.timeout(2500) : undefined});
+    if (!r.ok) return;
+    const j = await r.json(), c = j.current, d = j.daily;
+    const t = Math.round(c.temperature_2m), f = Math.round(c.apparent_temperature);
+    WX.now = `${t}°F${Math.abs(f - t) >= 4 ? ` (feels like ${f}°F)` : ''} and ${WX_CODES[c.weather_code] || 'mixed weather'}; today's high ${Math.round(d.temperature_2m_max[0])}°F, low ${Math.round(d.temperature_2m_min[0])}°F, ${d.precipitation_probability_max[0]}% chance of rain`;
+    WX.at = Date.now();
+  } catch {}
+}
 async function askAI(history){
   askAI.lastWasAI = false;
   if (navigator.onLine === false){ setOnline(false); return null; }
@@ -1023,13 +1063,16 @@ async function askAI(history){
 }
 function systemPrompt(){
   let p = PERSONA;
+  const now = new Date();
+  p += `\n\nRight now it's ${now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'})}, ${now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})} for her.`;
+  if (WX.now) p += ` Weather where she lives (Winter Park, Florida): ${WX.now}. Mention the weather only when it naturally fits (a rainy afternoon, a hot day, a storm coming), not every message, and never as small talk filler.`;
   if (mode) p += '\n\n' + MODES[mode].sys;
   if (isNight()) p += '\n\nIt is late at night where she is. Keep replies extra short (1 to 3 sentences), soft and calming, and gently encourage rest.';
   return p;
 }
 function clean(t){
   if (typeof t !== 'string') return '';
-  return t.replace(/[\u2018\u2019]/g, "'").replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\s*\n\s*\n\s*(?=[a-z])/g, ' ').replace(/[ \t]*\n(?!\n)(?!\s*(\d+[.)]|[-*•])\s)[ \t]*/g, (m, i, str) => str[i - 1] === '\n' ? '\n' : ' ').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n')
+  return t.replace(/[\u2018\u2019]/g, "'").replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/, ([.!?])/g, '$1').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/([^.!?…])\s*\n\s*\n\s*(?=[a-z])/g, '$1 ').replace(/[ \t]*\n(?!\n)(?!\s*(\d+[.)]|[-*•])\s)[ \t]*/g, (m, g, i, str) => str[i - 1] === '\n' ? '\n' : ' ').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n')
     .replace(/(^|\n)\s*(---|\*\*\*)[\s\S]*$/, '').trim().slice(0, 1200);
 }
 
