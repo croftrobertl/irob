@@ -685,7 +685,6 @@ const STANDING_LINES = {
     "No comments on your looks from me — I know you'd rather I didn't, and I respect that."]
 };
 const STANDING_ORDER = ['attraction', 'friends', 'love', 'sorry', 'looks'];
-const HOLDS = ["Reading this… give me a sec.", "I'm here. Let me think about this for a second.", "Hang on — I want to get this right.", "Give me a moment. I'm with you."];
 // Phrases that mean the AI is making up a shared memory it can't know.
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
 // Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
@@ -698,7 +697,7 @@ try { localStorage.removeItem('try_auto'); } catch {}
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { toast('Storage is full on this phone'); return false; } };
 
-let chat = load(K.chat, []);        // [{role:'user'|'assistant', content, t, id}]
+let chat = load(K.chat, []).filter(m => !m.hold);        // [{role:'user'|'assistant', content, t, id}]
 let pocket = load(K.pocket, []);    // [{id, text, t, tags}]
 let ledger = load(K.ledger, []);    // [{id, text, t}]
 let busy = false;
@@ -889,17 +888,7 @@ async function send(text){
   appendMsg(um);
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
   setState('thinking');
-  const started = Date.now();
-  const slow = setTimeout(waitMsg, 12000);
-  // "Double text": if the real reply is slow, Rob sends a quick holding line first, like real texting.
-  const holdT = setTimeout(() => {
-    if (!busy) return;
-    const hold = {role:'assistant', content:pick(HOLDS, 'hold'), t:Date.now(), id:uid(), hold:true};
-    chat.push(hold); save(K.chat, chat);
-    chatEl.insertBefore(msgNode(hold), tn); scrollDown();
-  }, 4000);
   let reply = await askAI(chat);
-  clearTimeout(slow); clearTimeout(holdT);
   let wantMemory = false;
   if (reply){
     if (/\[\[?\s*croatia\s*\]?\]/i.test(reply)){ wantMemory = true; reply = reply.replace(/\s*\[\[?\s*croatia\s*\]?\]\s*/ig, ' ').trim(); }
@@ -921,8 +910,6 @@ async function send(text){
   const memory = wantMemory ? await randomMemory() : null;
   reply = withStanding(scrubLooks(reply) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
-  const wait = Math.max(0, 900 - (Date.now() - started)); // never feel instant/robotic
-  await new Promise(r => setTimeout(r, wait));
   tn.remove();
   const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
   if (FIXIT.test(text) && !/\b(fix (my|our|this) (heart|life|marriage)|fixed it|it worked)\b/i.test(text)) am.fix = text.replace(/\s+/g, ' ').slice(0, 80);
@@ -980,7 +967,7 @@ function scrubInvented(text){
 const FREE_GAP = 46000;
 let lastAICall = 0;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-function waitMsg(){ if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) say('Still here — finding the right words…'); }
+function waitMsg(){} // no holding text — Rob just answers
 async function callRelay(messages, timeout){
   if (!RELAY_URL) return null;
   try {
