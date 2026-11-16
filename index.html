@@ -553,6 +553,8 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
 /* ================= Config ================= */
 const HER = 'Erica';
 const AI_URL = 'https://text.pollinations.ai/openai';
+// iRob relay (Cloudflare Worker → Groq, then Cloudflare Workers AI). Empty = skip straight to Pollinations.
+const RELAY_URL = '';
 const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
 const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob, her husband. You love her, and because you love her, what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, and don't use pet names. Write naturally, like a text from a husband who has her back — never like a therapist or an assistant.
@@ -843,7 +845,18 @@ const FREE_GAP = 46000;
 let lastAICall = 0;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function waitMsg(){ if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) say('Still here — finding the right words…'); }
+async function callRelay(messages, timeout){
+  if (!RELAY_URL) return null;
+  try {
+    const r = await fetch(RELAY_URL, {method:'POST', headers:{'Content-Type':'application/json'}, signal:AbortSignal.timeout ? AbortSignal.timeout(Math.min(timeout, 25000)) : undefined, body:JSON.stringify({messages, max_tokens:600})});
+    if (!r.ok) return null;
+    const j = await r.json(); const txt = clean(j && j.text);
+    return txt ? {text:txt, via:j.provider} : null;
+  } catch { return null; }
+}
 async function callAI(messages, timeout){
+  const relayed = await callRelay(messages, timeout);
+  if (relayed) return relayed;
   const gap = FREE_GAP - (Date.now() - lastAICall);
   if (gap > 0){ waitMsg(); await sleep(gap); }
   for (let attempt = 0; attempt < 2; attempt++){
