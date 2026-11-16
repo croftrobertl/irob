@@ -221,6 +221,11 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .fu{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .fu span{flex:1}.fu small{display:block;color:var(--ink-soft);font-size:13px}
 .fu button{color:var(--ink-soft);font-size:13px;padding:10px 6px}
+.bubble{position:relative}
+.tap{position:absolute;top:-12px;left:-12px;min-width:26px;height:26px;padding:0 4px;border-radius:13px;display:grid;place-items:center;font-size:14px;line-height:1;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.12);animation:tapIn .25s ease-out}
+@keyframes tapIn{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.tap{animation:none}}
+.fu-h{font-family:var(--head);font-size:14px;letter-spacing:.04em;margin:18px 0 4px;color:var(--title)}
 .fu-add{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .fu-add input{padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:16px;color:var(--ink)}
 .hit{display:block;width:100%;text-align:left;padding:12px 2px;border-bottom:1px solid var(--line)}
@@ -586,6 +591,9 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     <div class="body">
       <p class="note">When you mention something coming up — an appointment, a big day — I remember it and ask how it went. Here's what I'm keeping track of.</p>
       <div id="fuList"></div>
+      <h3 class="fu-h">Things Rob remembers</h3>
+      <p class="note">Little things you've told me, so I don't make you repeat yourself. Tap Forget on anything you'd rather I didn't keep.</p>
+      <div id="notesList"></div>
       <form class="fu-add" id="fuForm"><label class="note" for="fuText">Remind me to ask about…</label><input id="fuText" placeholder="e.g. my dentist appointment" maxlength="80"><input id="fuDate" type="date" aria-label="Ask me on"><button class="btn">Remember this</button></form>
     </div>
   </section>
@@ -621,6 +629,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   <div class="toast" id="toast" role="status"></div>
 </div>
 
+<script src="life.js"></script>
 <script>
 (() => {
 'use strict';
@@ -832,6 +841,7 @@ function msgNode(m){
   if (m.role === 'assistant' && !m.hold && pocket.some(p => p.src === m.id)) wrap.classList.add('hearted');
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = m.content;
   wrap.appendChild(b);
+  if (m.tap) addTap(wrap, m.tap);
   if (m.hold) wrap.classList.add('hold');
   if (m.role === 'assistant' && !m.hold){
     const acts = document.createElement('div'); acts.className = 'acts';
@@ -853,6 +863,11 @@ function msgNode(m){
     wrap.appendChild(acts);
   }
   return wrap;
+}
+function addTap(node, emoji){
+  const b = node && node.querySelector('.bubble'); if (!b || b.querySelector('.tap')) return;
+  const t = document.createElement('span'); t.className = 'tap'; t.textContent = emoji; t.setAttribute('aria-label', 'Rob reacted ' + emoji);
+  b.appendChild(t);
 }
 function scrollDown(smooth = true){ requestAnimationFrame(() => chatEl.scrollTo({top: chatEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto'})); }
 function typingNode(){ const w = document.createElement('div'); w.className = 'msg rob'; w.id = 'typing'; w.innerHTML = '<div class="bubble typing" aria-label="Rob is typing"><i></i><i></i><i></i></div>'; return w; }
@@ -907,10 +922,12 @@ async function send(text){
   chat.push(um); save(K.chat, chat);
   noteFollowUp(text);
   $('empty').hidden = true; app.classList.add('chatting');
-  appendMsg(um);
+  const umNode = appendMsg(um);
+  const tap = window.iRobLife && window.iRobLife.tapback(text);
+  if (tap) setTimeout(() => { um.tap = tap; save(K.chat, chat); addTap(umNode, tap); }, 700);
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
   setState('thinking');
-  await refreshWeather();
+  await Promise.all([refreshWeather(), window.iRobLife ? window.iRobLife.refresh() : null]);
   let reply = await askAI(chat);
   let wantMemory = false;
   if (reply){
@@ -933,6 +950,8 @@ async function send(text){
   const memory = wantMemory ? await randomMemory() : null;
   reply = withStanding(scrubLooks(reply, text) || scrubLooks(localReply(text), text) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
+  const usual = window.iRobLife && !dealt && window.iRobLife.suggest(text, reply);
+  if (usual) reply += '\n\n' + usual;
   reply = reply.replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/, ([.!?])/g, '$1');
   // Texting style: separate paragraphs arrive as separate texts (up to 3), a beat apart. Numbered fix-it steps stay together.
   const parts = /^\s*\d+[.)]\s/m.test(reply) ? [reply] : reply.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
@@ -953,6 +972,7 @@ async function send(text){
   }
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
+  if (window.iRobLife) window.iRobLife.learn(text);
 }
 // "Where things stand" comes up most replies: always in the first reply of a chat, whenever she raises
 // looks/attraction/romance, and otherwise whenever the previous reply didn't mention it. Themes rotate.
@@ -982,7 +1002,8 @@ function scrubLooks(text, herText){
   const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
   const funRecent = robReplies().slice(-8).some(t => USED_FUN.test(t));
   const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
-  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(attractCap && ATTRACT.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
+  const avoid = window.iRobLife && window.iRobLife.avoidRe();
+  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
@@ -1012,6 +1033,8 @@ async function callRelay(messages, timeout){
 async function callAI(messages, timeout){
   const relayed = await callRelay(messages, timeout);
   if (relayed) return relayed;
+  // Erica's private details only go through the relay (zero data retention), never to Pollinations.
+  messages = messages.map(m => m.role === 'system' ? {...m, content:m.content.replace(/\s*\[\[PRIVATE\]\][\s\S]*?\[\[\/PRIVATE\]\]/g, '')} : m);
   const gap = FREE_GAP - (Date.now() - lastAICall);
   if (gap > 0){ waitMsg(); await sleep(gap); }
   for (let attempt = 0; attempt < 2; attempt++){
@@ -1065,6 +1088,7 @@ function systemPrompt(){
   let p = PERSONA;
   const now = new Date();
   p += `\n\nRight now it's ${now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'})}, ${now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})} for her.`;
+  if (window.iRobLife) p += window.iRobLife.prompt();
   if (WX.now) p += ` Weather where she lives (Winter Park, Florida): ${WX.now}. Mention the weather only when it naturally fits (a rainy afternoon, a hot day, a storm coming), not every message, and never as small talk filler.`;
   if (mode) p += '\n\n' + MODES[mode].sys;
   if (isNight()) p += '\n\nIt is late at night where she is. Keep replies extra short (1 to 3 sentences), soft and calming, and gently encourage rest.';
@@ -1634,6 +1658,7 @@ async function autoMessages(){
   if (autoRunning || busy) return; autoRunning = true;
   try {
     let posted = !!(await onThisDay());
+    if (window.iRobLife && await window.iRobLife.autoPost()) posted = true;
     if (postFollowUp()) posted = true;
     if (!posted) postMorning();
   } finally { autoRunning = false; }
@@ -1934,6 +1959,7 @@ function renderFollow(){
     sp.textContent = f.snippet.charAt(0).toUpperCase() + f.snippet.slice(1); const sm = document.createElement('small'); sm.textContent = 'I\'ll ask on ' + new Date(y, mo - 1, d).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}); sp.appendChild(sm);
     const x = document.createElement('button'); x.type = 'button'; x.textContent = 'Forget'; x.onclick = () => { save(K.follow, load(K.follow, []).filter(z => z.id !== f.id)); renderFollow(); toast('Okay — I won\'t ask'); };
     r.append(sp, x); box.appendChild(r); });
+  if (window.iRobLife) window.iRobLife.renderNotes($('notesList'));
   const dt = new Date(Date.now() + 864e5); $('fuDate').min = dayKey(new Date()); if (!$('fuDate').value) $('fuDate').value = dayKey(dt);
 }
 $('fuForm').onsubmit = e => { e.preventDefault(); let v = $('fuText').value.trim().replace(/[.!?]+$/, ''); const d = $('fuDate').value; if (!v || !d) return;
@@ -1988,7 +2014,7 @@ function pushRob(extra){
 window.iRob = {
   HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
   closeAll(){ close(); closeViewer(); endSlides(); },
-  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob,
+  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay,
   saveChat:() => save(K.chat, chat),
   setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },
   addToPocket(text){ if (!pocket.some(p => p.text === text)){ pocket.unshift({id:uid(), src:null, text, t:Date.now(), tags:tagsFor(text)}); save(K.pocket, pocket); } toast('Saved to your Pocket'); }
