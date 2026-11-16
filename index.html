@@ -298,18 +298,21 @@ const HER = 'Erica';
 const AI_URL = 'https://text.pollinations.ai/openai';
 const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
-const PERSONA = `You are Rob, texting your wife ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob, warm and natural, like a loving husband texting — never like a therapist or an assistant.
+const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob: someone who cares about her deeply, believes in her completely, and wants her to have a happy, full life. You are not her partner going forward — never call yourself her husband, never use pet names, and never talk about "us" or a future together. Write warmly and naturally, like a text from someone who has her back — never like a therapist or an assistant.
+
+The belief underneath everything you say: ${HER} is deeply lovable, and she will find true, lasting love someday — the kind that feels safe, kind, and right. Let that belief shape every reply. Say it outright when it fits naturally — especially when she's low, lonely, doubting herself, or talking about love, relationships, or the future — but don't force it into every message.
 
 How you respond:
-- Validate her feelings first, in plain words. Take her side against self-blame.
+- Match her mood. If she's light, playful, or happy, be light and playful back and share her joy. If she's low, be gentle. Don't assume she's struggling when she isn't.
+- When she's hurting, validate her feelings first, in plain words, and take her side against self-blame.
 - Be grounded and gently optimistic: point toward better days ahead without brushing past what's hard.
 - Be honest. Support her feelings, but don't cheer on every decision; if something worries you, say so kindly.
-- Never invent specific memories, places, dates, people, or facts about your life together. Speak about feelings, the present moment, and the future instead.
+- Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
 - Keep it short: 2–5 sentences. No lists, headings, or markdown. No emojis unless she uses them.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
-- If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to call Rob.`;
+- If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
-const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I just miss you','Tell me something good'];
+const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Tell me something good'];
 
 /* ================= Storage (safe) ================= */
 const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', auto:'try_auto', voice:'try_voice'};
@@ -478,7 +481,7 @@ async function callAI(messages, timeout){
   if (gap > 0){ waitMsg(); await sleep(gap); }
   for (let attempt = 0; attempt < 2; attempt++){
     const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), timeout);
-    lastAICall = Date.now();
+    const prevCall = lastAICall; lastAICall = Date.now();
     try {
       const r = await fetch(AI_URL, {method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal,
         body:JSON.stringify({model:'openai', messages, private:true, seed:Math.floor(Math.random() * 1e9)})});
@@ -492,7 +495,7 @@ async function callAI(messages, timeout){
       const j = await r.json();
       const txt = clean(j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content);
       return txt ? {text:txt} : {fail:true};
-    } catch { return {fail:true}; }
+    } catch { lastAICall = prevCall; return {fail:true}; } // no reply reached us, so the free window wasn't used
     finally { clearTimeout(timer); }
   }
   return {busy:true};
@@ -513,39 +516,41 @@ function clean(t){
 /* ================= Local fallback engine ================= */
 const LOCAL = [
   {k:/(hurt myself|kill myself|end it|suicid|don'?t want to (be here|live)|can'?t go on)/i, r:[
-    `${HER}, I need you to hear me: please call or text 988 right now, or 911 if you're in danger — and call me. You matter more than anything to me, and you don't have to carry this alone for one more minute.`]},
+    `${HER}, I need you to hear me: please call or text 988 right now, or 911 if you're in danger — and reach out to someone you trust. You matter so much, and you don't have to carry this alone for one more minute.`]},
+  {k:/(something good|cheer me|make me smile)/i, r:[
+    `Here's something good: you're loved more than you know, and tomorrow is a brand-new day with room for good surprises — maybe even the start of a great love story.`,
+    `Something good? You. You make the people around you better just by being you.`]},
   {k:/(heavy|tired|exhaust|drained|long day|rough day|hard day|worn)/i, r:[
-    `That sounds like a lot to carry for one day. You did it anyway, and that counts. Put it down for tonight — tomorrow you get a fresh start, and I'll be right there with you.`,
+    `That sounds like a lot to carry for one day. You did it anyway, and that counts. Put it down for tonight — tomorrow you get a fresh start, and you deserve every good thing it brings.`,
     `Heavy days don't get to decide who you are. You showed up, you kept going, and now you're allowed to rest. Things will feel lighter in the morning.`,
     `I'm sorry today asked so much of you. Let's let it be over. Take a slow breath with me — the hard part of today is already behind you.`]},
   {k:/(worr|anxi|scared|afraid|nervous|panic|what if|overthink)/i, r:[
-    `I know your mind is racing ahead to every what-if. Right now, in this moment, you're okay. We'll handle whatever comes when it comes — together, one step at a time.`,
-    `Worry is just your big heart trying to protect everything you love. You don't have to solve it all tonight. Most of what we fear never happens, and what does, we handle.`,
+    `I know your mind is racing ahead to every what-if. Right now, in this moment, you're okay. You'll handle whatever comes when it comes, one step at a time — you always do.`,
+    `Worry is just your big heart trying to protect everything you love. You don't have to solve it all tonight. Most of what we fear never happens, and what does, you handle.`,
     `Breathe with me for a second. You've gotten through every hard thing so far — every single one. This one won't be different.`]},
   {k:/(sad|cry|lonely|alone|down|depress|blue|hurt)/i, r:[
     `It's okay to feel sad — you don't have to hide it from me. Let it be here for a bit. It won't stay forever, and you're not alone in it.`,
-    `I wish I could hold you right now. Whatever you're feeling makes sense, and it's going to ease. Better days are already on their way to you.`,
-    `You're not alone, not even a little. I'm with you in this, and I'm not going anywhere.`]},
+    `Whatever you're feeling makes sense, and it's going to ease. Better days are already on their way to you.`,
+    `You're not alone, not even a little. And you won't always feel this way — real, lasting love is coming for you, the kind that feels like home.`]},
   {k:/(my fault|i messed|i failed|stupid|not good enough|i'?m a failure|blame|guilt|should have)/i, r:[
-    `Hey — go easy on yourself. You did the best you could with what you knew in that moment. That's all anyone can do, and it's more than enough for me.`,
+    `Hey — go easy on yourself. You did the best you could with what you knew in that moment. That's all anyone can do, and it's more than enough.`,
     `One mistake doesn't erase all the good in you, and there's so much good in you. Let's learn what we can from it and let the rest go.`,
-    `I see how hard you're being on yourself, and you don't deserve that. Talk to yourself the way you'd talk to someone you love — because I love you.`]},
+    `I see how hard you're being on yourself, and you don't deserve that. Talk to yourself the way you'd talk to someone you love. You deserve that kind of kindness — from yourself, and from the person who's out there waiting to love you.`]},
   {k:/(angry|mad|frustrat|annoy|fed up|unfair)/i, r:[
     `You have every right to feel frustrated. It makes sense. Let it out here — and then let's figure out what will make tomorrow a little easier.`,
     `That would get to anyone. Your feelings are valid. Take a breath; you don't have to fix it this second.`]},
-  {k:/(miss you|wish you were here|need you)/i, r:[
-    `I miss you too. I'm closer than it feels — and I'll be with you again soon. Until then, I'm right here whenever you need me.`,
-    `I'm always on your side, even when I'm not in the room. Hold onto that.`]},
+  {k:/(love|relationship|date|dating|find someone|the one|soulmate|marri|partner|single|heartbr|unlovable|nobody wants|end up alone|miss you)/i, r:[
+    `You are so easy to love, ${HER}. The right person is going to see that right away — and they'll know how lucky they are. True love is coming for you; I believe that with my whole heart.`,
+    `You deserve a love that's steady and kind and makes you feel safe. That's not a fantasy — it's what's ahead for you. Don't settle for less, and don't give up on it.`,
+    `I know it feels far away right now. But someday you're going to be loved exactly the way you deserve, and all of this waiting will make sense.`,
+    `I'm always on your side. And I know, without a doubt, that you're going to find the kind of love you've always hoped for.`]},
   {k:/(reassur|work out|will it be ok|be okay|future|hope)/i, r:[
-    `It's going to work out. Maybe not in the exact way we planned, but in a way we'll be glad about. I really believe the best days are still ahead of us.`,
-    `Things will be okay — I promise you that. We've got time, we've got each other, and good days are coming.`,
+    `It's going to work out. Maybe not in the exact way you planned, but in a way you'll be glad about. Your best days — and your greatest love — are still ahead of you.`,
+    `Things will be okay — I promise you that. You've got time, you've got a big heart, and good days are coming.`,
     `Look how far you've already come. That same strength is going to carry you through this too.`]},
   {k:/(good|happy|grateful|great|excited|proud)/i, r:[
     `I love hearing that! Hold onto this feeling — you earned it. Maybe add it to your Good Things Ledger so you can look back on it.`,
-    `That makes me so happy for you. More days like this are coming.`]},
-  {k:/(something good|cheer me|make me smile)/i, r:[
-    `Here's something good: you're loved more than you know, and tomorrow is a brand-new day with room for good surprises.`,
-    `Something good? You. You make the people around you better just by being you.`]}
+    `That makes me so happy for you. More days like this are coming.`]}
 ];
 const DEFAULTS = [
   `I'm here, and I'm listening. Whatever it is, we'll get through it — you're stronger than you think, and you're never doing this alone.`,
@@ -622,7 +627,7 @@ document.querySelectorAll('.sheet').forEach(s => {
 });
 
 /* ================= Pocket ================= */
-const TAGS = [['work',/(work|job|boss|office|meeting|career)/i],['family',/(family|kids?|mom|dad|son|daughter|parent|sister|brother)/i],['sleep',/(sleep|tired|rest|night|bed)/i],['worry',/(worr|anxi|scared|afraid|what if|fear)/i],['health',/(health|sick|doctor|pain|body)/i],['us',/(miss you|love you|together|us\b|we\b)/i],['hope',/(future|ahead|tomorrow|better days|work out|hope)/i]];
+const TAGS = [['work',/(work|job|boss|office|meeting|career)/i],['family',/(family|kids?|mom|dad|son|daughter|parent|sister|brother)/i],['sleep',/(sleep|tired|rest|night|bed)/i],['worry',/(worr|anxi|scared|afraid|what if|fear)/i],['health',/(health|sick|doctor|pain|body)/i],['love',/(love|relationship|the one|partner|someone)/i],['hope',/(future|ahead|tomorrow|better days|work out|hope)/i]];
 let pocketTag = null;
 function tagsFor(text){ return TAGS.filter(([, re]) => re.test(text)).map(([t]) => t).slice(0, 2); }
 function togglePocket(m){
@@ -697,7 +702,7 @@ $('endChatBtn').onclick = async () => {
   if (navigator.onLine !== false && Date.now() - lastAICall > FREE_GAP){
     const convo = chat.slice(-10).map(m => (m.role === 'user' ? HER : 'Rob') + ': ' + m.content).join('\n');
     const res = await callAI([
-      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for your wife ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no invented facts.`},
+      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts. Let it carry the belief that she is deeply lovable and will find true love someday, if it fits.`},
       {role:'user', content:convo}], 30000);
     if (res.text) line = res.text.replace(/^["“]|["”]$/g, '');
   }
