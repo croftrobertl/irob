@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f6dbf">
+<meta name="theme-color" content="#eaf3fc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12263a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,17 +16,31 @@
 <title>The Rob You Want</title>
 <style>
 :root{
-  --blue:#0f6dbf; --blue-deep:#0a4f8c; --blue-soft:#e7f1fb;
-  --coral:#f08080; --coral-soft:#fdeceb;
+  --blue:#0f6dbf; --blue-deep:#0a4f8c; --blue-soft:#e7f1fb; --accent:#0f6dbf; --title:#0a4f8c;
+  --coral:#f08080; --coral-soft:#fdeceb; --tag-ink:#8a2f2f; --act-on:#c24b4b; --good:#1d7a46;
   --gold:#ffb84d;
   --ink:#16242c; --ink-soft:#4a5a63;
-  --bg:#f7fafc; --card:#ffffff; --line:#dde6ee;
+  --page:#e9f0f6; --app-top:#eaf3fc; --bg:#f7fafc; --card:#ffffff; --surface:#ffffff; --surface-2:#f6f9fc; --line:#dde6ee;
+  --bar:rgba(255,255,255,.92); --thumb-bg:#dbe7f2; --grab:#cfd9e2; --send-off:#b9cde0; --dot:#9db6cc;
+  --toast-bg:#16242c; --toast-ink:#ffffff;
   --radius:20px;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
   --app-h:100dvh;
 }
+/* "Canal at night" — follows the iPhone's dark mode */
+@media (prefers-color-scheme:dark){
+  :root{
+    --blue-soft:#1a3550; --accent:#5aa9ec; --title:#9ccdf7;
+    --coral-soft:#3a2426; --tag-ink:#f6bcbc; --act-on:#f08080; --good:#6fd39a;
+    --ink:#e7eef4; --ink-soft:#a9b8c4;
+    --page:#060d13; --app-top:#12263a; --bg:#0e1a24; --card:#16232f; --surface:#16232f; --surface-2:#1b2a37; --line:#26384a;
+    --bar:rgba(14,26,36,.94); --thumb-bg:#1b2a37; --grab:#3a4c5c; --send-off:#2a3f55; --dot:#5d7489;
+    --toast-bg:#e7eef4; --toast-ink:#0e1a24;
+  }
+}
+[hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#e9f0f6;color:var(--ink);
+html,body{margin:0;height:100%;background:var(--page);color:var(--ink);
   font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 body{overscroll-behavior:none}
 button,input,textarea{font:inherit;color:inherit}
@@ -31,7 +49,7 @@ button{cursor:pointer;border:0;background:none;padding:0}
 
 /* ---------- App frame ---------- */
 .app{position:relative;margin:0 auto;max-width:440px;height:var(--app-h);display:flex;flex-direction:column;
-  background:linear-gradient(180deg,#eaf3fc 0%,var(--bg) 38%);overflow:hidden}
+  background:linear-gradient(180deg,var(--app-top) 0%,var(--bg) 38%);overflow:hidden}
 @media (min-width:480px){
   body{display:flex;align-items:center;justify-content:center;min-height:100%}
   .app{height:min(900px,calc(var(--app-h) - 40px));border-radius:32px;box-shadow:0 20px 60px rgba(15,60,100,.18);border:1px solid var(--line)}
@@ -39,12 +57,12 @@ button{cursor:pointer;border:0;background:none;padding:0}
 
 /* ---------- Top bar ---------- */
 .top{display:flex;align-items:center;gap:8px;padding:calc(var(--safe-t) + 10px) 14px 4px}
-.icon-btn{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--blue-deep)}
+.icon-btn{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--title)}
 .icon-btn:active{background:var(--blue-soft)}
 .icon-btn svg{width:22px;height:22px}
 .icon-btn[aria-pressed="true"]{background:var(--blue);color:#fff}
 .pill{margin-right:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ink-soft);
-  background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .pill i{width:8px;height:8px;border-radius:50%;background:#2e9d5b}
 .pill.off i{background:#c98a1b}
 
@@ -53,8 +71,8 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .avatar-wrap{position:relative;width:132px;height:132px;transition:width .35s ease,height .35s ease}
 .float{animation:float 6s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.avatar{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:#fff;
-  border:4px solid #fff;box-shadow:0 10px 28px rgba(15,109,191,.22);display:block}
+.avatar{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--surface);
+  border:4px solid var(--surface);box-shadow:0 10px 28px rgba(15,109,191,.22);display:block}
 .avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .ring{position:absolute;inset:-10px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .4s}
 .app[data-state="listening"] .ring.listen{opacity:1;box-shadow:0 0 0 4px rgba(255,184,77,.55),0 0 34px 8px rgba(255,184,77,.45)}
@@ -64,10 +82,10 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .ring.wave::before,.ring.wave::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid var(--coral);animation:wave 1.4s ease-out infinite}
 .ring.wave::after{animation-delay:.7s}
 @keyframes wave{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.25);opacity:0}}
-.cam{position:absolute;right:-2px;bottom:4px;width:40px;height:40px;border-radius:50%;background:#fff;color:var(--blue);
+.cam{position:absolute;right:-2px;bottom:4px;width:40px;height:40px;border-radius:50%;background:var(--surface);color:var(--accent);
   display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.15);border:1px solid var(--line)}
 .cam svg{width:20px;height:20px}
-h1{margin:12px 0 0;font:700 24px/1.15 Georgia,"Iowan Old Style","Times New Roman",serif;letter-spacing:.2px;color:var(--blue-deep);transition:font-size .35s}
+h1{margin:12px 0 0;font:700 24px/1.15 Georgia,"Iowan Old Style","Times New Roman",serif;letter-spacing:.2px;color:var(--title);transition:font-size .35s}
 .status{min-height:20px;margin-top:3px;font-size:14px;color:var(--ink-soft)}
 .breath-hint{font-size:12px;color:var(--ink-soft);margin-top:2px}
 /* compact hero once chatting */
@@ -78,16 +96,43 @@ h1{margin:12px 0 0;font:700 24px/1.15 Georgia,"Iowan Old Style","Times New Roman
 .app.chatting h1{font-size:18px;margin-top:6px}
 .app.chatting .breath-hint{display:none}
 
+/* slim header while chatting (Messages-style) */
+.mini{display:none;flex:1;min-width:0;align-items:center;gap:10px}
+.app.chatting .mini{display:flex}
+.app.chatting .pill{display:none}
+.app.chatting:not(.breathing) .hero{display:none}
+.mini-av{position:relative;width:38px;height:38px;border-radius:50%;flex:none}
+.mini-av img{position:relative;width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid var(--surface);box-shadow:0 2px 8px rgba(15,109,191,.22);display:block}
+.mini-av .ring{inset:-4px}
+.mini-txt{min-width:0}
+.mini-txt b{display:block;font:700 17px/1.15 Georgia,"Iowan Old Style",serif;color:var(--title)}
+.mini-txt small{display:block;font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Pocket: words / memories */
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg .chip{padding:7px 14px;font-size:14px}
+.seg .chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:4px}
+.mgrid button{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--thumb-bg)}
+.mgrid img{width:100%;height:100%;object-fit:cover;display:block}
+.mgrid span{position:absolute;left:0;right:0;bottom:0;padding:16px 7px 5px;font-size:11px;font-weight:600;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* confirm sheet */
+.confirm-msg{font-size:17px;line-height:1.4;margin:10px 2px 6px}
 /* Croatia memory card + viewer */
-.memory{position:relative;display:block;width:min(240px,72vw);margin-top:2px;border-radius:16px;overflow:hidden;background:#dbe7f2;border:1px solid var(--line);box-shadow:0 4px 14px rgba(15,60,100,.12);text-align:left}
-.memory img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#dbe7f2}
-.memory .cap{display:block;padding:8px 11px 9px;background:#fff;font-size:13px;line-height:1.3;color:var(--ink-soft)}
-.memory .cap b{display:block;color:var(--blue-deep);font-size:14px}
+.memory{position:relative;display:block;width:min(240px,72vw);margin-top:2px;border-radius:16px;overflow:hidden;background:var(--thumb-bg);border:1px solid var(--line);box-shadow:0 4px 14px rgba(15,60,100,.12);text-align:left}
+.memory img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--thumb-bg)}
+.memory .cap{display:block;padding:8px 11px 9px;background:var(--surface);font-size:13px;line-height:1.3;color:var(--ink-soft)}
+.memory .cap b{display:block;color:var(--title);font-size:14px}
 .memory .playbadge{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:rgba(10,30,50,.55);display:grid;place-items:center}
 .memory .playbadge svg{width:22px;height:22px;fill:#fff;margin-left:3px}
 .viewer{position:absolute;inset:0;z-index:40;background:#0b1620;color:#fff;display:none;flex-direction:column;padding:calc(var(--safe-t) + 8px) 0 calc(var(--safe-b) + 12px)}
 .viewer.show{display:flex}
-.viewer .vtop{display:flex;align-items:center;padding:0 8px 6px 18px}
+.viewer .vtop{display:flex;align-items:center;gap:2px;padding:0 6px 8px 14px}
+.vmap{position:relative;flex:none;width:56px;height:56px;border-radius:14px;overflow:hidden;margin-right:10px;background:#1b2a37;border:2px solid rgba(255,255,255,.75)}
+.vmap img{position:absolute;width:256px;height:256px;max-width:none}
+.vmap i{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--coral);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
+.viewer .icon-btn[aria-pressed="true"]{background:transparent;color:var(--coral)}
+.viewer .icon-btn[aria-pressed="true"] svg{fill:var(--coral)}
+.vattr{font-size:10.5px;opacity:.6;text-align:center;padding:8px 0 0}
 .viewer .vtop b{flex:1;font:600 17px/1.25 Georgia,serif}
 .viewer .vtop small{display:block;font:13px -apple-system,Helvetica,sans-serif;opacity:.8;margin-top:2px}
 .viewer .icon-btn{color:#fff}
@@ -97,6 +142,23 @@ h1{margin:12px 0 0;font:700 24px/1.15 Georgia,"Iowan Old Style","Times New Roman
 .viewer .vbtns .btn{flex:1;text-align:center;text-decoration:none}
 .viewer .vbtns .ghost{background:rgba(255,255,255,.14);color:#fff}
 .viewer .vmsg{opacity:.85;text-align:center;padding:20px}
+/* "Take me back" breathing slideshow */
+.slides{position:absolute;inset:0;z-index:45;background:#05090d;color:#fff;display:none;overflow:hidden}
+.slides.show{display:block}
+.sl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1);transition:opacity 1.6s ease,transform 5s ease-in-out}
+.sl.on{opacity:1}
+.sl.zoom{transform:scale(1.07)}
+.sl-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:calc(var(--safe-t) + 8px) 6px 34px 18px;background:linear-gradient(rgba(0,0,0,.5),transparent);font:600 17px/1.2 Georgia,serif;z-index:1}
+.sl-top span{flex:1}
+.slides .icon-btn{color:#fff}
+.sl-breath{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 70px);text-align:center;font:600 28px/1.2 Georgia,serif;text-shadow:0 2px 14px rgba(0,0,0,.7);z-index:1}
+.sl-dots{position:absolute;left:0;right:0;bottom:calc(var(--safe-b) + 40px);display:flex;justify-content:center;gap:7px;z-index:1}
+.sl-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4)}
+.sl-dots i.on{background:#fff}
+.sl-end{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(5,9,13,.62);padding:24px}
+.sl-end p{font:600 30px/1.2 Georgia,serif;margin:0 0 18px}
+.sl-end .btns{width:100%;max-width:300px}
+.sl-end .ghost{background:rgba(255,255,255,.16);color:#fff}
 /* breathing pacer */
 .avatar-wrap{z-index:0}
 h1,.status{position:relative;z-index:1}
@@ -118,42 +180,45 @@ h1,.status{position:relative;z-index:1}
 .act{width:36px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--ink-soft)}
 .act svg{width:18px;height:18px}
 .act:active{background:var(--blue-soft)}
-.act.on{color:#c24b4b}
+.act.on{color:var(--act-on)}
 .act.on svg{fill:var(--coral)}
 .typing{display:inline-flex;gap:5px;padding:14px 16px}
-.typing i{width:8px;height:8px;border-radius:50%;background:#9db6cc;animation:dot 1.2s infinite}
+.typing i{width:8px;height:8px;border-radius:50%;background:var(--dot);animation:dot 1.2s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes dot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 
 /* ---------- Chips + composer ---------- */
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 14px 8px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;padding:9px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;color:var(--blue-deep);font-weight:600}
+.chip{flex:none;padding:9px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--title);font-weight:600}
 .chip:active{background:var(--blue-soft)}
-.app.chatting .chips.starters{display:none}
-.composer{display:flex;align-items:flex-end;gap:8px;padding:8px 12px calc(var(--safe-b) + 10px);background:rgba(255,255,255,.92);border-top:1px solid var(--line)}
-.composer textarea{flex:1;resize:none;max-height:130px;min-height:46px;padding:12px 15px;border-radius:23px;border:1px solid var(--line);background:#fff;font-size:16px;line-height:1.35;outline:none}
+.app.chatting:not(.chips-open) .chips.starters{display:none}
+.composer .spark{width:46px;height:46px;flex:none;border-radius:50%;color:var(--accent)}
+.composer .spark[aria-expanded="true"]{background:var(--blue-soft)}
+.app:not(.chatting) .spark{display:none}
+.composer{display:flex;align-items:flex-end;gap:8px;padding:8px 12px calc(var(--safe-b) + 10px);background:var(--bar);border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;max-height:130px;min-height:46px;padding:12px 15px;border-radius:23px;border:1px solid var(--line);background:var(--surface);font-size:16px;line-height:1.35;outline:none}
 .composer textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(15,109,191,.15)}
 .send{width:46px;height:46px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none}
-.send:disabled{background:#b9cde0}
+.send:disabled{background:var(--send-off)}
 .send svg{width:20px;height:20px}
 .foot{font-size:11.5px;color:var(--ink-soft);text-align:center;padding:0 16px 2px}
 
 /* ---------- Bottom sheets ---------- */
 .scrim{position:absolute;inset:0;background:rgba(10,30,50,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
 .scrim.show{opacity:1;pointer-events:auto}
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:24px 24px 0 0;max-height:86%;
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:24px 24px 0 0;max-height:86%;
   display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
   padding-bottom:calc(var(--safe-b) + 8px);box-shadow:0 -10px 40px rgba(0,0,0,.15)}
 .sheet.show{transform:none}
-.grab{width:40px;height:5px;border-radius:3px;background:#cfd9e2;margin:9px auto 4px}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--grab);margin:9px auto 4px}
 .sheet header{display:flex;align-items:center;padding:4px 10px 6px 20px}
-.sheet h2{margin:0;flex:1;font:700 20px/1.2 Georgia,serif;color:var(--blue-deep)}
+.sheet h2{margin:0;flex:1;font:700 20px/1.2 Georgia,serif;color:var(--title)}
 .sheet .body{overflow-y:auto;padding:4px 20px 14px}
 .menu-item{display:flex;align-items:center;gap:14px;width:100%;padding:14px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:16px}
-.menu-item svg{width:22px;height:22px;color:var(--blue)}
+.menu-item svg{width:22px;height:22px;color:var(--accent);flex:none}
 .menu-item small{display:block;color:var(--ink-soft);font-size:13px}
-.search{width:100%;padding:11px 14px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none;background:#f6f9fc}
+.search{width:100%;padding:11px 14px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none;background:var(--surface-2)}
 .search:focus{border-color:var(--blue)}
 .filter{display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:none}
 .filter .chip{padding:6px 12px;font-size:13px}
@@ -161,7 +226,7 @@ h1,.status{position:relative;z-index:1}
 .thought{padding:14px 0;border-bottom:1px solid var(--line)}
 .thought p{margin:0 0 6px}
 .meta{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft)}
-.tag{background:var(--coral-soft);color:#8a2f2f;border-radius:999px;padding:2px 9px;font-weight:600}
+.tag{background:var(--coral-soft);color:var(--tag-ink);border-radius:999px;padding:2px 9px;font-weight:600}
 .meta button{margin-left:auto;color:var(--ink-soft);font-size:13px;padding:6px}
 .none{color:var(--ink-soft);text-align:center;padding:26px 6px}
 /* ledger */
@@ -170,29 +235,29 @@ h1,.status{position:relative;z-index:1}
 .balance b{font:700 38px/1.1 Georgia,serif;display:block;margin-top:2px}
 .balance span{font-size:13px;opacity:.9}
 .addrow{display:flex;gap:8px;margin-bottom:6px}
-.addrow input{flex:1;padding:11px 14px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none}
+.addrow input{flex:1;padding:11px 14px;border-radius:14px;border:1px solid var(--line);font-size:16px;outline:none;background:var(--surface)}
 .addrow input:focus{border-color:var(--blue)}
 .btn{padding:11px 16px;border-radius:14px;background:var(--blue);color:#fff;font-weight:600}
-.btn.ghost{background:var(--blue-soft);color:var(--blue-deep)}
+.btn.ghost{background:var(--blue-soft);color:var(--title)}
 .btn.warn{background:var(--coral);color:#3a1212}
 .entry{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:flex-start}
-.entry .amt{flex:none;font-weight:700;color:#1d7a46;font-variant-numeric:tabular-nums;min-width:28px}
+.entry .amt{flex:none;font-weight:700;color:var(--good);font-variant-numeric:tabular-nums;min-width:28px}
 .entry .txt{flex:1}
 .entry .d{flex:none;font-size:12.5px;color:var(--ink-soft)}
 .ledger-day{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-top:14px}
 /* settings */
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .row small{display:block;color:var(--ink-soft);font-size:13px}
-.switch{position:relative;width:52px;height:32px;border-radius:999px;background:#cfd9e2;flex:none;transition:background .2s}
+.switch{position:relative;width:52px;height:32px;border-radius:999px;background:var(--grab);flex:none;transition:background .2s}
 .switch::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
 .switch[aria-checked="true"]{background:var(--blue)}
 .switch[aria-checked="true"]::after{transform:translateX(20px)}
-select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;max-width:60%}
+select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);max-width:60%}
 /* closing card */
 .card-preview{display:block;margin:0 auto;height:min(52vh,460px);width:auto;max-width:100%;aspect-ratio:9/16;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .btns .btn{flex:1}
-.toast{position:absolute;left:50%;bottom:calc(var(--safe-b) + 92px);transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast{position:absolute;left:50%;bottom:calc(var(--safe-b) + 92px);transform:translate(-50%,20px);background:var(--toast-bg);color:var(--toast-ink);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (prefers-reduced-motion:reduce){
@@ -209,9 +274,10 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
     </button>
     <span class="pill" id="pill"><i></i><span id="pillTxt">Here</span></span>
-    <button class="icon-btn" id="autoSpeak" aria-pressed="false" aria-label="Read replies aloud">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
-    </button>
+    <div class="mini" id="mini">
+      <button class="mini-av" id="miniAvatar" aria-label="Breathe with me"><span class="ring listen"></span><span class="ring think"></span><span class="ring wave"></span><img id="miniImg" alt=""></button>
+      <span class="mini-txt"><b>Rob</b><small id="miniStatus">Here for you</small></span>
+    </div>
     <button class="icon-btn" id="menuBtn" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -238,34 +304,37 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
 
   <div class="chips starters" id="chips"></div>
   <form class="composer" id="form" autocomplete="off">
+    <button type="button" class="spark" id="chipsBtn" aria-label="Ideas to talk about" aria-expanded="false" aria-controls="chips"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
     <label for="input" class="sr">Message</label>
     <textarea id="input" rows="1" placeholder="Talk to me…" enterkeyhint="send"></textarea>
     <button class="send" id="send" aria-label="Send" disabled>
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.3 10l12.6 2-12.6 2z"/></svg>
     </button>
   </form>
-  <div class="foot" style="padding-bottom:calc(var(--safe-b) + 4px);background:rgba(255,255,255,.92);margin-top:-6px">A place for comfort, not a substitute for professional care.</div>
+  <div class="foot" style="padding-bottom:calc(var(--safe-b) + 4px);background:var(--bar);margin-top:-6px">A place for comfort, not a substitute for professional care.</div>
 
   <div class="scrim" id="scrim"></div>
 
   <!-- Menu sheet -->
-  <section class="sheet" id="sheetMenu" aria-label="Menu" role="dialog">
+  <section class="sheet" id="sheetMenu" aria-label="Menu" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Menu</h2></header>
     <div class="body">
       <button class="menu-item" data-open="sheetPocket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg><span>Pocket of Good Thoughts<small>Words worth keeping</small></span></button>
       <button class="menu-item" id="memoryBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 9"/></svg><span>A memory from Croatia<small>A random moment from our best trip</small></span></button>
+      <button class="menu-item" id="slidesBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M2 20c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M7 11a5 5 0 0 1 10 0"/><path d="M12 2v2M4.9 4.9l1.4 1.4M19.1 4.9l-1.4 1.4"/></svg><span>Take me back<small>A one-minute breathing slideshow of Croatia</small></span></button>
       <button class="menu-item" data-open="sheetLedger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M8 15h3"/></svg><span>Good Things Ledger<small>Proof that things go right</small></span></button>
       <button class="menu-item" id="endChatBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 18h14M8 21h8"/><path d="M8 15a4 4 0 1 1 8 0"/></svg><span>Wrap up with a card<small>One thought to carry with you</small></span></button>
-      <button class="menu-item" data-open="sheetSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings<small>Voice, photo, start fresh</small></span></button>
+      <button class="menu-item" data-open="sheetSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Settings<small>Voice, photo, backup</small></span></button>
     </div>
   </section>
 
   <!-- Pocket -->
-  <section class="sheet" id="sheetPocket" aria-label="Pocket of Good Thoughts" role="dialog">
+  <section class="sheet" id="sheetPocket" aria-label="Pocket of Good Thoughts" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Pocket of Good Thoughts</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
+      <div class="seg" id="pocketSeg"><button class="chip" type="button" data-view="words" aria-pressed="true">Words</button><button class="chip" type="button" data-view="memories" aria-pressed="false">Memories</button></div>
       <input class="search" id="pocketSearch" type="search" placeholder="Search your saved thoughts" aria-label="Search saved thoughts">
       <div class="filter" id="pocketFilter"></div>
       <div id="pocketList"></div>
@@ -273,7 +342,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </section>
 
   <!-- Ledger -->
-  <section class="sheet" id="sheetLedger" aria-label="Good Things Ledger" role="dialog">
+  <section class="sheet" id="sheetLedger" aria-label="Good Things Ledger" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Good Things Ledger</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
@@ -284,21 +353,22 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </section>
 
   <!-- Settings -->
-  <section class="sheet" id="sheetSettings" aria-label="Settings" role="dialog">
+  <section class="sheet" id="sheetSettings" aria-label="Settings" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Settings</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
-      <div class="row"><span>Read replies aloud<small>Uses this phone's built-in voice — not Rob's real voice</small></span><button class="switch" id="autoSwitch" role="switch" aria-checked="false" aria-label="Read replies aloud"></button></div>
-      <div class="row"><span>Voice</span><select id="voiceSel" aria-label="Voice"></select></div>
+      <div class="row"><span>Voice<small>This phone's built-in voice — not Rob's real voice</small></span><select id="voiceSel" aria-label="Voice"></select></div>
       <div class="row"><span>Test the voice</span><button class="btn ghost" id="voiceTest">Play</button></div>
       <div class="row"><span>Photo<small>Saved on this phone only</small></span><span><button class="btn ghost" id="photoChange">Change</button> <button class="btn ghost" id="photoReset">Reset</button></span></div>
       <div class="row"><span>Add to Home Screen<small>In Safari: Share → Add to Home Screen. Keeps everything saved.</small></span></div>
+      <div class="row"><span>Save a backup<small>Chat, Pocket, Ledger and photo in one file</small></span><button class="btn ghost" id="backupBtn">Save</button></div>
+      <div class="row"><span>Restore a backup<small>Replaces what's on this phone</small></span><button class="btn ghost" id="restoreBtn">Restore</button><input type="file" id="restoreIn" accept="application/json,.json" hidden></div>
       <div class="row"><span>Clear everything<small>Chat, Pocket, Ledger, photo — all erased from this phone</small></span><button class="btn warn" id="wipe">Clear</button></div>
     </div>
   </section>
 
   <!-- Closing card -->
-  <section class="sheet" id="sheetCard" aria-label="Your card" role="dialog">
+  <section class="sheet" id="sheetCard" aria-label="Your card" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Carry this with you</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
@@ -307,10 +377,24 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     </div>
   </section>
 
-  <section class="viewer" id="viewer" role="dialog" aria-label="A memory from Croatia">
-    <div class="vtop"><b id="vTitle">Croatia<small id="vSub"></small></b><button class="icon-btn" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <section class="sheet" id="sheetConfirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmMsg">
+    <div class="grab"></div>
+    <div class="body"><p class="confirm-msg" id="confirmMsg"></p><div class="btns"><button class="btn ghost" id="confirmNo">Cancel</button><button class="btn" id="confirmYes">OK</button></div></div>
+  </section>
+
+  <section class="slides" id="slides" role="dialog" aria-modal="true" aria-label="Take me back to Croatia">
+    <img class="sl" id="slA" alt=""><img class="sl" id="slB" alt="">
+    <div class="sl-top"><span id="slPlace">Croatia</span><button class="icon-btn" id="slClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="sl-breath" id="slBreath" aria-live="polite"></div>
+    <div class="sl-dots" id="slDots"></div>
+    <div class="sl-end" id="slEnd" hidden><p>Welcome back.</p><div class="btns"><button class="btn ghost" id="slAgain">Again</button><button class="btn" id="slDone">Done</button></div></div>
+  </section>
+
+  <section class="viewer" id="viewer" role="dialog" aria-modal="true" aria-label="A memory from Croatia">
+    <div class="vtop"><a class="vmap" id="vMap" target="_blank" rel="noopener" aria-label="Show where this was on a map" hidden><span id="vTiles"></span><i></i></a><b id="vTitle">Croatia<small id="vSub"></small></b><button class="icon-btn" id="vHeart" aria-pressed="false" aria-label="Save this memory to your Pocket"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.6-4.6-9.5-9.3C1 7.6 3.3 4 6.9 4c2.1 0 3.6 1.1 5.1 3 1.5-1.9 3-3 5.1-3 3.6 0 5.9 3.6 4.4 7.2-1.9 4.7-9.5 9.3-9.5 9.3z"/></svg></button><button class="icon-btn" id="vClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="stage" id="vStage"></div>
     <div class="vbtns"><button class="btn" id="vAnother">Another one</button><a class="btn ghost" id="vTrip" href="https://croftrobertl.github.io/croatia/" target="_blank" rel="noopener">Whole trip</a></div>
+    <div class="vattr" id="vAttr" hidden>Map © OpenStreetMap contributors</div>
   </section>
 
   <div class="toast" id="toast" role="status"></div>
@@ -339,17 +423,22 @@ How you respond:
 - You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
+const HOLDS = ["Reading this… give me a sec.", "I'm here. Let me think about this for a second.", "Hang on — I want to get this right.", "Give me a moment. I'm with you."];
+// Phrases that mean the AI is making up a shared memory it can't know.
+const INVENTED = /\b(remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
+// Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
+const TODAY_OVERRIDE = (location.hash.match(/today=(\d{4}-\d\d-\d\d)/) || [])[1];
 const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Make me smile','Tell me something good'];
 
 /* ================= Storage (safe) ================= */
-const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', auto:'try_auto', voice:'try_voice', recent:'try_recent'};
+const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', voice:'try_voice', recent:'try_recent', otd:'try_otd'};
+try { localStorage.removeItem('try_auto'); } catch {}
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { toast('Storage is full on this phone'); return false; } };
 
 let chat = load(K.chat, []);        // [{role:'user'|'assistant', content, t, id}]
 let pocket = load(K.pocket, []);    // [{id, text, t, tags}]
 let ledger = load(K.ledger, []);    // [{id, text, t}]
-let autoSpeak = load(K.auto, false);
 let busy = false;
 
 /* ================= Elements ================= */
@@ -368,14 +457,16 @@ window.addEventListener('resize', fitViewport); fitViewport();
 
 /* ================= State / status ================= */
 const STATUS = {idle:'', listening:'Listening…', thinking:'Typing something encouraging…', speaking:'Speaking…'};
-function setState(s){ app.dataset.state = s; if (!app.classList.contains('breathing')) statusEl.textContent = STATUS[s] || ''; }
-function setOnline(on){ $('pill').classList.toggle('off', !on); $('pillTxt').textContent = on ? 'Here' : 'Offline mode'; }
+let online = true;
+function say(t){ statusEl.textContent = t || ''; $('miniStatus').textContent = t || (online ? 'Here for you' : 'Offline mode'); }
+function setState(s){ app.dataset.state = s; if (!app.classList.contains('breathing')) say(STATUS[s]); }
+function setOnline(on){ online = on; $('pill').classList.toggle('off', !on); $('pillTxt').textContent = on ? 'Here' : 'Offline mode'; if (!statusEl.textContent) say(''); }
 setOnline(navigator.onLine !== false);
 addEventListener('online', () => setOnline(true)); addEventListener('offline', () => setOnline(false));
 
 /* ================= Avatar ================= */
 const DEFAULT_AVATAR = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe5f8"/><stop offset=".62" stop-color="#fbe3d6"/><stop offset=".62" stop-color="#0f6dbf"/><stop offset="1" stop-color="#0a4f8c"/></linearGradient></defs><rect width="200" height="200" fill="url(#s)"/><circle cx="100" cy="118" r="44" fill="#ffb84d"/><circle cx="100" cy="118" r="44" fill="#f08080" opacity=".35"/><rect y="124" width="200" height="76" fill="#0f6dbf"/><path d="M30 142h40M95 154h50M58 168h36M150 140h24" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".55"/><path d="M84 112q16 14 32 0" stroke="#7a3d1a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="86" cy="98" r="4.5" fill="#7a3d1a"/><circle cx="114" cy="98" r="4.5" fill="#7a3d1a"/></svg>`);
-function showPhoto(){ $('avatarImg').src = load(K.photo, null) || DEFAULT_AVATAR; }
+function showPhoto(){ const src = load(K.photo, null) || DEFAULT_AVATAR; $('avatarImg').src = src; $('miniImg').src = src; }
 showPhoto();
 const pickPhoto = () => $('photoIn').click();
 $('camBtn').onclick = pickPhoto; $('photoChange').onclick = pickPhoto;
@@ -404,7 +495,7 @@ function compress(file, size, q){
 
 /* ================= Breathing pacer (4-7-8) ================= */
 let breathTimer = null;
-$('avatar').onclick = () => app.classList.contains('breathing') ? stopBreathing() : startBreathing();
+$('avatar').onclick = $('miniAvatar').onclick = () => app.classList.contains('breathing') ? stopBreathing() : startBreathing();
 function startBreathing(){
   stopSpeaking();
   app.classList.add('breathing');
@@ -412,9 +503,9 @@ function startBreathing(){
   let i = 0, cycles = 0;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const step = () => {
-    if (cycles >= 4) { statusEl.textContent = 'Well done. I\'m proud of you.'; return stopBreathing(true); }
+    if (cycles >= 4) { say('Well done. I\'m proud of you.'); return stopBreathing(true); }
     const [label, ms, scale] = steps[i];
-    statusEl.textContent = label;
+    say(label);
     ring.style.transition = reduce ? 'none' : `transform ${i === 1 ? 0 : ms}ms ease-in-out`;
     ring.style.transform = `scale(${scale})`;
     if (navigator.vibrate) navigator.vibrate(20);
@@ -447,7 +538,8 @@ function msgNode(m){
   wrap.className = 'msg ' + (m.role === 'user' ? 'me' : 'rob');
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = m.content;
   wrap.appendChild(b);
-  if (m.role === 'assistant'){
+  if (m.hold) wrap.classList.add('hold');
+  if (m.role === 'assistant' && !m.hold){
     const acts = document.createElement('div'); acts.className = 'acts';
     const play = document.createElement('button'); play.className = 'act'; play.innerHTML = ICON.play; play.setAttribute('aria-label', 'Read aloud');
     play.onclick = () => speak(m.content.replace(/Here's a little piece of Croatia.*$/, ''));
@@ -455,7 +547,7 @@ function msgNode(m){
     const sync = () => { const on = pocket.some(p => p.src === m.id); star.classList.toggle('on', on); star.setAttribute('aria-label', on ? 'Remove from Pocket' : 'Save to Pocket'); star.setAttribute('aria-pressed', on); };
     star.onclick = () => { togglePocket(m); sync(); };
     sync(); acts.append(play, star);
-    if (m.memory) wrap.appendChild(memoryCard(m.memory));
+    if (m.memory) wrap.appendChild(memoryCard(m.memory, () => { delete m.memory; save(K.chat, chat); }));
     wrap.appendChild(acts);
   }
   return wrap;
@@ -464,7 +556,9 @@ function scrollDown(smooth = true){ requestAnimationFrame(() => chatEl.scrollTo(
 function typingNode(){ const w = document.createElement('div'); w.className = 'msg rob'; w.id = 'typing'; w.innerHTML = '<div class="bubble typing" aria-label="Rob is typing"><i></i><i></i><i></i></div>'; return w; }
 
 /* ================= Starters ================= */
-STARTERS.forEach(s => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.textContent = s; c.onclick = () => send(s); $('chips').appendChild(c); });
+STARTERS.forEach(s => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.textContent = s; c.onclick = () => { setTray(false); send(s); }; $('chips').appendChild(c); });
+function setTray(on){ app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
+$('chipsBtn').onclick = () => setTray(!app.classList.contains('chips-open'));
 
 /* ================= Composer ================= */
 const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 130) + 'px'; sendBtn.disabled = !input.value.trim() || busy; };
@@ -485,20 +579,27 @@ async function send(text){
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
   setState('thinking');
   const started = Date.now();
-  const slow = setTimeout(() => { if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) statusEl.textContent = 'Still here — finding the right words…'; }, 12000);
+  const slow = setTimeout(waitMsg, 12000);
+  // "Double text": if the real reply is slow, Rob sends a quick holding line first, like real texting.
+  const holdT = setTimeout(() => {
+    if (!busy) return;
+    const hold = {role:'assistant', content:pick(HOLDS, 'hold'), t:Date.now(), id:uid(), hold:true};
+    chat.push(hold); save(K.chat, chat);
+    chatEl.insertBefore(msgNode(hold), tn); scrollDown();
+  }, 1500);
   let reply = await askAI(chat);
-  clearTimeout(slow);
+  clearTimeout(slow); clearTimeout(holdT);
   let wantMemory = false;
   if (reply){
     if (/\[\[?\s*croatia\s*\]?\]/i.test(reply)){ wantMemory = true; reply = reply.replace(/\s*\[\[?\s*croatia\s*\]?\]\s*/ig, ' ').trim(); }
-  } else {
-    reply = localReply(text);
+    reply = scrubInvented(reply);
   }
+  if (!reply) reply = localReply(text);
   // The app decides too (the free model rarely uses the tag): always when she asks to smile, sometimes when she's low.
   if (/(smile|something good|cheer me|happy memory)/i.test(text)) wantMemory = true;
   else if (/(sad|cry|lonely|alone|down|blue|heavy|tired|rough|hard day|miss|stress|anxious|worried)/i.test(text) && Math.random() < 0.4) wantMemory = true;
   // keep it special: at most one memory every 4 replies (unless she asked to smile)
-  const sinceLast = [...chat].reverse().filter(m => m.role === 'assistant').findIndex(m => m.memory);
+  const sinceLast = [...chat].reverse().filter(m => m.role === 'assistant' && !m.hold).findIndex(m => m.memory);
   if (wantMemory && sinceLast !== -1 && sinceLast < 3 && !/(smile|cheer|something good)/i.test(text)) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
@@ -510,7 +611,13 @@ async function send(text){
   chat.push(am); if (chat.length > 300) chat = chat.slice(-300); save(K.chat, chat);
   chatEl.appendChild(msgNode(am)); scrollDown();
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
-  if (autoSpeak) speak(reply);
+}
+// Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
+function scrubInvented(text){
+  if (!INVENTED.test(text)) return text;
+  const parts = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
+  const kept = parts.filter(p => !INVENTED.test(p) && !/\bthat (memory|moment)\b/i.test(p)).join('').trim();
+  return (kept.match(/[.!?]/g) || []).length >= 2 && kept.length >= 60 ? kept : null;
 }
 
 /* ================= AI (Pollinations, free) ================= */
@@ -518,7 +625,7 @@ async function send(text){
 const FREE_GAP = 46000;
 let lastAICall = 0;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-function waitMsg(){ if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) statusEl.textContent = 'Still here — finding the right words…'; }
+function waitMsg(){ if (app.dataset.state === 'thinking' && !app.classList.contains('breathing')) say('Still here — finding the right words…'); }
 async function callAI(messages, timeout){
   const gap = FREE_GAP - (Date.now() - lastAICall);
   if (gap > 0){ waitMsg(); await sleep(gap); }
@@ -546,7 +653,7 @@ async function callAI(messages, timeout){
 async function askAI(history){
   askAI.lastWasAI = false;
   if (navigator.onLine === false){ setOnline(false); return null; }
-  const messages = [{role:'system', content:PERSONA}, ...history.slice(-HISTORY_TURNS).map(m => ({role:m.role, content:m.content}))];
+  const messages = [{role:'system', content:PERSONA}, ...history.filter(m => !m.hold).slice(-HISTORY_TURNS).map(m => ({role:m.role, content:m.content}))];
   const res = await callAI(messages, AI_TIMEOUT);
   setOnline(!res.fail);
   askAI.lastWasAI = !!res.text;
@@ -554,7 +661,7 @@ async function askAI(history){
 }
 function clean(t){
   if (typeof t !== 'string') return '';
-  return t.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/\n{3,}/g, '\n\n')
+  return t.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/[ \t]*\n(?!\n)[ \t]*/g, (m, i, str) => str[i - 1] === '\n' ? '\n' : ' ').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/\n{3,}/g, '\n\n')
     .replace(/(^|\n)\s*(---|\*\*\*)[\s\S]*$/, '').trim().slice(0, 1200);
 }
 
@@ -623,9 +730,10 @@ function loadTrip(){
       if (!(day.index >= 3 && day.index <= 17)) return;
       (day.places || []).forEach(pl => (pl.items || []).forEach(it => {
         if (/^in-flight/i.test(it.city || '')) return;
-        const place = it.city || pl.name || day.area || 'Croatia';
-        if (it.kind === 'photo' && it.full && it.src) pool.push({k:'p', id:it.full, full:TRIP + it.full, thumb:TRIP + it.src, place, date:day.date, time:it.time || ''});
-        else if (it.kind === 'video' && it.type === 'self_hosted' && it.url && it.poster) pool.push({k:'v', id:it.url, url:TRIP + it.url, thumb:TRIP + it.poster, place, date:day.date, time:it.time || ''});
+        const place = (it.city || pl.name || day.area || 'Croatia').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+        const geo = (typeof it.lat === 'number' && typeof it.lng === 'number') ? {lat:it.lat, lng:it.lng} : {};
+        if (it.kind === 'photo' && it.full && it.src) pool.push({k:'p', id:it.full, full:TRIP + it.full, thumb:TRIP + it.src, place, date:day.date, time:it.time || '', ...geo});
+        else if (it.kind === 'video' && it.type === 'self_hosted' && it.url && it.poster && (it.dur || 0) <= 60) pool.push({k:'v', id:it.url, url:TRIP + it.url, thumb:TRIP + it.poster, place, date:day.date, time:it.time || '', ...geo});
       }));
     });
     if (!pool.length) throw 0;
@@ -642,11 +750,11 @@ async function randomMemory(){
   return it;
 }
 function memDate(m){ const [y, mo, d] = m.date.split('-').map(Number); return new Date(y, mo - 1, d).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'}); }
-function memoryCard(m){
+function memoryCard(m, onFail){
   const b = document.createElement('button'); b.className = 'memory'; b.type = 'button';
   b.setAttribute('aria-label', (m.k === 'v' ? 'Play video from ' : 'Open photo from ') + m.place);
   const img = document.createElement('img'); img.loading = 'lazy'; img.alt = ''; img.src = m.thumb;
-  img.onerror = () => { b.remove(); };
+  img.onerror = () => { b.remove(); if (onFail) onFail(); };
   const cap = document.createElement('span'); cap.className = 'cap';
   const t = document.createElement('b'); t.textContent = m.place; cap.append(t, document.createTextNode(memDate(m)));
   b.append(img, cap);
@@ -654,14 +762,21 @@ function memoryCard(m){
   b.onclick = () => openViewer(m);
   return b;
 }
+let curMem = null;
 function openViewer(m){
-  stopSpeaking(); close();
+  stopSpeaking(); close(true); $('scrim').classList.remove('show');
   const v = $('viewer'), st = $('vStage');
-  st.innerHTML = '';
-  if (!m){ const p = document.createElement('p'); p.className = 'vmsg'; p.textContent = 'I couldn\'t reach the Croatia photos just now. Try again in a moment.'; st.appendChild(p); }
-  else {
+  st.innerHTML = ''; curMem = m;
+  if (!v.classList.contains('show')) lastFocus = document.activeElement;
+  if (!m){
+    $('vTitle').firstChild.textContent = 'Croatia'; $('vSub').textContent = '';
+    $('vMap').hidden = $('vAttr').hidden = $('vHeart').hidden = true;
+    const p = document.createElement('p'); p.className = 'vmsg'; p.textContent = 'I couldn\'t reach the Croatia photos just now. Try again in a moment.'; st.appendChild(p);
+  } else {
     $('vTitle').firstChild.textContent = m.place;
     $('vSub').textContent = memDate(m) + (m.time ? ' · ' + m.time : '');
+    $('vHeart').hidden = false; syncHeart();
+    showMap(m);
     let el;
     if (m.k === 'v'){ el = document.createElement('video'); el.src = m.url; el.poster = m.thumb; el.controls = true; el.playsInline = true; el.setAttribute('playsinline', ''); el.preload = 'metadata'; }
     else { el = document.createElement('img'); el.src = m.full; el.alt = 'Photo from ' + m.place; }
@@ -669,12 +784,94 @@ function openViewer(m){
     st.appendChild(el);
     if (m.k === 'v') el.play().catch(() => {});
   }
-  v.classList.add('show');
+  v.classList.add('show'); setInert(true);
+  setTimeout(() => $('vClose').focus({preventScroll:true}), 30);
 }
-function closeViewer(){ const v = $('viewer'); if (!v.classList.contains('show')) return; v.querySelectorAll('video').forEach(x => x.pause()); v.classList.remove('show'); $('vStage').innerHTML = ''; }
+function closeViewer(){
+  const v = $('viewer'); if (!v.classList.contains('show')) return;
+  v.querySelectorAll('video').forEach(x => x.pause()); v.classList.remove('show'); $('vStage').innerHTML = ''; curMem = null;
+  if (!$('slides').classList.contains('show')) setInert(false);
+  restoreFocus();
+}
+// Small map of where the photo was taken (OpenStreetMap tiles); tap opens Apple Maps.
+function showMap(m){
+  const a = $('vMap'), tiles = $('vTiles');
+  if (typeof m.lat !== 'number'){ a.hidden = $('vAttr').hidden = true; return; }
+  const z = 13, n = 2 ** z, W = 52, r = m.lat * Math.PI / 180;
+  const px = (m.lng + 180) / 360 * n * 256, py = (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n * 256;
+  const left = px - W / 2, top = py - W / 2;
+  tiles.innerHTML = '';
+  for (let tx = Math.floor(left / 256); tx <= Math.floor((left + W - 1) / 256); tx++)
+    for (let ty = Math.floor(top / 256); ty <= Math.floor((top + W - 1) / 256); ty++){
+      const i = document.createElement('img'); i.alt = ''; i.src = `https://tile.openstreetmap.org/${z}/${tx}/${ty}.png`;
+      i.style.left = (tx * 256 - left) + 'px'; i.style.top = (ty * 256 - top) + 'px'; tiles.appendChild(i);
+    }
+  a.href = `https://maps.apple.com/?ll=${m.lat},${m.lng}&q=${encodeURIComponent(m.place)}&z=15`;
+  a.hidden = $('vAttr').hidden = false;
+}
+function memSaved(m){ return pocket.some(p => p.kind === 'memory' && p.memory && p.memory.id === m.id); }
+function syncHeart(){ const on = !!curMem && memSaved(curMem); $('vHeart').setAttribute('aria-pressed', on); $('vHeart').setAttribute('aria-label', on ? 'Remove this memory from your Pocket' : 'Save this memory to your Pocket'); }
+$('vHeart').onclick = () => {
+  if (!curMem) return;
+  if (memSaved(curMem)){ pocket = pocket.filter(p => !(p.kind === 'memory' && p.memory.id === curMem.id)); toast('Removed from your Pocket'); }
+  else { pocket.unshift({id:uid(), kind:'memory', memory:curMem, text:curMem.place, t:Date.now(), tags:[]}); toast('Saved to your Pocket'); }
+  save(K.pocket, pocket); syncHeart();
+};
 $('vClose').onclick = closeViewer;
 $('vAnother').onclick = async () => { $('vStage').innerHTML = '<p class="vmsg">Finding another…</p>'; openViewer(await randomMemory()); };
 $('memoryBtn').onclick = async () => { close(); toast('Finding a memory…'); const m = await randomMemory(); clearTimeout(toastT); $('toast').classList.remove('show'); openViewer(m); };
+
+/* ================= "Take me back": one-minute breathing slideshow ================= */
+let slToken = null;
+async function startSlides(){
+  close(); closeViewer(); stopSpeaking(); stopBreathing();
+  const pool = await loadTrip();
+  const photos = pool ? pool.filter(m => m.k === 'p') : [];
+  if (!photos.length){ toast('I couldn\'t reach the Croatia photos just now'); return; }
+  const list = []; while (list.length < 6){ const m = photos[Math.floor(Math.random() * photos.length)]; if (!list.includes(m)) list.push(m); }
+  const token = {}; slToken = token;
+  const box = $('slides'), A = $('slA'), B = $('slB'), dots = $('slDots');
+  if (!box.classList.contains('show')) lastFocus = document.activeElement;
+  [A, B].forEach(x => { x.classList.remove('on', 'zoom'); x.removeAttribute('src'); });
+  $('slEnd').hidden = true; dots.innerHTML = list.map(() => '<i></i>').join('');
+  box.classList.add('show'); setInert(true); setTimeout(() => $('slClose').focus({preventScroll:true}), 30);
+  const preload = m => new Promise(res => { const i = new Image(); const t = setTimeout(() => res(false), 9000); i.onload = () => { clearTimeout(t); res(true); }; i.onerror = () => { clearTimeout(t); res(false); }; i.src = m.full; });
+  let next = preload(list[0]);
+  for (let i = 0; i < list.length; i++){
+    await next; if (slToken !== token) return;
+    if (i + 1 < list.length) next = preload(list[i + 1]);
+    const layer = i % 2 ? B : A, other = i % 2 ? A : B;
+    layer.classList.remove('zoom'); layer.src = list[i].full; void layer.offsetWidth;
+    layer.classList.add('on'); other.classList.remove('on');
+    $('slPlace').textContent = list[i].place + ' · ' + memDate(list[i]);
+    [...dots.children].forEach((d, j) => d.classList.toggle('on', j === i));
+    $('slBreath').textContent = 'Breathe in…'; requestAnimationFrame(() => layer.classList.add('zoom'));
+    await sleep(5000); if (slToken !== token) return;
+    $('slBreath').textContent = 'Breathe out…'; layer.classList.remove('zoom');
+    await sleep(5000); if (slToken !== token) return;
+  }
+  $('slBreath').textContent = ''; $('slEnd').hidden = false; $('slDone').focus({preventScroll:true});
+}
+function endSlides(){ slToken = null; const box = $('slides'); if (!box.classList.contains('show')) return; box.classList.remove('show'); if (!$('viewer').classList.contains('show')) setInert(false); restoreFocus(); }
+$('slidesBtn').onclick = startSlides; $('slAgain').onclick = startSlides;
+$('slClose').onclick = $('slDone').onclick = endSlides;
+
+/* ================= "On this day" (Sep 12–26 each year) ================= */
+async function onThisDay(){
+  const now = TODAY_OVERRIDE ? new Date(TODAY_OVERRIDE + 'T12:00:00') : new Date();
+  const y = now.getFullYear(), mo = now.getMonth() + 1, d = now.getDate();
+  if (mo !== 9 || d < 12 || d > 26 || y <= 2025 || busy) return;
+  const dd = String(d).padStart(2, '0'), key = `${y}-09-${dd}`;
+  if (load(K.otd, '') === key) return;
+  const pool = await loadTrip(); if (!pool) return;
+  const day = pool.filter(m => m.date === `2025-09-${dd}`); if (!day.length) return;
+  const photos = day.filter(m => m.k === 'p'), src = photos.length ? photos : day;
+  const m = src[Math.floor(Math.random() * src.length)];
+  const n = y - 2025, words = ['', 'One year', 'Two years', 'Three years', 'Four years', 'Five years'];
+  const msg = {role:'assistant', content:`${words[n] || n + ' years'} ago today, we were ${/lokrum/i.test(m.place) ? 'on ' : /islands?$/i.test(m.place) ? 'in the ' : 'in '}${m.place}. Here's a moment from that day.`, t:Date.now(), id:uid(), memory:m, otd:true};
+  if (busy || load(K.otd, '') === key) return;
+  save(K.otd, key); chat.push(msg); save(K.chat, chat); renderChat();
+}
 
 /* ================= Voice (iPhone built-in) ================= */
 const synth = window.speechSynthesis;
@@ -712,25 +909,45 @@ function speak(text){
 }
 function stopSpeaking(){ if (synth && (synth.speaking || synth.pending)) synth.cancel(); if (app.dataset.state === 'speaking') setState('idle'); }
 $('voiceTest').onclick = () => speak(`Hi ${HER}. I'm right here whenever you need me.`);
-function setAuto(on){ autoSpeak = on; save(K.auto, on); $('autoSpeak').setAttribute('aria-pressed', on); $('autoSwitch').setAttribute('aria-checked', on); }
-$('autoSpeak').onclick = () => { setAuto(!autoSpeak); toast(autoSpeak ? 'I\'ll read my replies aloud' : 'Reading aloud is off'); if (!autoSpeak) stopSpeaking(); };
-$('autoSwitch').onclick = () => setAuto(!autoSpeak);
-setAuto(autoSpeak);
 
 /* ================= Sheets ================= */
-let openSheet = null;
+let openSheet = null, lastFocus = null, pendingConfirm = null;
+const MAIN = ['.top', '.hero', '.chat', '.chips', '.composer', '.foot'];
+function setInert(on){ MAIN.forEach(sel => document.querySelectorAll(sel).forEach(el => { el.inert = on; })); }
+function restoreFocus(){ const f = lastFocus; lastFocus = null; if (f && f !== input && document.contains(f) && f.focus) f.focus({preventScroll:true}); }
 function open(id){
+  if (!openSheet) lastFocus = document.activeElement;
   close(true); openSheet = $(id);
   if (id === 'sheetPocket') renderPocket();
   if (id === 'sheetLedger') renderLedger();
-  $('scrim').classList.add('show'); openSheet.classList.add('show');
+  $('scrim').classList.add('show'); openSheet.classList.add('show'); setInert(true);
+  const sheet = openSheet;
+  setTimeout(() => { const f = sheet.querySelector('#confirmNo, [data-close], button, input, select'); if (f && sheet.classList.contains('show')) f.focus({preventScroll:true}); }, 60);
 }
-function close(quick){ if (openSheet){ openSheet.classList.remove('show'); openSheet = null; } if (!quick) $('scrim').classList.remove('show'); }
+function close(quick){
+  const wasConfirm = openSheet && openSheet.id === 'sheetConfirm';
+  if (openSheet){ openSheet.classList.remove('show'); openSheet = null; }
+  if (!quick){
+    $('scrim').classList.remove('show');
+    if (!$('viewer').classList.contains('show') && !$('slides').classList.contains('show')){ setInert(false); restoreFocus(); }
+  }
+  if (wasConfirm && pendingConfirm){ const r = pendingConfirm; pendingConfirm = null; r(false); }
+}
+// In-app "are you sure?" sheet instead of the browser's plain dialog.
+function askConfirm(msg, okLabel = 'OK', danger = false){
+  return new Promise(res => {
+    $('confirmMsg').textContent = msg;
+    const y = $('confirmYes'); y.textContent = okLabel; y.className = 'btn' + (danger ? ' warn' : '');
+    open('sheetConfirm'); pendingConfirm = res;
+  });
+}
+$('confirmYes').onclick = () => { const r = pendingConfirm; pendingConfirm = null; close(); if (r) r(true); };
+$('confirmNo').onclick = () => close();
 $('menuBtn').onclick = () => open('sheetMenu');
 $('scrim').onclick = () => close();
 document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => open(b.dataset.open));
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => close());
-addEventListener('keydown', e => { if (e.key === 'Escape'){ closeViewer(); close(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape'){ if ($('slides').classList.contains('show')) endSlides(); else if ($('viewer').classList.contains('show')) closeViewer(); else close(); } });
 // swipe down to close
 document.querySelectorAll('.sheet').forEach(s => {
   let y0 = null;
@@ -740,7 +957,8 @@ document.querySelectorAll('.sheet').forEach(s => {
 
 /* ================= Pocket ================= */
 const TAGS = [['work',/(work|job|boss|office|meeting|career)/i],['family',/(family|kids?|mom|dad|son|daughter|parent|sister|brother)/i],['sleep',/(sleep|tired|rest|night|bed)/i],['worry',/(worr|anxi|scared|afraid|what if|fear)/i],['health',/(health|sick|doctor|pain|body)/i],['love',/(love|relationship|the one|partner|someone)/i],['hope',/(future|ahead|tomorrow|better days|work out|hope)/i]];
-let pocketTag = null;
+let pocketTag = null, pocketView = 'words';
+document.querySelectorAll('#pocketSeg .chip').forEach(c => c.onclick = () => { pocketView = c.dataset.view; renderPocket(); });
 function tagsFor(text){ return TAGS.filter(([, re]) => re.test(text)).map(([t]) => t).slice(0, 2); }
 function togglePocket(m){
   const i = pocket.findIndex(p => p.src === m.id);
@@ -754,8 +972,25 @@ function togglePocket(m){
 }
 function renderPocket(){
   const q = $('pocketSearch').value.trim().toLowerCase();
+  document.querySelectorAll('#pocketSeg .chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.view === pocketView));
+  $('pocketSearch').placeholder = pocketView === 'memories' ? 'Search by place' : 'Search your saved thoughts';
   const f = $('pocketFilter'); f.innerHTML = '';
-  const used = [...new Set(pocket.flatMap(p => p.tags || []))];
+  const list0 = $('pocketList');
+  if (pocketView === 'memories'){
+    f.hidden = true; list0.innerHTML = '';
+    const mems = pocket.filter(p => p.kind === 'memory' && p.memory && (!q || p.memory.place.toLowerCase().includes(q)));
+    if (!mems.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = pocket.some(p => p.kind === 'memory') ? 'Nothing matches that.' : 'Tap the heart on any Croatia photo to keep it here.'; list0.appendChild(n); return; }
+    const g = document.createElement('div'); g.className = 'mgrid';
+    mems.forEach(p => {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Open memory from ' + p.memory.place);
+      const i = document.createElement('img'); i.loading = 'lazy'; i.alt = ''; i.src = p.memory.thumb; i.onerror = () => { i.remove(); };
+      const c = document.createElement('span'); c.textContent = p.memory.place;
+      b.append(i, c); b.onclick = () => openViewer(p.memory); g.appendChild(b);
+    });
+    list0.appendChild(g); return;
+  }
+  const words = pocket.filter(p => p.kind !== 'memory');
+  const used = [...new Set(words.flatMap(p => p.tags || []))];
   if (pocketTag && !used.includes(pocketTag)) pocketTag = null;
   ['all', ...used].forEach(t => {
     const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.textContent = t === 'all' ? 'All' : t;
@@ -765,8 +1000,8 @@ function renderPocket(){
   });
   f.hidden = used.length === 0;
   const list = $('pocketList'); list.innerHTML = '';
-  const items = pocket.filter(p => (!pocketTag || (p.tags || []).includes(pocketTag)) && (!q || p.text.toLowerCase().includes(q)));
-  if (!items.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = pocket.length ? 'Nothing matches that.' : 'Tap the star under any reply to keep it here.'; list.appendChild(n); return; }
+  const items = words.filter(p => (!pocketTag || (p.tags || []).includes(pocketTag)) && (!q || p.text.toLowerCase().includes(q)));
+  if (!items.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = words.length ? 'Nothing matches that.' : 'Tap the star under any reply to keep it here.'; list.appendChild(n); return; }
   items.forEach(p => {
     const d = document.createElement('div'); d.className = 'thought';
     const t = document.createElement('p'); t.textContent = p.text;
@@ -807,12 +1042,12 @@ $('ledgerForm').onsubmit = e => {
 /* ================= Closing card ================= */
 let cardText = '', cardBlob = null;
 $('endChatBtn').onclick = async () => {
-  const last = [...chat].reverse().find(m => m.role === 'assistant');
+  const last = [...chat].reverse().find(m => m.role === 'assistant' && !m.hold);
   if (!last){ close(); toast('Talk with me first, then I\'ll make you a card'); return; }
   close(); toast('Making your card…');
   let line = null;
   if (navigator.onLine !== false && Date.now() - lastAICall > FREE_GAP){
-    const convo = chat.slice(-10).map(m => (m.role === 'user' ? HER : 'Rob') + ': ' + m.content).join('\n');
+    const convo = chat.filter(m => !m.hold).slice(-10).map(m => (m.role === 'user' ? HER : 'Rob') + ': ' + m.content).join('\n');
     const res = await callAI([
       {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for your wife ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts. If it fits, let it carry your hope that she will find someone she truly loves.`},
       {role:'user', content:convo}], 30000);
@@ -862,15 +1097,36 @@ $('cardPocket').onclick = () => {
 };
 
 /* ================= New chat / wipe ================= */
-$('newChat').onclick = () => {
+$('newChat').onclick = async () => {
   if (!chat.length) return;
-  if (!confirm('Start a fresh conversation? Your Pocket and Ledger stay.')) return;
+  if (!await askConfirm('Start a fresh conversation? Your Pocket and Ledger stay.', 'Start fresh')) return;
   stopSpeaking(); chat = []; save(K.chat, chat); renderChat(); setState('idle');
 };
-$('wipe').onclick = () => {
-  if (!confirm('Erase everything on this phone — chat, Pocket, Ledger and photo? This can\'t be undone.')) return;
+$('wipe').onclick = async () => {
+  if (!await askConfirm('Erase everything on this phone — chat, Pocket, Ledger and photo? This can\'t be undone.', 'Erase everything', true)) return;
   stopSpeaking(); Object.values(K).forEach(k => { try { localStorage.removeItem(k); } catch {} });
-  chat = []; pocket = []; ledger = []; setAuto(false); showPhoto(); renderChat(); close(); toast('Everything has been cleared');
+  chat = []; pocket = []; ledger = []; showPhoto(); renderChat(); close(); toast('Everything has been cleared');
+};
+const pad2 = n => String(n).padStart(2, '0');
+$('backupBtn').onclick = async () => {
+  const data = {}; Object.values(K).forEach(k => { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch {} });
+  const d = new Date(), name = `rob-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
+  const blob = new Blob([JSON.stringify({app:'the-rob-you-want', v:1, saved:d.toISOString(), data})], {type:'application/json'});
+  const file = new File([blob], name, {type:'application/json'});
+  try { if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); toast('Backup ready — keep it in Files'); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); toast('Backup saved');
+};
+$('restoreBtn').onclick = () => $('restoreIn').click();
+$('restoreIn').onchange = async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  let j = null; try { j = JSON.parse(await f.text()); } catch {}
+  const keys = Object.values(K);
+  if (!j || j.app !== 'the-rob-you-want' || !j.data || typeof j.data !== 'object' || !Object.keys(j.data).every(k => keys.includes(k) && typeof j.data[k] === 'string')){ toast('That file isn\'t a backup from this app'); return; }
+  if (!await askConfirm(`Replace everything on this phone with the backup from ${fmtDate(j.saved)}?`, 'Restore', true)) return;
+  keys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  try { Object.entries(j.data).forEach(([k, v]) => localStorage.setItem(k, v)); } catch { toast('Not enough space on this phone to restore'); return; }
+  location.reload();
 };
 
 /* ================= Helpers ================= */
@@ -878,7 +1134,9 @@ function fmtDate(t){ return new Date(t).toLocaleDateString(undefined, {month:'sh
 function fmtDay(t){ const d = new Date(t), now = new Date(); const diff = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'}); }
 let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
 
-renderChat();
+renderChat(); say('');
+onThisDay();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onThisDay(); });
 })();
 </script>
 </body>

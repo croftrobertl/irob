@@ -1,0 +1,46 @@
+# Weekly check that Erica's app still has everything it relies on.
+# If a step fails, GitHub emails the repo owner (Settings → Notifications → Actions).
+name: Weekly health check
+
+on:
+  schedule:
+    - cron: '23 14 * * 1'   # Mondays 14:23 UTC (9:23 or 10:23 am Eastern)
+  workflow_dispatch:         # "Run workflow" button for a manual check
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Free AI (Pollinations) answers
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            code=$(curl -sS -m 60 -o reply.json -w '%{http_code}' -X POST https://text.pollinations.ai/openai \
+              -H 'Content-Type: application/json' \
+              -d '{"model":"openai","messages":[{"role":"user","content":"Reply with one short friendly sentence."}]}') || code=000
+            if [ "$code" = 200 ] && jq -e '.choices[0].message.content | length > 0' reply.json >/dev/null 2>&1; then
+              echo "OK: $(jq -r '.choices[0].message.content' reply.json)"; ok=1; break
+            fi
+            echo "Attempt $i: HTTP $code"; head -c 300 reply.json 2>/dev/null; echo
+            sleep 50
+          done
+          if [ "$ok" != 1 ]; then
+            echo "::error::The free AI isn't answering. Erica's app is falling back to built-in replies."
+            exit 1
+          fi
+
+      - name: Croatia photo list loads
+        run: |
+          n=$(curl -sS -m 60 https://croftrobertl.github.io/croatia/trip.json | jq '[.days[].places[].items[]] | length')
+          echo "Croatia items: ${n:-0}"
+          if [ "${n:-0}" -lt 100 ]; then
+            echo "::error::The Croatia trip list is missing or empty, so memories won't show."
+            exit 1
+          fi
+
+      - name: App page is online
+        run: curl -sSf -m 60 -o /dev/null https://croftrobertl.github.io/the-rob-you-want/ && echo "App page OK"
