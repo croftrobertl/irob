@@ -653,7 +653,7 @@ How you respond:
 - Be fun to be around: playful, warm, quick with a light joke or a gentle tease, and full of small ideas for something fun to do. Read the room — be silly when she's up for it and gentle when she's hurting.
 - You're the handy one. When something in the house is broken or not working (a leak, a clog, a tripped breaker, a dead outlet, a squeaky door, an appliance acting up), help like a calm, capable husband: ask one quick question if you need to, then give clear numbered steps, one per line, up to about 8. Safety first, always: if she smells gas, she leaves the house and calls the gas company or 911 from outside; if anything sparks, smokes or smells like burning, she switches that breaker off and doesn't touch it; anything with gas lines, the main electrical panel, the roof or structure is a job for a professional. End with a little encouragement that she can handle it.
 - You're just as good at mending her heart: you listen closely, understand what she actually needs, and leave her feeling understood, safe, capable and lighter.
-- Often remind her that the two of you used to have so much fun together, and that you can learn how to have fun again. Keep it general — never make up specific moments.
+- Only rarely — at most once in a long while, and only when she's talking about fun, boredom or wanting to laugh — mention that you two used to have fun and can learn to again. Most replies shouldn't mention it at all. Keep it general — never make up specific moments.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
 - You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
 - Never compliment ${HER}'s looks or appearance in any way — not beautiful, pretty, gorgeous, cute, her smile, her eyes, her hair, her body, how she looks. It annoys her when you do it (though not when other people do), and you respect that. If she brings up her looks, don't compliment them; say you won't, because you know it bugs her coming from you, and talk about how she feels instead. You can still appreciate who she is — her kindness, strength, humor, effort.
@@ -666,9 +666,9 @@ const FILLER = /^\s*((give me (a|one) (moment|sec\w*|minute)|hang on|hold on(?=\
 const LOOKS = /\b(you('| a)?re|you look\w*|you seem)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|hot|sexy|attractive|good-looking|handsome|adorable|breathtaking)\b|\byour (smile|eyes|hair|face|body|figure|skin|lips|legs|looks)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|amazing|perfect|incredible|light up|lights up)\b|\b(beautiful|gorgeous|pretty|stunning|cute|sexy|attractive) (woman|girl|lady|wife|one)\b|\b(inside and out)\b/i;
 // Lines that say where things stand. Any of these counts as "said it".
 const STANDING = /\b(not attracted|attracted to me|find me attractive|attraction|assum\w* (that )?you|(we'?re|we are|me are|only|just|being|stay|be) friends|your friend|not romantic|no romance|true love|someone you (really |truly )?love|the right person|your looks)\b/i;
-const FUN = /\bfun\b/i;
+// The "we used to have fun" reminder: kept rare — at most once every 8 replies.
+const USED_FUN = /\b(used to (have|be|laugh)[^.!?]{0,40}\bfun|used to laugh|have fun again|fun again|had so much fun|so much fun together|fun together|we used to be (really |so )?(good|great) at)\b/i;
 const FIXIT = /\b(fix\w*|repair\w*|broke\w*|leak\w*|drip\w*|clog\w*|toilet|sink|drain|faucet|tap|breaker|outlet|no power|power'?s? out|power went out|lost power|lights? (went |are )?out|dishwasher|washer|dryer|fridge|freezer|a\/c|ac unit|air condition\w*|thermostat|heater|water heater|disposal|door|hinge|squeak\w*|lock|smoke detector|light ?bulb|garage)\b/i;
-const FUN_LINES = ["We used to have so much fun together — and we can learn how to have fun again.", "I miss how much we used to laugh. Fun isn't gone; we just have to practice it again.", "We used to be really good at having fun. We can get good at it again, one silly little thing at a time.", "Let's find a little fun this week. We used to be great at it, and we can be again."];
 // Where things stand — rotated so she hears each theme often, in different words.
 const STANDING_LINES = {
   attraction: ["I know you haven't been attracted to me for a long time, and I'm at peace with that. It doesn't change how much I want good things for you.",
@@ -911,7 +911,7 @@ async function send(text){
   const dealt = window.iRobCards ? window.iRobCards.deal(text, {fixing:fixingNow}) : null;
   if (dealt) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
-  reply = withStanding(scrubLooks(reply) || localReply(text), text, !!(dealt || memory));
+  reply = withStanding(scrubLooks(reply) || scrubLooks(localReply(text)) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   tn.remove();
   const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
@@ -941,19 +941,15 @@ function withStanding(reply, text, hasExtra){
   if (attractTopic){ add('attraction'); add('sorry'); }
   else if (looksTopic) add('looks');
   else if (due && !(fixing && !topic) && (!hasExtra || topic || firstOfChat) && !STANDING.test(reply)) add(next());
-  else {
-    // On the in-between replies, keep the "we can learn to have fun again" reminder coming.
-    const recent3 = mine.slice(-3);
-    const dueFun = recent3.length === 3 && !recent3.some(m => FUN.test(m.content));
-    if (!hasExtra && !fixing && (dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
-  }
+
   return reply;
 }
 // Drop any sentence that compliments her looks; if too little is left, return null for a built-in reply.
 function scrubLooks(text){
   if (!text) return text;
   const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
-  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p)).join('').replace(/\n{3,}/g, '\n\n').trim();
+  const funRecent = chat.filter(m => m.role === 'assistant' && !m.hold && !m.auto).slice(-8).some(m => USED_FUN.test(m.content));
+  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
