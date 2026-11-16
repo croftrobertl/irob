@@ -15,7 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - name: Free AI (Pollinations) answers
+      - name: iRob relay (Groq → Cloudflare AI) answers
+        run: |
+          out=$(curl -sS -m 60 "https://irob-ai.croftrobertl.workers.dev/?deep=1") || out='{}'
+          echo "$out"
+          if ! echo "$out" | jq -e '.ok == true' >/dev/null 2>&1; then
+            echo "::error::The iRob relay isn't answering. Erica's app is using the slower backups."
+            exit 1
+          fi
+
+      - name: Backup AI (Pollinations) answers
         run: |
           ok=0
           for i in 1 2 3; do
@@ -29,7 +38,8 @@ jobs:
             sleep 50
           done
           if [ "$ok" != 1 ]; then
-            echo "::error::The free AI isn't answering. Erica's app is falling back to built-in replies."
+            echo "::warning::Pollinations (the backup AI) isn't answering."
+            exit 0
             exit 1
           fi
 
@@ -43,4 +53,4 @@ jobs:
           fi
 
       - name: App page is online
-        run: curl -sSf -m 60 -o /dev/null https://croftrobertl.github.io/the-rob-you-want/ && echo "App page OK"
+        run: curl -sSf -m 60 -o /dev/null https://croftrobertl.github.io/irob/ && echo "App page OK"
