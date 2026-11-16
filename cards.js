@@ -54,6 +54,7 @@ const SVG_DOG = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://w
 const CAPTIONS = {
   dog:["This golden retriever would like you to know you're doing great.","Official golden retriever opinion: you're the best person in the room.","Emergency happiness delivery. Tail wags included.","He heard you needed a friend. He brought his whole face.","Golden retriever energy, transferred directly to you."],
   cat:["This cat has reviewed your situation and approves of a nap.","Purr-scription: one deep breath, then a snack.","A small, very serious cat has decided you deserve good things.","Cat says: knock the worry off the table. Gently.","This kitty is sending you a slow blink. That means love in cat."],
+  pup:["Official puppy opinion: you're the best person in the room.","Emergency happiness delivery. Tail wags included.","This good dog heard you needed a friend.","Puppy-certified: you deserve good things today."],
   any:["Emergency serotonin, delivered.","A tiny furry reminder that the world still has good things in it.","Paws for a second. This one's for you.","Cuteness has been dispatched to your location."]
 };
 const timeout = (ms) => AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined;
@@ -63,7 +64,7 @@ const SOURCES = {
   cat: async () => { const j = await getJSON(Math.random() < .3 ? 'https://cataas.com/cat/gif?json=true' : 'https://cataas.com/cat?json=true'); const gif = /gif/.test(j.mimetype || ''); return {type:gif ? 'gif' : 'image', kind:'cat', url:`https://cataas.com/cat/${j.id || j._id}${gif ? '' : '?width=600'}`}; },
   pup: async () => { const j = await getJSON('https://random.dog/woof.json'); const ext = (j.url.split('.').pop() || '').toLowerCase();
     if (!j.fileSizeBytes || j.fileSizeBytes > 3e6 || ext === 'webm') throw 0;
-    return {type:ext === 'mp4' ? 'video' : ext === 'gif' ? 'gif' : 'image', kind:'dog', url:j.url}; }
+    return {type:ext === 'mp4' ? 'video' : ext === 'gif' ? 'gif' : 'image', kind:'pup', url:j.url}; }
 };
 function preload(item){
   return new Promise((res, rej) => {
@@ -75,7 +76,7 @@ function preload(item){
 function poolItem(kind){
   if (kind === 'cat') return {type:'image', kind:'cat', url:rnd(POOL.cats)};
   if (kind === 'golden') return {type:'image', kind:'dog', url:rnd(POOL.dogs)};
-  const r = Math.random(); return r < .15 ? {type:'video', kind:'dog', url:rnd(POOL.vids)} : r < .55 ? {type:'image', kind:'cat', url:rnd(POOL.cats)} : {type:'image', kind:'dog', url:rnd(POOL.dogs)};
+  const r = Math.random(); return r < .15 ? {type:'video', kind:'pup', url:rnd(POOL.vids)} : r < .55 ? {type:'image', kind:'cat', url:rnd(POOL.cats)} : {type:'image', kind:'dog', url:rnd(POOL.dogs)};
 }
 async function freshCritter(kind){
   const names = kind === 'cat' ? ['cat'] : kind === 'golden' ? ['golden'] : ['golden', 'cat', 'pup'];
