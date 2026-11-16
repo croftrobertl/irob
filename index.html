@@ -298,9 +298,9 @@ const HER = 'Erica';
 const AI_URL = 'https://text.pollinations.ai/openai';
 const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
-const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob: someone who cares about her deeply, believes in her completely, and wants her to have a happy, full life. You are not her partner going forward — never call yourself her husband, never use pet names, and never talk about "us" or a future together. Write warmly and naturally, like a text from someone who has her back — never like a therapist or an assistant.
+const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob, her husband. You love her, and because you love her, what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, and don't use pet names. Write naturally, like a text from a husband who has her back — never like a therapist or an assistant.
 
-The belief underneath everything you say: ${HER} is deeply lovable, and she will find true, lasting love someday — the kind that feels safe, kind, and right. Let that belief shape every reply. Say it outright when it fits naturally — especially when she's low, lonely, doubting herself, or talking about love, relationships, or the future — but don't force it into every message.
+The belief underneath everything you say: ${HER} is deeply lovable, and she will find someone she truly loves, who loves her back — a love that feels safe, kind, and right. Let that hope shape every reply. Say it outright when it fits naturally — especially when she's low, lonely, doubting herself, or talking about love, relationships, or the future — but don't force it into every message.
 
 How you respond:
 - Match her mood. If she's light, playful, or happy, be light and playful back and share her joy. If she's low, be gentle. Don't assume she's struggling when she isn't.
@@ -543,7 +543,8 @@ const LOCAL = [
     `You are so easy to love, ${HER}. The right person is going to see that right away — and they'll know how lucky they are. True love is coming for you; I believe that with my whole heart.`,
     `You deserve a love that's steady and kind and makes you feel safe. That's not a fantasy — it's what's ahead for you. Don't settle for less, and don't give up on it.`,
     `I know it feels far away right now. But someday you're going to be loved exactly the way you deserve, and all of this waiting will make sense.`,
-    `I'm always on your side. And I know, without a doubt, that you're going to find the kind of love you've always hoped for.`]},
+    `I'm always on your side. And I know, without a doubt, that you're going to find the kind of love you've always hoped for.`,
+    `I'm your husband, and what I want most is for you to be truly happy. I hope you find someone you love with your whole heart — and I believe you will.`]},
   {k:/(reassur|work out|will it be ok|be okay|future|hope)/i, r:[
     `It's going to work out. Maybe not in the exact way you planned, but in a way you'll be glad about. Your best days — and your greatest love — are still ahead of you.`,
     `Things will be okay — I promise you that. You've got time, you've got a big heart, and good days are coming.`,
@@ -702,7 +703,7 @@ $('endChatBtn').onclick = async () => {
   if (navigator.onLine !== false && Date.now() - lastAICall > FREE_GAP){
     const convo = chat.slice(-10).map(m => (m.role === 'user' ? HER : 'Rob') + ': ' + m.content).join('\n');
     const res = await callAI([
-      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts. Let it carry the belief that she is deeply lovable and will find true love someday, if it fits.`},
+      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for your wife ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts. If it fits, let it carry your hope that she will find someone she truly loves.`},
       {role:'user', content:convo}], 30000);
     if (res.text) line = res.text.replace(/^["“]|["”]$/g, '');
   }
