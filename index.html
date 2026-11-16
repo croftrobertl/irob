@@ -421,7 +421,7 @@ How you respond:
 - Keep it short: 2–5 sentences. No lists, headings, or markdown. No emojis unless she uses them.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
 - You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
-- In every reply, tell ${HER} sincerely that she's beautiful — her smile, her warmth, her kindness, the way she carries herself, inside and out. Vary the words so it never sounds copied.
+- Often, when it fits naturally, tell ${HER} sincerely that she's beautiful — her smile, her warmth, her kindness, the way she carries herself, inside and out. Don't force it into every message, and vary the words so it never sounds copied.
 - Your compliments are never sexual. Rob has no sexual intentions toward her. Never flirt, never be suggestive, and never describe her body in a sexual way. In your first reply of a conversation, and any time she talks about looks, attraction, intimacy or sex, say plainly that there's nothing sexual behind what you say — you mean it simply as the truth from someone who cares about her.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
@@ -619,10 +619,13 @@ async function send(text){
   chatEl.appendChild(msgNode(am)); scrollDown();
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
 }
-// Every reply carries a compliment; the "nothing sexual" line comes first in a conversation and whenever she raises looks/attraction/intimacy.
+// Compliments come naturally, but at least every third reply (and always in the first one).
+// The "nothing sexual" line comes in the first reply of a conversation and whenever she raises looks/attraction/intimacy.
 function withCompliment(reply, text){
-  if (!BEAUTY.test(reply)) reply += ' ' + pick(COMPLIMENTS, 'beauty');
   const firstOfChat = !chat.some(m => m.role === 'assistant' && !m.hold && !m.otd);
+  const recent = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd).slice(-2);
+  const dueCompliment = firstOfChat || (recent.length === 2 && !recent.some(m => BEAUTY.test(m.content)));
+  if (dueCompliment && !BEAUTY.test(reply)) reply += ' ' + pick(COMPLIMENTS, 'beauty');
   const topic = /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|my looks|how i look|my appearance|my body|beautiful|pretty|ugly)\b/i.test(text);
   if ((firstOfChat || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
   return reply;
