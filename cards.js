@@ -132,24 +132,24 @@ const FLIPS = [
   {k:/(too much|overwhelm|can'?t handle|drowning)/i, f:"It's too much. I can't handle it.", b:"I see someone who's handled every hard day so far — every single one. You don't have to handle all of it today. Just the next small piece."},
   {k:/(stupid|dumb|idiot)/i, f:"I'm so stupid.", b:"I see someone smart enough to notice her mistakes — and kind enough to everyone but herself. Let's extend you some of that kindness."},
   {k:/(alone|lonely|nobody)/i, f:"Nobody really gets it.", b:"I see someone worth understanding, and people who'd want to if they knew how heavy today was. You're not alone in this."},
-  {k:/(ugly|look awful|hate how i look)/i, f:"I look awful today.", b:"I see someone beautiful — inside and out — on a day she's being hard on herself. Your worth was never about today's mirror."},
+  {k:/(ugly|look awful|hate how i look)/i, f:"I look awful today.", b:"I see someone being really hard on herself today. I'll leave the mirror talk alone — your worth was never about it anyway."},
   {k:/(anxious|worry|worried|what if)/i, f:"What if everything goes wrong?", b:"I see a big heart trying to protect everything it loves. Most what-ifs never happen — and the ones that do, you handle."},
   {k:/./, f:"I should be doing better than this.", b:"I see someone doing her honest best on a hard day. That's not 'should be better' — that's enough."}
 ];
 const FACTS = ["Survived 100% of your hardest days so far","Kept the people you love fed, safe and loved","Made someone smile this week, probably without noticing","Kept going on days you really didn't want to","Showed up for your kids, again and again","Asked for comfort instead of pretending — that takes guts"];
 const NOTES = ["You're my favorite notification.","Proof you're doing great: you're still trying. That counts double.","Somewhere a golden retriever is thinking about you. So am I.","You're allowed to rest before you're finished.","Your laugh is still one of the best sounds in the world.","Today's forecast: a little lighter than yesterday."];
 const TICKETS = [
-  {id:'date', title:'Date night', detail:'You pick the place — Rob plans the rest.', kind:'romantic'},
-  {id:'breakfast', title:'Breakfast in bed', detail:'Coffee exactly how you like it, no getting up.', kind:'romantic'},
-  {id:'dance', title:'Slow dance in the kitchen', detail:'One song, lights low, no phones.', kind:'romantic'},
-  {id:'movie', title:'Movie night, your pick', detail:'Your movie, extra snacks, zero complaints.', kind:'romantic'},
+  {id:'date', title:'Friend outing', detail:'You pick the place — Rob drives and pays.', kind:'fun'},
+  {id:'breakfast', title:'Breakfast is made', detail:'Coffee exactly how you like it, ready when you wake up.', kind:'fun'},
+  {id:'dance', title:'Kitchen dance party', detail:'One silly song, full volume, no judging.', kind:'fun'},
+  {id:'movie', title:'Movie night, your pick', detail:'Your movie, extra snacks, zero complaints.', kind:'fun'},
   {id:'bedtime', title:'Bedtime takeover', detail:'You\'re off duty tonight — Rob handles bedtime.', kind:'practical'},
   {id:'dinner', title:'Dinner\'s handled', detail:'Rob cooks, orders or figures it out. You rest.', kind:'practical'},
   {id:'nap', title:'Two-hour nap', detail:'Guaranteed quiet. Kids and chaos handled.', kind:'practical'},
   {id:'errand', title:'Errand rescue', detail:'One errand you\'re dreading — gone.', kind:'practical'}
 ];
 const VOUCHERS = TICKETS.filter(t => ['breakfast','nap','dinner','movie'].includes(t.id));
-const HYPE = ["You were made for this. Walk in like the golden retriever version of you: tail up, zero doubt.","Golden retriever energy only: you're amazing, everyone's lucky to have you, and today is going to be great.","Nervous just means it matters. You've got this — and a whole golden retriever believes in you.","Deep breath, shoulders back. You're smart, capable and ridiculously lovable. Go get it."];
+const HYPE = ["You were made for this. Walk in like the golden retriever version of you: tail up, zero doubt.","Golden retriever energy only: you're amazing, everyone's lucky to have you, and today is going to be great.","Nervous just means it matters. You've got this — and a whole golden retriever believes in you.","Deep breath, shoulders back. You're smart, capable and you've got this. Go get it."];
 const SANCTUARY_THOUGHTS = ["Nothing needs you for the next two minutes.","Let your shoulders drop. Unclench your jaw.","Breathe in slowly… and let it go even slower.","The water doesn't hurry. Neither do you.","You're safe right here.","Whatever's waiting can wait. You're allowed this."];
 const GROUND = [[5,'things you can see'],[4,'things you can feel'],[3,'things you can hear'],[2,'things you can smell'],[1,'thing you can taste']];
 

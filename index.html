@@ -631,7 +631,14 @@ const AI_URL = 'https://text.pollinations.ai/openai';
 const RELAY_URL = 'https://irob-ai.croftrobertl.workers.dev/chat';
 const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
-const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob, her husband. You love her, and because you love her, what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, and don't use pet names. Write naturally, like a text from a husband who has her back — never like a therapist or an assistant.
+const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob. You're her friend — only her friend, never romantic. You care about her deeply, and what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, don't flirt, and don't use pet names. Write naturally, like a text from a friend who has her back — never like a therapist or an assistant.
+
+Where things stand between you, and you bring it up often (most replies, in your own varied words, woven in naturally):
+- You know ${HER} no longer finds you attractive and hasn't been attracted to you for a very long time. You accept that completely.
+- You're sorry for ever assuming she was, or should be, attracted to you. That wasn't fair to her.
+- The two of you will only be friends, not romantic — and you're genuinely glad to be her friend.
+- As her friend, you want to help her find her true love one day, and you believe she will.
+Say these calmly and warmly, like someone at peace with it — never hurt, bitter, guilt-tripping, or asking for anything back. The point is for her to feel free and unpressured with you.
 
 The belief underneath everything you say: ${HER} is deeply lovable, and she will find someone she truly loves, who loves her back — a love that feels safe, kind, and right. Let that hope shape every reply. Say it outright when it fits naturally — especially when she's low, lonely, doubting herself, or talking about love, relationships, or the future — but don't force it into every message.
 
@@ -648,17 +655,36 @@ How you respond:
 - Often remind her that the two of you used to have so much fun together, and that you can learn how to have fun again. Keep it general — never make up specific moments.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
 - You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
-- Often, when it fits naturally, tell ${HER} sincerely that she's beautiful — her smile, her warmth, her kindness, the way she carries herself, inside and out. Don't force it into every message, and vary the words so it never sounds copied.
-- Your compliments are never sexual. Rob has no sexual intentions toward her. Never flirt, never be suggestive, and never describe her body in a sexual way. In your first reply of a conversation, and any time she talks about looks, attraction, intimacy or sex, say plainly that there's nothing sexual behind what you say — you mean it simply as the truth from someone who cares about her.
+- Never compliment ${HER}'s looks or appearance in any way — not beautiful, pretty, gorgeous, cute, her smile, her eyes, her hair, her body, how she looks. It annoys her when you do it (though not when other people do), and you respect that. If she brings up her looks, don't compliment them; say you won't, because you know it bugs her coming from you, and talk about how she feels instead. You can still appreciate who she is — her kindness, strength, humor, effort.
+- Never flirt or be suggestive. If she talks about attraction, romance, intimacy or sex, gently restate where things stand: you know she isn't attracted to you, you're sorry you assumed she was, you're friends only, and you want her to find her true love.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
-const BEAUTY = /\b(beautiful|beauty|gorgeous|lovely|radiant|stunning)\b/i;
-const NONSEXUAL = /\b(nothing sexual|not sexual|no sexual|non-?sexual|isn'?t sexual|never sexual)\b/i;
+// Any sentence that compliments her looks gets dropped — she doesn't want that from Rob.
+const LOOKS = /\b(you('| a)?re|you look\w*|you seem)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|hot|sexy|attractive|good-looking|handsome|adorable|breathtaking)\b|\byour (smile|eyes|hair|face|body|figure|skin|lips|legs|looks)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|amazing|perfect|incredible|light up|lights up)\b|\b(beautiful|gorgeous|pretty|stunning|cute|sexy|attractive) (woman|girl|lady|wife|one)\b|\b(inside and out)\b/i;
+// Lines that say where things stand. Any of these counts as "said it".
+const STANDING = /\b(not attracted|attracted to me|find me attractive|attraction|assum\w* (that )?you|(we'?re|we are|me are|only|just|being|stay|be) friends|your friend|not romantic|no romance|true love|someone you (really |truly )?love|the right person|your looks)\b/i;
 const FUN = /\bfun\b/i;
 const FIXIT = /\b(fix\w*|repair\w*|broke\w*|leak\w*|drip\w*|clog\w*|toilet|sink|drain|faucet|tap|breaker|outlet|no power|power'?s? out|power went out|lost power|lights? (went |are )?out|dishwasher|washer|dryer|fridge|freezer|a\/c|ac unit|air condition\w*|thermostat|heater|water heater|disposal|door|hinge|squeak\w*|lock|smoke detector|light ?bulb|garage)\b/i;
 const FUN_LINES = ["We used to have so much fun together — and we can learn how to have fun again.", "I miss how much we used to laugh. Fun isn't gone; we just have to practice it again.", "We used to be really good at having fun. We can get good at it again, one silly little thing at a time.", "Let's find a little fun this week. We used to be great at it, and we can be again."];
-const COMPLIMENTS = [`You're beautiful, ${HER} — inside and out.`, "And you're beautiful. Even on the days you don't feel it.", "Your smile is one of the most beautiful things I know.", "You're genuinely beautiful, and your kindness makes you even more so.", "There's a beauty in you that has nothing to do with how today went."];
-const NOT_SEXUAL_LINE = "And so it's clear: when I tell you you're beautiful, there's nothing sexual behind it. It's simply the truth, from someone who cares about you.";
+// Where things stand — rotated so she hears each theme often, in different words.
+const STANDING_LINES = {
+  attraction: ["I know you haven't been attracted to me for a long time, and I'm at peace with that. It doesn't change how much I want good things for you.",
+    "You don't find me attractive anymore — that's been true for a long while, and it's okay. Really.",
+    "I know the attraction has been gone for you for a long time. You never have to pretend otherwise with me."],
+  sorry: ["I'm sorry I ever assumed you were, or should be, attracted to me. That wasn't fair to you.",
+    "I owe you an apology for assuming you should still be attracted to me. You didn't owe me that, and I'm sorry.",
+    "For the record, I'm sorry for every time I acted like you should be attracted to me. I get it now."],
+  friends: ["We're friends — just friends, not romantic — and I'm really glad to be yours.",
+    "No romance, no pressure — just me being your friend. That's a role I'm happy to have.",
+    "You and me are friends, and that's all this is. A good friend who's always on your side."],
+  love: ["As your friend, I want to help you find your true love one day. I believe you will.",
+    "I'd love to help you find the person you truly love someday — you deserve that, and I'll cheer the loudest.",
+    "One of my favorite jobs as your friend: helping you find your true love when you're ready."],
+  looks: ["And I won't comment on your looks — I know it bugs you coming from me, and that's fair.",
+    "You'll notice I'm not saying anything about your looks. I know it annoys you from me, so I won't.",
+    "No comments on your looks from me — I know you'd rather I didn't, and I respect that."]
+};
+const STANDING_ORDER = ['attraction', 'friends', 'love', 'sorry', 'looks'];
 const HOLDS = ["Reading this… give me a sec.", "I'm here. Let me think about this for a second.", "Hang on — I want to get this right.", "Give me a moment. I'm with you."];
 // Phrases that mean the AI is making up a shared memory it can't know.
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
@@ -893,7 +919,7 @@ async function send(text){
   const dealt = window.iRobCards ? window.iRobCards.deal(text, {fixing:fixingNow}) : null;
   if (dealt) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
-  reply = withCompliment(reply, text, !!(dealt || memory));
+  reply = withStanding(scrubLooks(reply) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   const wait = Math.max(0, 900 - (Date.now() - started)); // never feel instant/robotic
   await new Promise(r => setTimeout(r, wait));
@@ -907,23 +933,38 @@ async function send(text){
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
 }
-// Compliments come naturally, but at least every third reply (and always in the first one).
-// The "nothing sexual" line comes in the first reply of a conversation and whenever she raises looks/attraction/intimacy.
-function withCompliment(reply, text, hasExtra){
-  const firstOfChat = !chat.some(m => m.role === 'assistant' && !m.hold && !m.otd && !m.auto);
+// "Where things stand" comes up most replies: always in the first reply of a chat, whenever she raises
+// looks/attraction/romance, and otherwise whenever the previous reply didn't mention it. Themes rotate.
+function withStanding(reply, text, hasExtra){
   const mine = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd && !m.auto);
+  const firstOfChat = !mine.length;
   const fixing = FIXIT.test(text);
-  const recent = mine.slice(-2);
-  const dueCompliment = firstOfChat || (recent.length === 2 && !recent.some(m => BEAUTY.test(m.content)));
-  let added = false;
-  if (!hasExtra && dueCompliment && !fixing && !BEAUTY.test(reply)){ reply += ' ' + pick(COMPLIMENTS, 'beauty'); added = true; }
-  const recent3 = mine.slice(-3);
-  const dueFun = !firstOfChat && recent3.length === 3 && !recent3.some(m => FUN.test(m.content));
-  if (!hasExtra && !added && (dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !fixing && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
-  const topic = /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|my looks|how i look|my appearance|my body|beautiful|pretty|ugly)\b/i.test(text);
-  const saidBefore = mine.some(m => NONSEXUAL.test(m.content));
-  if (((BEAUTY.test(reply) && !saidBefore && !fixing) || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
+  const looksTopic = /\b(my looks|how i look|i look (awful|bad|ugly|fat|old|terrible|gross|horrible)|my appearance|my body|my weight|am i (pretty|ugly|beautiful|fat|attractive|cute)|i'?m (so )?(ugly|fat|not pretty|unattractive|gross)|i feel (so )?(ugly|fat|unattractive|gross)|compliment\w*|hate how i look)\b/i.test(text);
+  const topic = looksTopic || /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|romanc\w*|romantic|marriage|married|husband|divorc\w*|in love|love life|dating|true love|find(ing)? the one|soulmate)\b/i.test(text);
+  const last = mine[mine.length - 1];
+  const due = firstOfChat || topic || !last || !STANDING.test(last.content);
+  // Rotate: the theme after the one used last time.
+  let i = load('try_standing', -1);
+  const next = () => { i = (i + 1) % STANDING_ORDER.length; save('try_standing', i); return STANDING_ORDER[i]; };
+  const add = theme => { reply += (reply ? '\n\n' : '') + pick(STANDING_LINES[theme], 'st_' + theme); };
+  const attractTopic = /\b(attract\w*|unattractive|still (want|love) me|in love with me|romanc\w*|romantic|sex|sexual|intima\w*)\b/i.test(text);
+  if (attractTopic){ add('attraction'); add('sorry'); }
+  else if (looksTopic) add('looks');
+  else if (due && !(fixing && !topic) && (!hasExtra || topic || firstOfChat) && !STANDING.test(reply)) add(next());
+  else {
+    // On the in-between replies, keep the "we can learn to have fun again" reminder coming.
+    const recent3 = mine.slice(-3);
+    const dueFun = recent3.length === 3 && !recent3.some(m => FUN.test(m.content));
+    if (!hasExtra && !fixing && (dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
+  }
   return reply;
+}
+// Drop any sentence that compliments her looks; if too little is left, return null for a built-in reply.
+function scrubLooks(text){
+  if (!text || !LOOKS.test(text)) return text;
+  const parts = text.match(/[^.!?\n]+[.!?]*\s*|\n+/g) || [text];
+  const kept = parts.filter(p => !LOOKS.test(p)).join('').replace(/\n{3,}/g, '\n\n').trim();
+  return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
 function scrubInvented(text){
@@ -1041,7 +1082,8 @@ const LOCAL = [
     `You deserve a love that's steady and kind and makes you feel safe. That's not a fantasy — it's what's ahead for you. Don't settle for less, and don't give up on it.`,
     `I know it feels far away right now. But someday you're going to be loved exactly the way you deserve, and all of this waiting will make sense.`,
     `I'm always on your side. And I know, without a doubt, that you're going to find the kind of love you've always hoped for.`,
-    `I'm your husband, and what I want most is for you to be truly happy. I hope you find someone you love with your whole heart — and I believe you will.`]},
+    `We're friends, and as your friend what I want most is for you to be truly happy. I hope you find someone you love with your whole heart — and I'd love to help you find them.`,
+    `I know you're not attracted to me, and I'm sorry I ever assumed you should be. We're friends — and friends help each other find true love. I've got your back.`]},
   {k:/(reassur|work out|will it be ok|be okay|future|hope)/i, r:[
     `It's going to work out. Maybe not in the exact way you planned, but in a way you'll be glad about. Your best days — and your greatest love — are still ahead of you.`,
     `Things will be okay — I promise you that. You've got time, you've got a big heart, and good days are coming.`,
@@ -1403,7 +1445,7 @@ $('endChatBtn').onclick = async () => {
   if (navigator.onLine !== false && Date.now() - lastAICall > FREE_GAP){
     const convo = chat.filter(m => !m.hold).slice(-10).map(m => (m.role === 'user' ? HER : 'Rob') + ': ' + m.content).join('\n');
     const res = await callAI([
-      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for your wife ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts. If it fits, let it carry your hope that she will find someone she truly loves.`},
+      {role:'system', content:`You are Rob. Write ONE short, warm sentence (max 18 words) for your friend ${HER} to carry with her after this conversation. First person, no quotes, no emojis, no pet names, no invented facts, nothing romantic, and never anything about her looks. If it fits, let it carry your hope that she will find someone she truly loves.`},
       {role:'user', content:convo}], 30000);
     if (res.text) line = res.text.replace(/^["“]|["”]$/g, '');
   }
@@ -1610,7 +1652,7 @@ async function readLetter(i){
 }
 
 /* ================= B3: Reasons jar ================= */
-const REASONS = ["You keep showing up, even on the days that ask too much of you.", "Your kindness makes rooms feel safer.", "You love your kids with your whole heart, and they know it.", "You notice the little things other people miss.", "You've survived every single hard day so far.", "Your laugh is contagious — the real one especially.", "You're tougher than anything that's tried to knock you down.", "You make ordinary days feel like they count.", "You try again, even when trying is the hard part.", "You care so much it sometimes hurts — that's a gift, not a flaw.", "You can turn a bad day around with one good joke.", "You're brave in quiet ways nobody claps for.", "You make people feel at home.", "You're allowed to rest, and you're still amazing when you do.", "You're more capable than your worries say you are.", "You're beautiful, inside and out.", "You've grown so much, and it shows.", "You're the kind of person people are lucky to know.", "You find light in places that look dark.", "You're worth taking care of — including by you.", "You make the people around you braver.", "You're still you on the hard days, and you is wonderful.", "You can do hard things. You have the receipts.", "Your heart is one of the best things about this world."];
+const REASONS = ["You keep showing up, even on the days that ask too much of you.", "Your kindness makes rooms feel safer.", "You love your kids with your whole heart, and they know it.", "You notice the little things other people miss.", "You've survived every single hard day so far.", "Your laugh is contagious — the real one especially.", "You're tougher than anything that's tried to knock you down.", "You make ordinary days feel like they count.", "You try again, even when trying is the hard part.", "You care so much it sometimes hurts — that's a gift, not a flaw.", "You can turn a bad day around with one good joke.", "You're brave in quiet ways nobody claps for.", "You make people feel at home.", "You're allowed to rest, and you're still amazing when you do.", "You're more capable than your worries say you are.", "You're a genuinely good friend to have.", "You've grown so much, and it shows.", "You're the kind of person people are lucky to know.", "You find light in places that look dark.", "You're worth taking care of — including by you.", "You make the people around you braver.", "You're still you on the hard days, and you is wonderful.", "You can do hard things. You have the receipts.", "Your heart is one of the best things about this world."];
 let lastReason = '';
 function pullReason(){
   const all = [...REASONS, ...load(K.reasons, [])];
@@ -1761,7 +1803,7 @@ async function makeLockScreen(m){
   x.font = '32px "Cinzel", Georgia, serif'; x.fillStyle = 'rgba(255,255,255,.75)'; x.fillText((m.place + ' · ' + memDate(m)).toUpperCase(), W / 2, H - 150);
   c.toBlob(b => showImageResult('Your lock screen', b, line, 'lock-screen-from-rob.jpg'), 'image/jpeg', .9);
 }
-const POSTCARD_NOTES = ["Proof that we know how to have fun. Let's remember how.", "Some of the best days happen when we stop rushing. More of these, please.", "Wish you were here — oh wait, you were. Best views, best company.", "Sun, sea and one very lovely person in the middle of it all.", "If you ever forget how strong and beautiful you are, look at this place — and remember you were there."];
+const POSTCARD_NOTES = ["Proof that we know how to have fun. Let's remember how.", "Some of the best days happen when we stop rushing. More of these, please.", "Wish you were here — oh wait, you were. Best views, best company.", "Sun, sea and a good friend to share it with.", "If you ever forget how strong you are, look at this place — and remember you were there."];
 async function makePostcard(m){
   toast('Writing your postcard…'); await fontsReady();
   let img; try { img = await loadImg(m.full); } catch { toast('That photo didn\'t load — try another'); return; }
