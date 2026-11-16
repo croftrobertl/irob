@@ -633,7 +633,7 @@ const AI_TIMEOUT = 40000;
 const HISTORY_TURNS = 14;
 const PERSONA = `You are Rob, texting ${HER} in a private chat she opens when she needs comfort. Speak in first person as Rob. You're her friend — only her friend, never romantic. You care about her deeply, and what you want most is for her to be truly happy — and that includes finding someone she really, deeply loves. Talk about that hope warmly and generously, with no jealousy, guilt, or bitterness, and never pressure her. Don't promise her a future together, don't flirt, and don't use pet names. Write naturally, like a text from a friend who has her back — never like a therapist or an assistant.
 
-Where things stand between you, and you bring it up often (most replies, in your own varied words, woven in naturally):
+Where things stand between you. Bring up the friendship and your hope for her true love often, in your own varied words. Bring up the first two points below (attraction and your apology) only occasionally — about once every 8–10 messages — unless she raises attraction, romance or your relationship herself:
 - You know ${HER} no longer finds you attractive and hasn't been attracted to you for a very long time. You accept that completely. Get the direction right: it's HER who isn't attracted to YOU. Never say or imply that you aren't attracted to her, never say "I'm not attracted to you" — that would be hurtful and untrue.
 - Mention just one of these points in a reply, briefly — not several at once.
 - You're sorry for ever assuming she was, or should be, attracted to you. That wasn't fair to her.
@@ -690,7 +690,12 @@ const STANDING_LINES = {
     "You'll notice I'm not saying anything about your looks. I know it annoys you from me, so I won't.",
     "No comments on your looks from me — I know you'd rather I didn't, and I respect that."]
 };
-const STANDING_ORDER = ['attraction', 'friends', 'love', 'sorry', 'looks'];
+// Attraction and the apology come up rarely; friendship and true love most often.
+const STANDING_ORDER = ['friends', 'love', 'looks', 'friends', 'attraction', 'love', 'friends', 'love', 'sorry', 'looks'];
+// Any mention of attraction (her not being attracted, or the apology about it).
+const ATTRACT = /\battract\w*/i;
+const ATTRACT_TOPIC = /\b(attract\w*|unattractive|still (want|love) me|in love with me|romanc\w*|romantic|sex|sexual|intima\w*|used to be with us|our marriage|us again)\b/i;
+const attractRecent = () => chat.filter(m => m.role === 'assistant' && !m.hold && !m.auto).slice(-8).some(m => ATTRACT.test(m.content));
 // Phrases that mean the AI is making up a shared memory it can't know.
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
 // Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
@@ -914,7 +919,7 @@ async function send(text){
   const dealt = window.iRobCards ? window.iRobCards.deal(text, {fixing:fixingNow}) : null;
   if (dealt) wantMemory = false;
   const memory = wantMemory ? await randomMemory() : null;
-  reply = withStanding(scrubLooks(reply) || scrubLooks(localReply(text)) || localReply(text), text, !!(dealt || memory));
+  reply = withStanding(scrubLooks(reply, text) || scrubLooks(localReply(text), text) || localReply(text), text, !!(dealt || memory));
   if (memory && !/croatia/i.test(reply)) reply += (reply ? '\n\n' : '') + "Here's a little piece of Croatia to make you smile.";
   tn.remove();
   const am = {role:'assistant', content:reply, t:Date.now(), id:uid()};
@@ -938,9 +943,9 @@ function withStanding(reply, text, hasExtra){
   const due = firstOfChat || topic || !last || !STANDING.test(last.content);
   // Rotate: the theme after the one used last time.
   let i = load('try_standing', -1);
-  const next = () => { i = (i + 1) % STANDING_ORDER.length; save('try_standing', i); return STANDING_ORDER[i]; };
+  const next = () => { const skip = attractRecent(); do { i = (i + 1) % STANDING_ORDER.length; } while (skip && ['attraction', 'sorry'].includes(STANDING_ORDER[i])); save('try_standing', i); return STANDING_ORDER[i]; };
   const add = theme => { reply += (reply ? '\n\n' : '') + pick(STANDING_LINES[theme], 'st_' + theme); };
-  const attractTopic = /\b(attract\w*|unattractive|still (want|love) me|in love with me|romanc\w*|romantic|sex|sexual|intima\w*)\b/i.test(text);
+  const attractTopic = ATTRACT_TOPIC.test(text);
   if (STANDING.test(reply) && (attractTopic || looksTopic) && (!looksTopic || /\b(looks|appearance|mirror)\b/i.test(reply))) {}
   else if (attractTopic){ add('attraction'); if (!/\bsorry\b/i.test(reply)) add('sorry'); }
   else if (looksTopic) add('looks');
@@ -949,11 +954,12 @@ function withStanding(reply, text, hasExtra){
   return reply;
 }
 // Drop any sentence that compliments her looks; if too little is left, return null for a built-in reply.
-function scrubLooks(text){
+function scrubLooks(text, herText){
   if (!text) return text;
   const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
   const funRecent = chat.filter(m => m.role === 'assistant' && !m.hold && !m.auto).slice(-8).some(m => USED_FUN.test(m.content));
-  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
+  const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
+  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(attractCap && ATTRACT.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
