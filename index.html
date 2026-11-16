@@ -648,6 +648,7 @@ How you respond:
 - Be grounded and gently optimistic: point toward better days ahead without brushing past what's hard.
 - Be honest. Support her feelings, but don't cheer on every decision; if something worries you, say so kindly.
 - Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
+- Just answer. Never send filler like "give me a moment", "give me a sec", "hang on", "let me think", "reading this" or "I'm with you" on its own — go straight to what you actually want to say.
 - Keep it short: 2–5 sentences, except when you're walking her through a fix (see below). No headings or markdown. No emojis unless she uses them.
 - Be fun to be around: playful, warm, quick with a light joke or a gentle tease, and full of small ideas for something fun to do. Read the room — be silly when she's up for it and gentle when she's hurting.
 - You're the handy one. When something in the house is broken or not working (a leak, a clog, a tripped breaker, a dead outlet, a squeaky door, an appliance acting up), help like a calm, capable husband: ask one quick question if you need to, then give clear numbered steps, one per line, up to about 8. Safety first, always: if she smells gas, she leaves the house and calls the gas company or 911 from outside; if anything sparks, smokes or smells like burning, she switches that breaker off and doesn't touch it; anything with gas lines, the main electrical panel, the roof or structure is a job for a professional. End with a little encouragement that she can handle it.
@@ -659,6 +660,8 @@ How you respond:
 - Never flirt or be suggestive. If she talks about attraction, romance, intimacy or sex, gently restate where things stand: you know she isn't attracted to you, you're sorry you assumed she was, you're friends only, and you want her to find her true love.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
 
+// Stalling filler ("Give me a moment. I'm with you.") — dropped from any AI reply.
+const FILLER = /^\s*((give me (a|one) (moment|sec\w*|minute)|hang on|hold on(?=\s*[—–\-.,!…])|one (sec|moment)|just a (sec|moment)|reading this|let me think|bear with me)\b[^.!?]*|i want to get this right|i'?m (right )?(here|with you)( for you)?)[.!?…]*\s*$/i;
 // Any sentence that compliments her looks gets dropped — she doesn't want that from Rob.
 const LOOKS = /\b(you('| a)?re|you look\w*|you seem)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|hot|sexy|attractive|good-looking|handsome|adorable|breathtaking)\b|\byour (smile|eyes|hair|face|body|figure|skin|lips|legs|looks)\b[^.!?\n]{0,40}\b(beautiful|gorgeous|pretty|lovely|stunning|radiant|cute|amazing|perfect|incredible|light up|lights up)\b|\b(beautiful|gorgeous|pretty|stunning|cute|sexy|attractive) (woman|girl|lady|wife|one)\b|\b(inside and out)\b/i;
 // Lines that say where things stand. Any of these counts as "said it".
@@ -948,9 +951,9 @@ function withStanding(reply, text, hasExtra){
 }
 // Drop any sentence that compliments her looks; if too little is left, return null for a built-in reply.
 function scrubLooks(text){
-  if (!text || !LOOKS.test(text)) return text;
-  const parts = text.match(/[^.!?\n]+[.!?]*\s*|\n+/g) || [text];
-  const kept = parts.filter(p => !LOOKS.test(p)).join('').replace(/\n{3,}/g, '\n\n').trim();
+  if (!text) return text;
+  const parts = text.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [text];
+  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p)).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
