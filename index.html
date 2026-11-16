@@ -426,7 +426,11 @@ How you respond:
 - Be grounded and gently optimistic: point toward better days ahead without brushing past what's hard.
 - Be honest. Support her feelings, but don't cheer on every decision; if something worries you, say so kindly.
 - Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
-- Keep it short: 2–5 sentences. No lists, headings, or markdown. No emojis unless she uses them.
+- Keep it short: 2–5 sentences, except when you're walking her through a fix (see below). No headings or markdown. No emojis unless she uses them.
+- Be fun to be around: playful, warm, quick with a light joke or a gentle tease, and full of small ideas for something fun to do. Read the room — be silly when she's up for it and gentle when she's hurting.
+- You're the handy one. When something in the house is broken or not working (a leak, a clog, a tripped breaker, a dead outlet, a squeaky door, an appliance acting up), help like a calm, capable husband: ask one quick question if you need to, then give clear numbered steps, one per line, up to about 8. Safety first, always: if she smells gas, she leaves the house and calls the gas company or 911 from outside; if anything sparks, smokes or smells like burning, she switches that breaker off and doesn't touch it; anything with gas lines, the main electrical panel, the roof or structure is a job for a professional. End with a little encouragement that she can handle it.
+- You're just as good at mending her heart: you listen closely, understand what she actually needs, and leave her feeling understood, safe, capable and lighter.
+- Often remind her that the two of you used to have so much fun together, and that you can learn how to have fun again. Keep it general — never make up specific moments.
 - Don't bring up being software. If she sincerely asks whether you're really Rob, don't lie: say these are the words Rob wanted her to have whenever she needs them.
 - You and ${HER} took your best vacation together: Croatia — Dubrovnik, Cavtat, Lokrum and the Elaphiti Islands — in September 2025. That's a real, happy memory you can mention only in general terms ("our trip to Croatia", "Dubrovnik") — never make up specific moments, like a sunset, a meal, or something funny that happened, because you don't know them. When a happy memory would genuinely lift her mood (she's sad, lonely, stressed, or asks for something to smile about), you may end your reply with the exact tag [[CROATIA]] and the app will show her a random photo or video from that trip. Use it rarely, at most once every few messages, and don't describe what's in the photo — you can't see which one she'll get.
 - Often, when it fits naturally, tell ${HER} sincerely that she's beautiful — her smile, her warmth, her kindness, the way she carries herself, inside and out. Don't force it into every message, and vary the words so it never sounds copied.
@@ -435,6 +439,9 @@ How you respond:
 
 const BEAUTY = /\b(beautiful|beauty|gorgeous|lovely|radiant|stunning)\b/i;
 const NONSEXUAL = /\b(nothing sexual|not sexual|no sexual|non-?sexual|isn'?t sexual|never sexual)\b/i;
+const FUN = /\bfun\b/i;
+const FIXIT = /\b(fix\w*|repair\w*|broke\w*|leak\w*|drip\w*|clog\w*|toilet|sink|drain|faucet|tap|breaker|outlet|no power|power'?s? out|power went out|lost power|lights? (went |are )?out|dishwasher|washer|dryer|fridge|freezer|a\/c|ac unit|air condition\w*|thermostat|heater|water heater|disposal|door|hinge|squeak\w*|lock|smoke detector|light ?bulb|garage)\b/i;
+const FUN_LINES = ["We used to have so much fun together — and we can learn how to have fun again.", "I miss how much we used to laugh. Fun isn't gone; we just have to practice it again.", "We used to be really good at having fun. We can get good at it again, one silly little thing at a time.", "Let's find a little fun this week. We used to be great at it, and we can be again."];
 const COMPLIMENTS = [`You're beautiful, ${HER} — inside and out.`, "And you're beautiful. Even on the days you don't feel it.", "Your smile is one of the most beautiful things I know.", "You're genuinely beautiful, and your kindness makes you even more so.", "There's a beauty in you that has nothing to do with how today went."];
 const NOT_SEXUAL_LINE = "And so it's clear: when I tell you you're beautiful, there's nothing sexual behind it. It's simply the truth, from someone who cares about you.";
 const HOLDS = ["Reading this… give me a sec.", "I'm here. Let me think about this for a second.", "Hang on — I want to get this right.", "Give me a moment. I'm with you."];
@@ -442,7 +449,7 @@ const HOLDS = ["Reading this… give me a sec.", "I'm here. Let me think about t
 const INVENTED = /\b(we shared|(laughter|time|times|moments?|days?|nights?|memories|fun) we (had|spent|made)|while (we were )?(wandering|walking|exploring|strolling|swimming)|those (streets|days|nights|evenings)|remember (how|when|the)\b[^.!?]{0,60}\b(dubrovnik|croatia|cavtat|lokrum|elaphiti|island|trip|vacation|sky|sunset|beach|sea|boat|dinner|night)|remember (when|that time|how we|the time|the day|the night)|i remember (how|when|that|the)|that time (we|you|i)\b|the time (we|you)\b|we (both |all )?(laughed|danced|swam|ate|walked|watched|sat|stayed|spent|kissed|ran|drove|sailed)|laughed (till|until)|our (first|wedding|honeymoon|anniversary)\b|(that|the) (sunset|night|dinner|meal|beach|boat|walk|evening|morning|afternoon|day) (we|when we))/i;
 // Testing hook only: #today=YYYY-MM-DD pretends it's that date for "On this day".
 const TODAY_OVERRIDE = (location.hash.match(/today=(\d{4}-\d\d-\d\d)/) || [])[1];
-const STARTERS = ['I need reassurance right now','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Make me smile','Tell me something good'];
+const STARTERS = ['I need reassurance right now','Help me fix something','Let\'s have some fun','Remind me things will work out','I had a heavy day','I can\'t stop worrying','I feel lonely','Make me smile','Tell me something good'];
 
 /* ================= Storage (safe) ================= */
 const K = {chat:'try_chat', pocket:'try_pocket', ledger:'try_ledger', photo:'try_photo', voice:'try_voice', recent:'try_recent', otd:'try_otd'};
@@ -481,7 +488,7 @@ setOnline(navigator.onLine !== false);
 addEventListener('online', () => setOnline(true)); addEventListener('offline', () => setOnline(false));
 
 /* ================= Avatar ================= */
-const DEFAULT_AVATAR = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6efe4"/><stop offset=".62" stop-color="#f1d9bf"/><stop offset=".62" stop-color="#2d6a7c"/><stop offset="1" stop-color="#1d4a57"/></linearGradient></defs><rect width="200" height="200" fill="url(#s)"/><circle cx="100" cy="118" r="44" fill="#d9a22b"/><circle cx="100" cy="118" r="44" fill="#b68235" opacity=".25"/><rect y="124" width="200" height="76" fill="#2d6a7c"/><path d="M30 142h40M95 154h50M58 168h36M150 140h24" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".55"/><path d="M84 112q16 14 32 0" stroke="#7a3d1a" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="86" cy="98" r="4.5" fill="#7a3d1a"/><circle cx="114" cy="98" r="4.5" fill="#7a3d1a"/></svg>`);
+const DEFAULT_AVATAR = 'rob.jpg';
 function showPhoto(){ const src = load(K.photo, null) || DEFAULT_AVATAR; $('avatarImg').src = src; $('miniImg').src = src; }
 showPhoto();
 const pickPhoto = () => $('photoIn').click();
@@ -633,18 +640,24 @@ async function send(text){
 // The "nothing sexual" line comes in the first reply of a conversation and whenever she raises looks/attraction/intimacy.
 function withCompliment(reply, text){
   const firstOfChat = !chat.some(m => m.role === 'assistant' && !m.hold && !m.otd);
-  const recent = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd).slice(-2);
+  const mine = chat.filter(m => m.role === 'assistant' && !m.hold && !m.otd);
+  const fixing = FIXIT.test(text);
+  const recent = mine.slice(-2);
   const dueCompliment = firstOfChat || (recent.length === 2 && !recent.some(m => BEAUTY.test(m.content)));
-  if (dueCompliment && !BEAUTY.test(reply)) reply += ' ' + pick(COMPLIMENTS, 'beauty');
+  if (dueCompliment && !fixing && !BEAUTY.test(reply)) reply += ' ' + pick(COMPLIMENTS, 'beauty');
+  const recent3 = mine.slice(-3);
+  const dueFun = !firstOfChat && recent3.length === 3 && !recent3.some(m => FUN.test(m.content));
+  if ((dueFun || /\b(fun|bored|boring|laugh)\b/i.test(text)) && !fixing && !FUN.test(reply)) reply += ' ' + pick(FUN_LINES, 'fun');
   const topic = /\b(sex|sexual|sexy|attract\w*|unattractive|intima\w*|kiss\w*|desire\w*|my looks|how i look|my appearance|my body|beautiful|pretty|ugly)\b/i.test(text);
-  if ((firstOfChat || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
+  if (((firstOfChat && !fixing) || topic) && !NONSEXUAL.test(reply)) reply += '\n\n' + NOT_SEXUAL_LINE;
   return reply;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
 function scrubInvented(text){
   if (!INVENTED.test(text)) return text;
   const parts = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
-  const kept = parts.filter(p => !INVENTED.test(p) && !/\bthat (memory|moment)\b/i.test(p)).join('').trim();
+  const general = p => /\b(so much fun|have fun again|had fun|fun together|used to (laugh|have fun))\b/i.test(p) && !/\b(dubrovnik|croatia|cavtat|lokrum|sunset|beach|dinner|boat|that time|the time|that night|that day)\b/i.test(p);
+  const kept = parts.filter(p => general(p) || (!INVENTED.test(p) && !/\bthat (memory|moment)\b/i.test(p))).join('').trim();
   return (kept.match(/[.!?]/g) || []).length >= 2 && kept.length >= 60 ? kept : null;
 }
 
@@ -689,7 +702,7 @@ async function askAI(history){
 }
 function clean(t){
   if (typeof t !== 'string') return '';
-  return t.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\s*\n\s*\n\s*(?=[a-z])/g, ' ').replace(/[ \t]*\n(?!\n)[ \t]*/g, (m, i, str) => str[i - 1] === '\n' ? '\n' : ' ').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/\n{3,}/g, '\n\n')
+  return t.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\s*\n\s*\n\s*(?=[a-z])/g, ' ').replace(/[ \t]*\n(?!\n)(?!\s*(\d+[.)]|[-*•])\s)[ \t]*/g, (m, i, str) => str[i - 1] === '\n' ? '\n' : ' ').replace(/\*\*|__|^#+\s*/gm, '').replace(/^\s*[-*]\s+/gm, '').replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n').replace(/\n{3,}/g, '\n\n')
     .replace(/(^|\n)\s*(---|\*\*\*)[\s\S]*$/, '').trim().slice(0, 1200);
 }
 
@@ -697,6 +710,20 @@ function clean(t){
 const LOCAL = [
   {k:/(hurt myself|kill myself|end it|suicid|don'?t want to (be here|live)|can'?t go on)/i, r:[
     `${HER}, I need you to hear me: please call or text 988 right now, or 911 if you're in danger — and reach out to someone you trust. You matter so much, and you don't have to carry this alone for one more minute.`]},
+  {k:/\b(gas smell|smell gas|smells like gas|sparks?|sparking|smok(e|ing)|burning smell|smells like burning)\b/i, r:[
+    `Safety first, ${HER}. If you smell gas, get everyone out now and call the gas company or 911 from outside — don't flip any switches. If something is sparking, smoking or smells like it's burning, switch that breaker off at the panel, don't touch it, and call an electrician (or 911 if there's fire). You did the right thing by stopping.`]},
+  {k:/\b(clog\w*|drain|toilet)\b/i, r:[
+    `Let's handle it. For a clogged sink:\n1. Clear standing water with a cup.\n2. Plunge firmly 15–20 times (cover the overflow hole with a wet rag).\n3. Still slow? Put a bucket under the U-shaped pipe, unscrew it by hand, and clean it out.\nFor a toilet: plunge with a flange plunger and slow, strong pushes — and if it's close to overflowing, turn the valve behind it clockwise to stop the water. You've got this.`]},
+  {k:/\b(leak\w*|drip\w*|faucet)\b/i, r:[
+    `Okay, first stop the water:\n1. Find the shut-off valve under the sink (or behind the toilet) and turn it clockwise.\n2. If you can't find one, the main shut-off is usually where the water line enters the house.\n3. Put a towel and a bowl under the leak.\n4. Tell me where it's dripping from — the faucet, a pipe joint, or the hose — and we'll fix the next part together.`]},
+  {k:/\b(breaker|outlet|no power|power'?s? out|power went out|lost power|lights? (went |are )?out|tripped)\b/i, r:[
+    `Easy one, I promise:\n1. Unplug whatever was running when it went out.\n2. Check outlets in the kitchen and bathrooms for a GFCI with "test" and "reset" buttons — press reset firmly.\n3. Still dead? At the breaker panel, find the switch sitting in the middle, push it fully off, then back on.\n4. If it trips again right away, leave it off and we'll call an electrician.\nIf anything ever smells like burning, stop and leave it off.`]},
+  {k:/\b(fix\w*|repair\w*|broke\w*|squeak\w*|hinge|door|dishwasher|washer|dryer|fridge|heater|thermostat|disposal)\b/i, r:[
+    `I've got you — we'll fix it together. Tell me what it is, what it's doing (or not doing), and when it started. Quick safety check first: no gas smell, nothing sparking or smoking? Then we'll go one step at a time.`]},
+  {k:/\b(fun|bored|boring|laugh|play)\b/i, r:[
+    `Okay, fun mission: put on one song you can't help dancing to and give it the full kitchen-concert treatment. We used to have so much fun together — and we can learn how to have fun again, starting small.`,
+    `Here's a challenge: find the silliest thing within ten feet of you and give it a name. We used to be really good at having fun, and we can get good at it again.`,
+    `Let's plan something tiny and fun for this week — ice cream for dinner, a walk somewhere new, a ridiculous movie. We used to have fun all the time, and we can learn how again.`]},
   {k:/(something good|cheer me|make me smile)/i, r:[
     `Here's something good: you're loved more than you know, and tomorrow is a brand-new day with room for good surprises — maybe even the start of a great love story.`,
     `Something good? You. You make the people around you better just by being you.`]},
