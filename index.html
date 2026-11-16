@@ -783,7 +783,7 @@ async function send(text){
     const hold = {role:'assistant', content:pick(HOLDS, 'hold'), t:Date.now(), id:uid(), hold:true};
     chat.push(hold); save(K.chat, chat);
     chatEl.insertBefore(msgNode(hold), tn); scrollDown();
-  }, 1500);
+  }, 4000);
   let reply = await askAI(chat);
   clearTimeout(slow); clearTimeout(holdT);
   let wantMemory = false;
