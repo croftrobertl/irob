@@ -1,4 +1,4 @@
-# The Rob You Want
+# iRob
 
 A single-file, free comfort chat for Erica. Open `index.html` — no build step.
 
@@ -7,4 +7,5 @@ A single-file, free comfort chat for Erica. Open `index.html` — no build step.
 - **Storage:** everything stays in the phone's browser. Settings → Save a backup / Restore a backup. On iPhone, add to the Home Screen so Safari doesn't clear it.
 - **Night mode:** follows the iPhone's dark mode.
 - **Weekly health check:** `.github/workflows/health-check.yml` runs Mondays and on demand (Actions → Weekly health check → Run workflow). GitHub emails the owner if the free AI, the Croatia list, or this page stops working. GitHub pauses scheduled runs in a public repo after 60 days with no commits, and emails before it does.
+- **Letters:** `write-letters.html` seals the "Open when…" letters with a shared word (AES-GCM, PBKDF2 250k). Save the sealed output as `letters.json`.
 - **Hosting:** GitHub Pages, Settings → Pages → Deploy from branch → `main` / root.
