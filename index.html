@@ -225,7 +225,7 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .wheel-svg{display:block;width:100%;height:100%}
 .pointer{position:absolute;left:50%;top:-16px;transform:translateX(-50%);width:34px;height:42px;z-index:1;background:linear-gradient(#c4523e,#8f2f20);clip-path:polygon(50% 100%,0 22%,0 0,100% 0,100% 22%);border-radius:6px 6px 0 0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
 .dare{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line),0 8px 20px rgba(60,40,10,.1);border-top:4px solid var(--bronze);padding:18px 16px;text-align:center}
-.dare-ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--deep)}.dare-ic svg{width:26px;height:26px}
+.dare-ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--deep)}.dare-ic svg{width:26px;height:26px}.dare-ic img{width:36px;height:36px}
 .dare b{font:600 18px/1.2 var(--head);letter-spacing:.04em;color:var(--title)}
 .dare span:last-child{font:400 17px/1.4 var(--body)}
 /* home */
@@ -2087,9 +2087,9 @@ const SEG = 360 / DARES.length, WHEEL_COLS = ['#b68235', '#f4e6cf', '#2d6a7c', '
   let svg = `<svg viewBox="0 0 200 200" class="wheel-svg" aria-hidden="true">`;
   DARES.forEach(([ic], i) => { const a0 = (i * SEG - 90) * Math.PI / 180, a1 = ((i + 1) * SEG - 90) * Math.PI / 180, col = WHEEL_COLS[i % WHEEL_COLS.length];
     const x0 = 100 + R0 * Math.cos(a0), y0 = 100 + R0 * Math.sin(a0), x1 = 100 + R0 * Math.cos(a1), y1 = 100 + R0 * Math.sin(a1);
-    const light = /^#(f|e)/.test(col), mid = (i + .5) * SEG;
+    const mid = (i + .5) * SEG;
     svg += `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A${R0} ${R0} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${col}" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>`;
-    svg += `<g transform="rotate(${mid} 100 100) translate(100 ${100 - R0 * .72}) rotate(${-0}) scale(.62) translate(-12 -12)"><g fill="none" stroke="${light ? '#7d5411' : '#fff'}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${WI[ic]}</g></g>`; });
+    svg += `<g transform="rotate(${mid} 100 100) translate(100 ${100 - R0 * .7})"><image href="icons/${36 + i}.webp" x="-12" y="-12" width="24" height="24"/></g>`; });
   for (let i = 0; i < DARES.length; i++){ const a = (i * SEG - 90) * Math.PI / 180; svg += `<circle cx="${(100 + 96.5 * Math.cos(a)).toFixed(2)}" cy="${(100 + 96.5 * Math.sin(a)).toFixed(2)}" r="1.9" fill="#fff6dc" stroke="#b68235" stroke-width=".6"/>`; }
   svg += `<circle cx="100" cy="100" r="17" fill="url(#hub)" stroke="#fff" stroke-width="2.5"/><defs><radialGradient id="hub" cx="40%" cy="35%"><stop offset="0" stop-color="#f3c98f"/><stop offset="1" stop-color="#7d5411"/></radialGradient></defs><path d="M100 90l2.4 7.2 7.6.4-6 4.6 2.2 7.3-6.2-4.3-6.2 4.3 2.2-7.3-6-4.6 7.6-.4z" fill="#fff"/></svg>`;
   w.innerHTML = svg;
@@ -2103,7 +2103,7 @@ function spin(){
   $('wheel').style.transform = `rotate(${target}deg)`;
   // ticking as segments pass the pointer
   if (!reduce && window.AudioContext){ try { const ac = spin.ac || (spin.ac = new AudioContext()); let n = 0; const tick = () => { if (n > 26) return; const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 1400; g.gain.setValueAtTime(.05, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .03); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + .03); n++; setTimeout(tick, 40 + n * n * 4.6); }; tick(); } catch {} }
-  setTimeout(() => { spinning = false; currentDare = DARES[i]; $('dareIcon').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${WI[DARES[i][0]]}</svg>`; $('dareTitle').textContent = DARES[i][1]; $('dareTxt').textContent = DARES[i][2]; $('dareBox').hidden = false; wheelTurn = target - target % 360 + 360; if (window.iRobFun) window.iRobFun.confetti(60); }, reduce ? 50 : 3600);
+  setTimeout(() => { spinning = false; currentDare = DARES[i]; $('dareIcon').innerHTML = `<img src="icons/${36 + i}.webp" alt="">`; $('dareTitle').textContent = DARES[i][1]; $('dareTxt').textContent = DARES[i][2]; $('dareBox').hidden = false; wheelTurn = target - target % 360 + 360; if (window.iRobFun) window.iRobFun.confetti(60); }, reduce ? 50 : 3600);
 }
 $('spinBtn').onclick = spin; $('dareAgain').onclick = spin;
 $('dareDone').onclick = () => { if (!currentDare) return; addLedger('Had fun: ' + currentDare[1].toLowerCase()); toast('Added to your Good Things Ledger 🎉'); $('dareBox').hidden = true; };
