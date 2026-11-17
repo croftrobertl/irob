@@ -1033,7 +1033,10 @@ const IC = {
   note:'<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01"/>',
 };
-const icon = k => `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${IC[k] || IC.sparkle}</svg></span>`;
+// Painted icons (icons/N.webp, numbered like the icon sheet); the line icons above stay as the fallback.
+const ART = {cat:1, puppy:2, cuddle:3, basket:4, boat:5, note:6, cookie:7, wheel:8, ticket:9, trophy:10, laugh:11, fork:12, jar:13, cards:14, hush:15, wrench:16, lock:17, moon:18};
+const icon = k => ART[k] ? `<span class="ic art" aria-hidden="true"><img src="icons/${ART[k]}.webp" alt="" decoding="async"></span>` : `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${IC[k] || IC.sparkle}</svg></span>`;
+const art = n => `<img class="art-e" src="icons/${n}.webp" alt="" decoding="async">`;
 const music = () => { if (window.iRobMusic && window.iRobMusic.unlocked()) window.iRobMusic.open(); else toast('Open your playlist link on this phone once to unlock the music 🎶'); };
 const TILES = [
   ['cat', 'Pocket Kitten', F('pocketKitten')],
@@ -1055,14 +1058,14 @@ const TILES = [
   ['lock', 'Just Us', F('dateNight')],
 ];
 const CROATIA = [
-  ['🧠', 'Memory Match', F('memoryMatch')],
-  ['🗺️', 'Where Was This?', () => startGame()],
-  ['🧩', 'Photo Puzzle', F('photoPuzzle')],
-  ['⏱️', 'Which Came First?', F('whichFirst')],
-  ['🔍', 'Zoom Detective', F('zoomDetective')],
-  ['📅', 'Trip Timeline', F('tripTimeline')],
-  ['🌊', 'Take Me Back', () => startSlides()],
-  ['📸', 'A Memory From Croatia', () => memoryMoment()],
+  [art(19), 'Memory Match', F('memoryMatch')],
+  [art(20), 'Where Was This?', () => startGame()],
+  [art(21), 'Photo Puzzle', F('photoPuzzle')],
+  [art(22), 'Which Came First?', F('whichFirst')],
+  [art(23), 'Zoom Detective', F('zoomDetective')],
+  [art(24), 'Trip Timeline', F('tripTimeline')],
+  [art(25), 'Take Me Back', () => startSlides()],
+  [art(26), 'A Memory From Croatia', () => memoryMoment()],
 ];
 const MORE = [];
 async function renderIdeas(){
