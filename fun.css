@@ -299,3 +299,65 @@
 .fun-sheet.full .cp-card{max-width:420px;min-height:200px}
 .fun-sheet.full .us-dice{max-width:520px}
 .fun-sheet.full .us-die{font-size:18px}
+
+/* Drawn cat, shared */
+.cat-svg{display:block;width:100%;height:100%;overflow:visible}
+.cat-svg.sleep .breath{transform-origin:60% 100%;animation:catBreath 3.2s ease-in-out infinite}
+.cat-svg.sleep .tail{transform-origin:90% 70%;animation:catTail 6s ease-in-out infinite}
+.cat-svg.sit .tail{transform-origin:70% 90%;animation:catTailSit 3.5s ease-in-out infinite}
+.cat-svg.sit .ear.r{transform-origin:62% 30%;animation:earTwitch 7s ease-in-out infinite}
+@keyframes catBreath{50%{transform:scale(1.025,1.05)}}
+@keyframes catTail{50%{transform:rotate(-2deg)}}
+@keyframes catTailSit{50%{transform:rotate(6deg)}}
+@keyframes earTwitch{0%,92%,100%{transform:none}94%{transform:rotate(-8deg)}96%{transform:rotate(4deg)}}
+@media (prefers-reduced-motion:reduce){.cat-svg *{animation:none!important}}
+
+/* Napping cat on a button (replaces the emoji version) */
+.roam-cat{position:fixed;z-index:30;padding:0;border:0;background:none;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25));animation:rcIn .6s cubic-bezier(.3,1.3,.5,1);transition:width .25s,height .25s,top .25s,left .25s}
+.roam-cat .rc-z{position:absolute;top:-6px;left:18%;font:700 13px/1 var(--head);color:var(--bronze);animation:rcZ 2.6s ease-in-out infinite}
+.roam-cat .rc-z.z2{left:8%;font-size:10px;animation-delay:1.3s}
+.roam-cat.waking{animation:none}
+.roam-cat.hop{animation:rcHop .6s ease-in forwards}
+@keyframes rcIn{from{transform:translateY(-14px);opacity:0}}
+@keyframes rcZ{0%{opacity:0;transform:translate(0,0)}35%{opacity:1}100%{opacity:0;transform:translate(-10px,-18px)}}
+@keyframes rcHop{35%{transform:translateY(-36px) rotate(-10deg)}100%{transform:translate(90px,20px) rotate(18deg);opacity:0}}
+.rc-say{position:fixed;z-index:31;padding:4px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font:600 13px/1.2 var(--body);color:var(--title);pointer-events:none;animation:sayPop .3s ease-out;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+
+/* Pocket kitten room */
+.pet-adopt-cat{width:150px;height:166px}
+.coat-row{display:flex;gap:12px}
+.coat{width:40px;height:40px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.coat[data-c=grey]{background:#9aa1ab}.coat[data-c=orange]{background:#e3a25a}.coat[data-c=tabby]{background:#a58a6a}.coat[data-c=black]{background:#3a3a40}
+.coat.on{box-shadow:0 0 0 3px var(--bronze)}
+.tg-room{position:relative;overflow:hidden;background:none}
+.tg-wall{position:absolute;inset:0 0 34% 0;background:linear-gradient(#f7e7d4,#efd6bb);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.18) 0 22px,transparent 22px 44px),linear-gradient(#f7e7d4,#efd6bb)}
+.tg-room.night .tg-wall{background:linear-gradient(#3b3f5c,#454160)}
+.tg-room.lights-off .tg-wall{background:linear-gradient(#171a28,#1f1d2b)}
+.tg-floor{position:absolute;left:0;right:0;bottom:0;height:34%;background:repeating-linear-gradient(90deg,#c99766 0 60px,#bf8b5a 60px 120px);box-shadow:inset 0 6px 10px rgba(0,0,0,.12)}
+.tg-room.night .tg-floor,.tg-room.lights-off .tg-floor{background:repeating-linear-gradient(90deg,#5b4636 0 60px,#523f30 60px 120px)}
+.tg-window{position:absolute;top:10%;right:8%;width:22%;max-width:110px;aspect-ratio:1/.85;border-radius:8px;background:linear-gradient(#bfe3f7,#e9f6fd);border:5px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.12);display:grid;place-items:center;font-size:24px}
+.tg-room.night .tg-window,.tg-room.lights-off .tg-window{background:linear-gradient(#1c2648,#2e3a66)}
+.tg-bowl{position:absolute;left:4%;bottom:8%;font-size:26px}
+.tg-furn{position:absolute;bottom:12%;transform:translateX(-50%);font-size:44px;line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+.tg-furn.f-tree{font-size:70px;bottom:16%}.tg-furn.f-plant{font-size:48px}.tg-furn.f-fish{font-size:36px;bottom:30%}
+.tg-cat{position:absolute;bottom:6%;width:calc(118px * var(--s,1));height:calc(130px * var(--s,1));transform:translateX(-50%);transition:left 1.4s ease-in-out;touch-action:none;cursor:grab;z-index:2}
+.tg-cat.asleep{width:calc(170px * var(--s,1));height:calc(102px * var(--s,1))}
+.tg-cat .acc{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;line-height:1}
+.tg-cat .acc.head{top:-8%;font-size:calc(30px * var(--s,1))}.tg-cat .acc.face{top:30%;font-size:calc(28px * var(--s,1))}.tg-cat .acc.neck{top:50%;font-size:calc(22px * var(--s,1))}
+.tg-cat.swat{animation:swat .5s}
+.tg-cat.pounce{animation:pounce .35s ease-out}
+@keyframes swat{20%{transform:translateX(-50%) rotate(-8deg) scale(1.06)}50%{transform:translateX(-50%) rotate(6deg)}}
+@keyframes pounce{40%{transform:translateX(-50%) translateY(-18px) scaleY(1.05)}}
+.tg-poop{position:absolute;bottom:4%;width:30px;height:26px;padding:4px;border:0;background:none;transform:translateX(-50%);z-index:3}
+.tg-poop svg{width:100%;height:100%}
+.tg-heart{position:absolute;bottom:50%;font-size:22px;pointer-events:none;animation:kcUp 1.5s ease-out forwards;z-index:4}
+.tg-game{position:absolute;inset:0;z-index:5}
+.tg-game.toss{cursor:pointer}
+.tg-treat{position:absolute;left:50%;bottom:2%;font-size:28px;transform:translateX(-50%);animation:toss .65s cubic-bezier(.3,.6,.4,1) forwards}
+.tg-treat.in{animation:none;opacity:0;transition:opacity .2s}
+.tg-treat.miss{animation:missFall .5s ease-in forwards}
+@keyframes toss{0%{bottom:2%}55%{bottom:70%}100%{bottom:26%}}
+@keyframes missFall{to{bottom:-10%;transform:translateX(-50%) rotate(160deg)}}
+.tg-h{grid-column:1/-1;margin:4px 0 0;font:400 11px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-align:left}
+.fun-sheet.full .tg-room{height:auto;flex:1;min-height:230px}
+.fun-sheet.full #funPet .body{gap:10px}
