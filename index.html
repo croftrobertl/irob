@@ -310,16 +310,21 @@ h1,.status{position:relative;z-index:1}
 @keyframes dot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
 
 /* ---------- Chips + composer ---------- */
-.chips{display:flex;flex-direction:column;gap:7px;padding:4px 0 8px}
-.tray-row{display:flex;gap:8px;overflow-x:auto;padding:0 14px;align-items:center;scrollbar-width:none}
-.tray-row::-webkit-scrollbar{display:none}
-.tray-row{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 44px),transparent)}
-.tray-row.at-end{-webkit-mask-image:none;mask-image:none}
-.tray-wrap{position:relative}
-.tray-more{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--surface);color:var(--title);box-shadow:0 1px 6px rgba(0,0,0,.15),inset 0 0 0 1px var(--line);z-index:1}
-@media (hover:hover) and (pointer:fine){ .tray-more{display:grid;place-items:center} .tray-wrap.at-end .tray-more{display:none} }
-.tray-label{flex:none;font:400 11px/1 var(--head);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);min-width:62px}
-.tray-row .chip{min-height:44px;padding:8px 13px;font-size:14px}
+.chips{display:flex;flex-direction:column;gap:10px;padding:10px 14px 12px;border-top:1px solid var(--line);background:var(--bg)}
+.tray-head{display:flex;flex-direction:column;gap:8px}
+.tray-label{flex:none;font:400 10.5px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.moods{display:flex;align-items:center;gap:6px}
+.moods .tray-label{margin-right:auto}
+.moods .chip{width:40px;height:40px;padding:0;display:grid;place-items:center;font-size:20px;border-radius:50%;background:var(--surface);border:1px solid var(--line)}
+.modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:3px;border-radius:12px;background:var(--surface-2);gap:2px}
+.modes .chip{min-height:34px;padding:4px 2px;border:0;border-radius:9px;background:transparent;font:600 12.5px/1.1 var(--body);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modes .chip[aria-pressed="true"]{background:var(--blue);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;padding:7px 4px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--title);font:600 11.5px/1.15 var(--body);text-align:center;transition:transform .12s}
+.tile .e{font-size:22px;line-height:1}
+.tile:active{transform:scale(.95);background:var(--blue-soft)}
+@media (prefers-reduced-motion:reduce){.tile{transition:none}}
+@media (max-width:340px){.tile{font-size:10.5px;min-height:56px}.tile .e{font-size:20px}.modes .chip{font-size:11.5px}}
 .chip[aria-pressed="true"]{background:var(--tint);border-color:var(--bronze);color:var(--deep)}
 .chip{flex:none;padding:9px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--title);font-weight:600}
 .chip:active{background:var(--blue-soft)}
@@ -439,9 +444,11 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </div>
 
   <div class="chips starters" id="chips">
-    <div class="tray-wrap"><div class="tray-row" id="modeRow" role="group" aria-label="What do you need right now?"><span class="tray-label">I need</span></div><button type="button" class="tray-more" aria-label="More" data-row="modeRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
-    <div class="tray-wrap"><div class="tray-row" id="weatherRow" role="group" aria-label="How is the weather inside?"><span class="tray-label">Inside it's</span></div><button type="button" class="tray-more" aria-label="More" data-row="weatherRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
-    <div class="tray-wrap"><div class="tray-row" id="ideaRow"></div><button type="button" class="tray-more" aria-label="More" data-row="ideaRow"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button></div>
+    <div class="tray-head">
+      <div class="moods" id="weatherRow" role="group" aria-label="How's the weather inside you?"><span class="tray-label">Inside it's</span></div>
+      <div class="modes" id="modeRow" role="group" aria-label="What do you need from Rob right now?"></div>
+    </div>
+    <div class="tiles" id="ideaRow" role="group" aria-label="Things to do with Rob"></div>
   </div>
   <form class="composer" id="form" autocomplete="off">
     <button type="button" class="spark" id="chipsBtn" aria-label="Ideas to talk about" aria-expanded="false" aria-controls="chips"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z"/></svg></button>
@@ -901,14 +908,33 @@ Object.entries(MODES).forEach(([k, v]) => { const c = document.createElement('bu
   $('modeRow').appendChild(c); });
 renderModes();
 const WEATHER = [['☀️ Sunny', '☀️ Feeling sunny today — pretty good, actually.'], ['⛅ Cloudy', '⛅ Feeling a bit cloudy — not great, not terrible.'], ['🌧 Rainy', '🌧 Feeling rainy inside — kind of sad today.'], ['⛈ Stormy', '⛈ Feeling stormy — overwhelmed and worn out.']];
-WEATHER.forEach(([l, msg]) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.textContent = l; c.onclick = () => { setTray(false); send(msg); }; $('weatherRow').appendChild(c); });
+WEATHER.forEach(([l, msg]) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; const [emoji, ...word] = l.split(' '); c.textContent = emoji; c.setAttribute('aria-label', 'Inside it\'s ' + word.join(' ').toLowerCase()); c.title = word.join(' '); c.onclick = () => { setTray(false); send(msg); }; $('weatherRow').appendChild(c); });
 const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 5; };
+// The fun tray: things to DO with Rob, all on one screen (no sideways scrolling).
+const TILES = [
+  ['🐶', 'Puppy break', () => window.iRobCards && window.iRobCards.openCard('golden')],
+  ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
+  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
+  ['🗺️', 'Where was this?', () => startGame()],
+  ['🌊', 'Croatia trip', () => startSlides()],
+  ['🔮', 'My fortune', () => send('Read my fortune for today. Make it funny and weirdly specific.')],
+  ['🤔', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
+  ['🍕', 'Pick dinner', () => send('Just pick dinner for me tonight. Decide, don\'t ask.')],
+  ['🫙', 'Reasons jar', () => open('sheetReasons')],
+  ['🔧', 'Fix something', () => send('Help me fix something')],
+  ['💬', 'Say it for me', () => open('sheetSay')],
+  ['🃏', 'Comfort cards', () => window.iRobCards && window.iRobCards.toolkit()],
+];
 function renderIdeas(){
-  const row = $('ideaRow'); row.innerHTML = '<span class="tray-label">Ideas</span>';
-  const add = (label, fn) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.textContent = label; c.onclick = () => { setTray(false); fn(); }; row.appendChild(c); };
-  if (isNight()) add('Help me sleep', helpMeSleep);
-  STARTERS.forEach(t => add(t, () => send(t)));
-  add('Help me say something', () => open('sheetSay'));
+  const row = $('ideaRow'); row.innerHTML = '';
+  const list = TILES.slice();
+  if (isNight()) list[7] = ['🌙', 'Help me sleep', helpMeSleep];
+  list.forEach(([e, label, fn]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tile';
+    b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label;
+    b.onclick = () => { setTray(false); fn(); };
+    row.appendChild(b);
+  });
 }
 renderIdeas();
 function trayEdges(){ document.querySelectorAll('.tray-row').forEach(r => { const end = r.scrollLeft + r.clientWidth >= r.scrollWidth - 4; r.classList.toggle('at-end', end); r.parentElement.classList.toggle('at-end', end); }); }
