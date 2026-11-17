@@ -591,7 +591,7 @@ async function importData(obj){
 
 /* ================= Wire up ================= */
 window.iRobCards = {
-  render:chatCard, deal, onLedger, openCard, exportData, importData, clearAll:() => DB.clear(), pocketCritters, hardDayExtras,
+  render:chatCard, deal, onLedger, openCard, exportData, importData, clearAll:() => DB.clear(), pocketCritters, hardDayExtras, critter, critterEl,
   toolkit:async () => { ensureSheets(); await renderToolkit(); A.open('sheetToolkit'); },
   _test:{CARDS, DB, freshCritter, RULES}
 };

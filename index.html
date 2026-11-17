@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
 <link rel="stylesheet" href="cards.css">
+<link rel="stylesheet" href="fun.css">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -911,24 +912,36 @@ const WEATHER = [['☀️ Sunny', '☀️ Feeling sunny today — pretty good, a
 WEATHER.forEach(([l, msg]) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; const [emoji, ...word] = l.split(' '); c.textContent = emoji; c.setAttribute('aria-label', 'Inside it\'s ' + word.join(' ').toLowerCase()); c.title = word.join(' '); c.onclick = () => { setTray(false); send(msg); }; $('weatherRow').appendChild(c); });
 const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 5; };
 // The fun tray: things to DO with Rob, all on one screen (no sideways scrolling).
+const F = name => () => window.iRobFun ? window.iRobFun[name]() : toast('One moment, still loading');
 const TILES = [
-  ['🐶', 'Puppy break', () => window.iRobCards && window.iRobCards.openCard('golden')],
-  ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
-  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
+  ['🐶', 'Puppy power', F('puppyPower')],
+  ['🐱', 'Kitten cuddles', F('kittenCuddles')],
+  ['🐣', 'Pocket kitten', F('pocketKitten')],
+  ['🧺', 'Catch kittens', F('catchKittens')],
+  ['🥠', 'Fortune cookie', F('fortuneCookie')],
+  ['🧠', 'Memory match', F('memoryMatch')],
   ['🗺️', 'Where was this?', () => startGame()],
-  ['🌊', 'Croatia trip', () => startSlides()],
-  ['🔮', 'My fortune', () => send('Read my fortune for today. Make it funny and weirdly specific.')],
+  ['🎉', 'Brag button', F('bragButton')],
+  ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
   ['🤔', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
   ['🍕', 'Pick dinner', () => send('Just pick dinner for me tonight. Decide, don\'t ask.')],
+  ['✨', 'More fun', () => window.iRobFun && window.iRobFun.moreFun(MORE)],
+];
+const MORE = [
+  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
+  ['🌊', 'Croatia trip', () => startSlides()],
   ['🫙', 'Reasons jar', () => open('sheetReasons')],
   ['🔧', 'Fix something', () => send('Help me fix something')],
   ['💬', 'Say it for me', () => open('sheetSay')],
   ['🃏', 'Comfort cards', () => window.iRobCards && window.iRobCards.toolkit()],
+  ['🔒', 'Just us', F('dateNight')],
 ];
 function renderIdeas(){
   const row = $('ideaRow'); row.innerHTML = '';
   const list = TILES.slice();
   if (isNight()) list[7] = ['🌙', 'Help me sleep', helpMeSleep];
+  const pet = window.iRobFun && window.iRobFun.petName && window.iRobFun.petName();
+  if (pet) list[2] = ['🐱', pet.length > 14 ? pet.slice(0, 13) + '…' : pet, list[2][2]];
   list.forEach(([e, label, fn]) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'tile';
     b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label;
@@ -941,7 +954,7 @@ function trayEdges(){ document.querySelectorAll('.tray-row').forEach(r => { cons
 document.querySelectorAll('.tray-row').forEach(r => r.addEventListener('scroll', trayEdges, {passive:true}));
 document.querySelectorAll('.tray-more').forEach(b => b.onclick = () => $(b.dataset.row).scrollBy({left:200, behavior:'smooth'}));
 addEventListener('resize', trayEdges);
-function setTray(on){ setTimeout(trayEdges, 30); app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
+function setTray(on){ if (on) renderIdeas(); setTimeout(trayEdges, 30); app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
 $('chipsBtn').onclick = () => setTray(!app.classList.contains('chips-open'));
 
 /* ================= Composer ================= */
@@ -2085,7 +2098,7 @@ function pushRob(extra){
 window.iRob = {
   HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
   closeAll(){ close(); closeViewer(); endSlides(); },
-  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay, isBusy:() => busy,
+  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay, isBusy:() => busy, loadTrip, addLedger,
   saveChat:() => save(K.chat, chat),
   setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },
   addToPocket(text){ if (!pocket.some(p => p.text === text)){ pocket.unshift({id:uid(), src:null, text, t:Date.now(), tags:tagsFor(text)}); save(K.pocket, pocket); } toast('Saved to your Pocket'); }
@@ -2101,5 +2114,6 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 })();
 </script>
 <script src="cards.js" defer></script>
+<script src="fun.js" defer></script>
 </body>
 </html>

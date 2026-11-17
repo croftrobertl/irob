@@ -1,0 +1,90 @@
+/* iRob fun pack. Uses the app's tokens (--surface, --line, --title, --blue, --bronze…). */
+.fun-sheet .body{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.fun-sheet .body > *{flex:none}
+.fun-sheet .note{margin:0;color:var(--ink-soft);font-size:14px}
+.fun-sheet .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--title)}
+.fun-confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:200}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* A. Puppy Power */
+.pp-stage{width:100%;min-height:180px;display:grid;place-items:center}
+.pp-stage .kc-media{width:100%;max-height:260px;object-fit:cover;border-radius:18px}
+.pp-btn{width:150px;height:150px;border-radius:50%;border:0;color:#fff;font:700 22px/1.05 var(--head);letter-spacing:.06em;
+  background:radial-gradient(circle at 35% 30%,#ff8a7a,#d8392b 55%,#9e2117);box-shadow:0 10px 0 #7d1810,0 16px 28px rgba(0,0,0,.25),inset 0 4px 10px rgba(255,255,255,.35);transition:transform .08s,box-shadow .08s}
+.pp-btn:active,.pp-btn.pressed{transform:translateY(8px);box-shadow:0 2px 0 #7d1810,0 6px 12px rgba(0,0,0,.25),inset 0 4px 10px rgba(255,255,255,.35)}
+.pp-meter{width:80%;height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.pp-meter i{display:block;height:100%;background:linear-gradient(90deg,#f2d16b,#d9a22b);border-radius:5px;transition:width .3s}
+.pp-level{margin:0;font:600 14px/1.3 var(--body);color:var(--title)}
+
+/* B. Kitten cuddles */
+.kc-pad{--melt:0;position:relative;width:100%;max-width:340px;aspect-ratio:1/1;border-radius:24px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;background:var(--surface-2)}
+.kc-pic{position:absolute;inset:0;display:grid;place-items:center;transform:scaleX(calc(1 + var(--melt) * .08)) scaleY(calc(1 - var(--melt) * .1));transform-origin:50% 100%;transition:transform .3s}
+.kc-pic .kc-media{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.kc-pad.holding{box-shadow:0 0 0 4px rgba(232,180,184,.6)}
+.kc-hearts{position:absolute;inset:0;pointer-events:none}
+.kc-hearts span{position:absolute;bottom:10%;font-size:26px;animation:kcUp 1.8s ease-out forwards}
+@keyframes kcUp{to{transform:translateY(-220px) scale(1.3);opacity:0}}
+.kc-hint{margin:0;font:600 15px/1.3 var(--body);color:var(--title);min-height:2.6em}
+
+/* C. Pocket kitten */
+.pet{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.pet-cat{position:relative;line-height:1;animation:petBob 2.6s ease-in-out infinite}
+.pet-cat[data-crown]::before{content:attr(data-crown);position:absolute;top:-.45em;left:50%;transform:translateX(-50%);font-size:.4em}
+@keyframes petBob{50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.pet-cat{animation:none}}
+.pet-name{margin:2px 0 0;font:600 22px/1.1 var(--head);letter-spacing:.04em;color:var(--title)}
+.pet-sub{margin:0;font-size:13px;color:var(--ink-soft)}
+.pet-line{margin:4px 0;min-height:2.6em;font-style:italic;color:var(--ink)}
+.pet-bars{display:grid;gap:6px;width:100%;max-width:300px}
+.pet-bar{display:flex;align-items:center;gap:8px}
+.pet-bar b{flex:1;height:9px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.pet-bar i{display:block;height:100%;background:var(--bronze);border-radius:5px}
+.pet-acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;max-width:320px;margin-top:6px}
+.pet-new{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.pet-egg{font-size:72px;line-height:1}
+.pet-new input,.us-lock input[type=password],.brag textarea{width:100%;max-width:320px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font:inherit;font-size:16px;color:var(--ink)}
+
+/* D. Catch the kittens */
+.catch{width:100%;border-radius:18px;overflow:hidden;background:linear-gradient(var(--surface-2),var(--bg));touch-action:none}
+.catch canvas{display:block;width:100%}
+.catch-hud{display:flex;justify-content:space-between;width:100%;font:600 15px/1 var(--body);color:var(--title);font-variant-numeric:tabular-nums}
+
+/* F. Fortune cookie */
+.fc{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:190px;justify-content:center}
+.fc-cookie{position:relative;width:150px;height:110px;border:0;background:none;font-size:96px;line-height:1}
+.fc-cookie span{position:absolute;top:0;transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .45s}
+.fc-cookie .l{left:12px;clip-path:inset(0 50% 0 0)}
+.fc-cookie .r{left:12px;clip-path:inset(0 0 0 50%)}
+.fc-cookie.open .l{transform:translateX(-34px) rotate(-22deg)}
+.fc-cookie.open .r{transform:translateX(34px) rotate(22deg)}
+.fc-slip{margin:0;max-width:300px;padding:12px 16px;background:#fffdf6;color:#3a2f20;border:1px solid #e7dcc4;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.12);font:italic 16px/1.4 var(--body);animation:slipIn .4s ease-out}
+@keyframes slipIn{from{transform:scaleX(.2);opacity:0}}
+
+/* G. Just us */
+.us-lock{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.us-icon{font-size:52px}
+.us-remember{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink-soft)}
+.us-labels,.us-dice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.us-labels span{font:400 10.5px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.us-die{aspect-ratio:1/1;display:grid;place-items:center;padding:8px;border-radius:18px;background:linear-gradient(145deg,#7a1f2b,#3f0d17);color:#fff3f0;font:600 15px/1.2 var(--body);box-shadow:0 6px 16px rgba(63,13,23,.35),inset 0 2px 6px rgba(255,255,255,.2)}
+.us-die.spin{transform:rotate(-8deg) scale(.94)}
+.us-wild{margin:0;padding:10px 14px;border-radius:12px;background:var(--tint);color:var(--deep);font-weight:600}
+.us-row{display:flex;gap:10px}
+
+/* H. Memory match */
+.mm-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.mm-card{position:relative;aspect-ratio:1/1;border:0;padding:0;border-radius:12px;overflow:hidden;background:var(--blue);perspective:600px}
+.mm-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
+.mm-back{position:absolute;inset:0;display:grid;place-items:center;color:#f2d16b;font-size:22px}
+.mm-card.up img{opacity:1}
+.mm-card.done{box-shadow:0 0 0 3px #d9a22b}
+
+/* I. Brag */
+.brag{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+.brag label{font-weight:600;color:var(--title)}
+.brag-trophy{font-size:80px;line-height:1;animation:trophy .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes trophy{from{transform:scale(.2) rotate(-20deg)}}
+.brag-said{margin:4px 0 0;font-style:italic}
+.brag-line{margin:2px 0 0;font-weight:600;color:var(--title)}
+.brag-shelf{margin:0;font-size:13px;color:var(--ink-soft)}
+.fun-sheet .tiles{width:100%}
