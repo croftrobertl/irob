@@ -755,6 +755,13 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retur
 
 let chat = load(K.chat, []).filter(m => !m.hold);        // [{role:'user'|'assistant', content, t, id}]
 let pocket = load(K.pocket, []);    // [{id, text, t, tags}]
+// One-time fresh start (requested): clear the conversation, Rob's follow-ups and his memory notes on every phone.
+(() => {
+  if (load('try_chat_reset_1', false)) return;
+  chat = []; save(K.chat, []); save(K.follow, []);
+  try { localStorage.removeItem('try_notes'); } catch {}
+  save('try_chat_reset_1', true);
+})();
 // One-time cleanup: remove the old "just friends / find someone else / not attracted" lines from saved chats and the Pocket.
 (() => {
   if (load('try_cleaned_friends', false)) return;
