@@ -23,6 +23,11 @@ jobs:
             echo "::error::The iRob relay isn't answering. Erica's app is using the slower backups."
             exit 1
           fi
+          errs=$(echo "$out" | jq -r '.errors7d // "n/a"')
+          echo "App errors reported in the last 7 days: $errs"
+          if [ "$errs" != "n/a" ] && [ "$errs" != "null" ] && [ "$errs" -gt 0 ]; then
+            echo "::warning::Erica's app reported $errs error(s) this week. Details: Cloudflare dashboard → Storage & Databases → KV → the LOG namespace."
+          fi
 
       - name: Backup AI (Pollinations) answers
         run: |

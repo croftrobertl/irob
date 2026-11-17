@@ -7,6 +7,18 @@
    - 4. Storm alerts: National Weather Service alerts for Winter Park (free, no key).
    - 5. Tapbacks: Rob sometimes reacts to her message before replying.
    Personal data only goes to the relay (Groq with zero data retention), never to the Pollinations fallback. */
+// 2.7: anonymous error reports → the relay's /log (no chat text, at most 5 per visit, each message once).
+(() => {
+  const VER = '2026-11-17', sent = new Set(); let n = 0;
+  const report = (m, src, line, col) => {
+    if (!m || n >= 5 || /^Script error\.?$/.test(m) || sent.has(m)) return; sent.add(m); n++;
+    const body = JSON.stringify({m:String(m).slice(0, 300), src:String(src || '').replace(location.origin, '').slice(0, 120), line, col, ver:VER, ua:(navigator.userAgent.match(/(iPhone OS [\d_]+|Android [\d.]+|Mac OS X [\d_]+|Windows NT [\d.]+)/) || [''])[0], where:(document.querySelector('.sheet.show') || {}).id || 'chat'});
+    try { fetch('https://irob-ai.croftrobertl.workers.dev/log', {method:'POST', body, keepalive:true, headers:{'Content-Type':'text/plain'}}).catch(() => {}); } catch {}
+  };
+  addEventListener('error', e => report(e.message, e.filename, e.lineno, e.colno));
+  addEventListener('unhandledrejection', e => { const r = e.reason; report('Unhandled: ' + (r && (r.message || r.name) || String(r)), r && r.stack ? (r.stack.split('\n')[1] || '') : '', 0, 0); });
+  window.iRobReport = report;
+})();
 (() => {
 'use strict';
 const PK = 'try_pkey', NOTES = 'try_notes', SENT = 'try_dates_sent', SEEN = 'try_alerts_seen', SUGG = 'try_sugg';
@@ -99,20 +111,19 @@ async function refreshAlerts(force){
   } catch {}
   return alerts;
 }
-function postAlerts(){
-  if (!R()) return false;
-  const seen = get(SEEN, []); let posted = false;
+// Weather alerts show as a slim banner above the chat (not as a chat message). Dismissed alerts stay dismissed.
+function alertsBannerNow(){
+  if (!R() || !R().showBanner) return;
+  const seen = get(SEEN, []);
   alerts.forEach(a => {
     if (seen.includes(a.id)) return;
-    seen.push(a.id);
     const until = a.ends ? ` until ${new Date(a.ends).toLocaleString('en-US', {weekday:'short', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'})}` : '';
     const tip = (TIP.find(([re]) => re.test(a.event)) || [null, 'Keep an eye on it and stay safe.'])[1];
-    R().pushRob({content:`Heads up: there's a ${a.event} for your area${until}. ${tip}${/warning/i.test(a.event) ? ' Text me when you\'re safe.' : ''}`});
-    posted = true;
+    const esc = t => t.replace(/[&<>]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;'}[c]));
+    R().showBanner('wx-' + a.id, `<b>${esc(a.event)}</b>${esc(until)}. ${esc(tip)}`, {icon:/warning/i.test(a.event) ? '🚨' : '⚠️', onDismiss:() => { const s2 = get(SEEN, []); s2.push(a.id); put(SEEN, s2.slice(-50)); }});
   });
-  put(SEEN, seen.slice(-50));
-  return posted;
 }
+async function alertsBanner(){ await refreshAlerts(); alertsBannerNow(); }
 
 // ---------- 2. Dates ----------
 function dateMessage(d, her){
@@ -197,10 +208,8 @@ async function autoPost(){
   await ready;
   const busy = () => R() && R().isBusy && R().isBusy();
   let posted = !busy() && postDates();
-  await refreshAlerts();
-  if (!busy() && postAlerts()) posted = true;
   return posted;
 }
 
-window.iRobLife = {ready, refresh, autoPost, prompt, avoidRe, suggest, tapback, learn, renderNotes, get profile(){ return profile; }};
+window.iRobLife = {ready, refresh, autoPost, alertsBanner, prompt, avoidRe, suggest, tapback, learn, renderNotes, get profile(){ return profile; }};
 })();

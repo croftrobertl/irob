@@ -78,6 +78,30 @@ button{cursor:pointer;border:0;background:none;padding:0}
 .pill i{width:8px;height:8px;border-radius:50%;background:#2e9d5b}
 .pill.off i{background:#c98a1b}
 
+/* ---------- Banners + Today card ---------- */
+.banners{display:flex;flex-direction:column;gap:6px;padding:0 12px}
+.banners:empty{display:none}
+.banner{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-radius:14px;background:#fff1d6;border:1px solid #e8c88a;color:#5e3f0c;font-size:13.5px;line-height:1.3;animation:actsIn .25s ease-out}
+.banner.soft{background:var(--tint);border-color:var(--line);color:var(--ink)}
+.banner .bi{flex:none;font-size:16px}
+.banner .bt{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.banner.open .bt{display:block}
+.banner .ba{flex:none;padding:6px 10px;border-radius:10px;background:var(--blue);color:#fff;font:600 12.5px/1 var(--body);min-height:32px}
+.banner .bx{flex:none;width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;color:inherit;opacity:.7}
+.today{width:100%;padding:0 4px;margin:auto 0 10px}
+.today-card{display:flex;gap:12px;align-items:center;padding:10px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 6px 18px rgba(125,84,17,.08);text-align:left}
+.today-photo{position:relative;flex:none;width:86px;height:86px;border-radius:14px;overflow:hidden;padding:0;border:0}
+.today-photo img{width:100%;height:100%;object-fit:cover}
+.today-photo span{position:absolute;left:0;right:0;bottom:0;padding:2px 4px;background:rgba(0,0,0,.5);color:#fff;font:600 9.5px/1.2 var(--body)}
+.today-txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.today-txt p{margin:0;overflow:hidden;text-overflow:ellipsis}
+.today-hi{font:600 16px/1.2 var(--head);letter-spacing:.03em;color:var(--title)}
+.today-date{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em}
+.today-row{font-size:13px;color:var(--ink);white-space:nowrap}
+.today-fortune{white-space:normal;font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@media (max-height:640px){.today-photo{width:66px;height:66px}.today-fortune{display:none}}
+.app:not(.chatting) .empty{margin-top:0}
+
 /* ---------- Hero / avatar ---------- */
 .hero{display:flex;flex-direction:column;align-items:center;padding:6px 0 10px;transition:padding .35s ease}
 .avatar-wrap{position:relative;width:132px;height:132px;transition:width .35s ease,height .35s ease}
@@ -134,7 +158,7 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .app.chatting .mini{display:flex}
 .app.chatting .pill{display:none}
 .app.chatting:not(.breathing) .hero{display:none}
-.mini-av{position:relative;width:38px;height:38px;border-radius:50%;flex:none}
+.mini-av{position:relative;width:44px;height:44px;border-radius:50%;flex:none}
 .mini-av img{position:relative;width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid var(--surface);box-shadow:0 2px 8px rgba(182,130,53,.22);display:block}
 .mini-av .ring{inset:-4px}
 .mini-txt{min-width:0}
@@ -234,6 +258,9 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 @keyframes tapIn{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.tap{animation:none}}
 .fu-h{font-family:var(--head);font-size:14px;letter-spacing:.04em;margin:18px 0 4px;color:var(--title)}
+.sx-h{margin:10px 0 6px;font:400 11px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.sx-chips{display:flex;flex-wrap:wrap;gap:8px}
+.sx-chips .chip{min-height:38px}
 .fu-add{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .fu-add input{padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:16px;color:var(--ink)}
 .hit{display:block;width:100%;text-align:left;padding:12px 2px;border-bottom:1px solid var(--line)}
@@ -242,8 +269,12 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 /* 9A desktop backdrop */
 #backdrop{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 body > .app{z-index:1}
-#backdrop img{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(26px) saturate(.9);opacity:0;transition:opacity 3s}
-#backdrop img.on{opacity:.55}
+#backdrop img{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(6px) saturate(.95);opacity:0;transition:opacity 3s}
+#backdrop img.on{opacity:.8}
+#backdrop img.kb{animation:kenburns 18s ease-in-out forwards}
+@keyframes kenburns{from{transform:scale(1.04) translate(0,0)}to{transform:scale(1.14) translate(var(--kx,0),var(--ky,0))}}
+#backdrop .bd-cap{position:absolute;left:28px;bottom:24px;z-index:1;font:400 13px/1 var(--head);letter-spacing:.12em;text-transform:uppercase;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:reduce){#backdrop img.kb{animation:none}}
 #backdrop::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--page) 45%,transparent)}
 /* confirm sheet */
 .confirm-msg{font-size:17px;line-height:1.4;margin:10px 2px 6px}
@@ -307,6 +338,9 @@ h1,.status{position:relative;z-index:1}
 .me .bubble{background:var(--blue);color:#fff;border-bottom-right-radius:6px}
 .rob .bubble{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px;box-shadow:0 2px 8px rgba(45,43,43,.05)}
 .acts{display:flex;gap:2px;margin-left:4px}
+.msg.rob .acts{display:none}
+.msg.rob.acts-on .acts{display:flex;animation:actsIn .18s ease-out}
+@keyframes actsIn{from{opacity:0;transform:translateY(-4px)}}
 .act{width:44px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--ink-soft)}
 .act svg{width:18px;height:18px}
 .act:active{background:var(--blue-soft)}
@@ -337,6 +371,38 @@ h1,.status{position:relative;z-index:1}
 .chip{flex:none;padding:9px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;color:var(--title);font-weight:600}
 .chip:active{background:var(--blue-soft)}
 .app.chatting:not(.chips-open) .chips.starters{display:none}
+/* Tray: a frosted panel floating above the composer. Closed until ✦ is tapped; drag the handle down (or tap the chat) to close. */
+.app .chips.starters{display:none}
+.app.chips-open .chips.starters{display:flex}
+.chips{position:absolute;left:0;right:0;bottom:var(--composer-h,72px);z-index:14;max-height:min(74%,560px);overflow-y:auto;overscroll-behavior:contain;border-top:0;border-radius:22px 22px 0 0;padding:0 12px 12px;gap:0;
+  background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 -14px 36px rgba(60,40,10,.18);animation:trayUp .28s cubic-bezier(.2,.8,.2,1)}
+@supports not (backdrop-filter:blur(1px)){.chips{background:var(--surface)}}
+@keyframes trayUp{from{transform:translateY(40px);opacity:0}}
+.chips.dragging{animation:none;transition:none}
+.chips.snap{transition:transform .2s ease-out}
+.tray-grab{flex:none;display:block;width:100%;height:26px;border:0;background:none;padding:0;cursor:grab;touch-action:none}
+.tray-grab::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--grab);margin:9px auto}
+.app .spark{display:grid!important}
+.empty .tall{display:none}.empty .short{display:inline!important}
+/* Bento grid: live tiles + bronze line icons */
+.tiles.bento{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(64px,auto);gap:8px}
+.tile .ic{width:26px;height:26px;color:var(--bronze)}
+.tile .ic svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tile.big{grid-column:span 2;grid-row:span 2;justify-content:space-between;align-items:stretch;padding:10px;text-align:left;background:linear-gradient(160deg,var(--surface),var(--tint))}
+.tile.big .pet-face{font-size:52px;line-height:1;text-align:center;animation:petBob 2.6s ease-in-out infinite}
+.tile.big .pt{font:600 15px/1.1 var(--head);letter-spacing:.03em;color:var(--title)}
+.tile.big .ps{font:400 11.5px/1.25 var(--body);color:var(--ink-soft)}
+.tile.big .need{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}.tile.big .need i{display:block;height:100%;background:var(--bronze)}
+.tile.wide{grid-column:span 2;position:relative;overflow:hidden;justify-content:flex-end;align-items:flex-start;padding:8px 10px;color:#fff;border:0;background:#4b3a22 center/cover no-repeat}
+.tile.wide::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(20,14,6,.78),rgba(20,14,6,.05) 70%)}
+.tile.wide > *{position:relative}
+.tile.wide .wt{font:600 14px/1.1 var(--head);letter-spacing:.06em;text-transform:uppercase}
+.tile.wide .ws{font:400 11px/1.2 var(--body);opacity:.9}
+.tile .badge{position:absolute;top:6px;right:6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--coral);color:#fff;font:700 10.5px/18px var(--body)}
+.tile{position:relative}
+/* 3G: frosted sheets */
+.sheet{background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(24px) saturate(1.3);backdrop-filter:blur(24px) saturate(1.3)}
+@keyframes petBob{50%{transform:translateY(-5px)}}
 .composer .spark{width:46px;height:46px;flex:none;border-radius:50%;color:var(--gold)}
 .composer .spark[aria-expanded="true"]{background:rgba(255,255,255,.12)}
 .app:not(.chatting) .spark{display:none}
@@ -434,6 +500,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     </button>
   </div>
 
+  <div class="banners" id="banners" aria-live="polite"></div>
   <div class="hero">
     <div class="avatar-wrap float">
       <span class="ring listen"></span><span class="ring think"></span><span class="ring wave"></span>
@@ -450,10 +517,12 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </div>
 
   <div class="chat" id="chat" aria-live="polite">
+    <div class="today" id="today" hidden></div>
     <p class="empty" id="empty">I'm right here. Tell me anything<span class="tall">, or tap one below</span><span class="short" style="display:none">, or tap ✦ for ideas</span>.</p>
   </div>
 
   <div class="chips starters" id="chips">
+    <button type="button" class="tray-grab" id="trayGrab" aria-label="Close the fun tray"></button>
     <div class="tiles" id="ideaRow" role="group" aria-label="Things to do with Rob"></div>
   </div>
   <form class="composer" id="form" autocomplete="off">
@@ -653,6 +722,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
 'use strict';
 /* ================= Config ================= */
 const HER = 'Erica';
+let tripPool = null, tripCache = []; // trip.json cache (declared early: the Today card and tray use it at startup)
 const AI_URL = 'https://text.pollinations.ai/openai';
 // iRob relay (Cloudflare Worker → Groq, then Cloudflare Workers AI). Empty = skip straight to Pollinations.
 const RELAY_URL = 'https://irob-ai.croftrobertl.workers.dev/chat';
@@ -807,6 +877,8 @@ addEventListener('online', () => setOnline(true)); addEventListener('offline', (
 
 /* ================= Avatar ================= */
 const DEFAULT_AVATAR = 'rob.jpg';
+// Everything worth keeping goes in the backup file (the "Just us" password never does).
+const BACKUP_KEYS = [...Object.values(K), 'try_pocketkitten', 'try_pp', 'try_catchbest', 'try_matchbest2', 'try_brags', 'try_notes', 'try_coupons', 'try_secrets_found', 'try_dates_sent', 'try_alerts_seen', 'try_lastbackup', 'try_searches'];
 function showPhoto(){ const src = load(K.photo, null) || DEFAULT_AVATAR; $('avatarImg').src = src; $('miniImg').src = src; }
 showPhoto();
 const pickPhoto = () => $('photoIn').click();
@@ -870,6 +942,7 @@ const ICON = {
 };
 function renderChat(){
   chatEl.querySelectorAll('.msg,.day-sep').forEach(n => n.remove()); lastDay = '';
+  $('today').hidden = chat.length > 0; if (!chat.length) setTimeout(renderToday, 0); // after startup finishes
   $('empty').hidden = chat.length > 0;
   app.classList.toggle('chatting', chat.length > 0);
   chat.forEach(m => appendMsg(m));
@@ -900,6 +973,7 @@ function msgNode(m){
     sync(); acts.append(play, star);
     if (m.memory) wrap.appendChild(memoryCard(m.memory, () => { delete m.memory; save(K.chat, chat); }));
     attachReact(b, m, wrap);
+    b.addEventListener('click', () => { const on = !wrap.classList.contains('acts-on'); document.querySelectorAll('.msg.acts-on').forEach(x => x.classList.remove('acts-on')); wrap.classList.toggle('acts-on', on); });
     if (m.card && window.iRobCards) wrap.appendChild(window.iRobCards.render(m));
     if (m.fix){
       const fb = document.createElement('button'); fb.className = 'fixbtn'; fb.type = 'button';
@@ -933,19 +1007,41 @@ const WEATHER = [['☀️ Sunny', '☀️ Feeling sunny today — pretty good, a
 const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 5; };
 // The fun tray: things to DO with Rob, all on one screen (no sideways scrolling).
 const F = name => () => window.iRobFun ? window.iRobFun[name]() : toast('One moment, still loading');
+// Bronze line icons (one style everywhere instead of mixed emoji).
+const IC = {
+  puppy:'<path d="M7.2 8.4C5 8.6 3.6 6.6 4.2 4.6c.4-1 1.6-1.2 2.5-.5L8.7 6M16.8 8.4c2.2.2 3.6-1.8 3-3.8-.4-1-1.6-1.2-2.5-.5L15.3 6"/><path d="M7 9c0-2.6 2.2-4 5-4s5 1.4 5 4v4a5 5 0 0 1-10 0z"/><path d="M10 10.6v.1M14 10.6v.1M11 14h2l-1 1.1zM12 15.1v1.4"/>',
+  cuddle:'<path d="M5.5 9.5 6.4 4l3.6 3M18.5 9.5 17.6 4 14 7"/><path d="M5 14a7 6.5 0 0 0 14 0c0-3.6-3.1-7-7-7s-7 3.4-7 7z"/><path d="M9.5 13v.1M14.5 13v.1M11 15.8c.6.5 1.4.5 2 0M2.5 13.5 5 14M21.5 13.5 19 14"/>',
+  basket:'<path d="M3 10.5h18l-2.2 9H5.2z"/><path d="M8 10.5 11 4M16 10.5 13 4M9 13.5v3M12 13.5v3M15 13.5v3"/>',
+  cookie:'<path d="M3 13.5C3 8.8 7 5 12 5s9 3.8 9 8.5c-3.2-1.1-5.8 0-9 3.2-3.2-3.2-5.8-4.3-9-3.2z"/><path d="M12 16.7 14.5 20H20"/>',
+  boat:'<path d="M12 3v13M12 4.5 18 15h-6M12 7 7.5 15H12"/><path d="M3 18.5c2 1.4 4 1.4 6 0 2 1.4 4 1.4 6 0 2 1.4 4 1.4 6 0"/>',
+  trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20.5h7M10 17h4"/>',
+  laugh:'<circle cx="12" cy="12" r="9"/><path d="M7.5 13.5h9a4.5 4.5 0 0 1-9 0zM8 9.2l2 1.1-2 1.1M16 9.2l-2 1.1 2 1.1"/>',
+  fork:'<path d="M12 21v-7M12 14 6.5 8.5M12 14l5.5-5.5M4.5 10V6.5H8M19.5 10V6.5H16"/>',
+  wheel:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/><circle cx="12" cy="12" r="1.8"/>',
+  sparkle:'<path d="M12 3.5l1.7 4.8 4.8 1.7-4.8 1.7L12 16.5l-1.7-4.8L5.5 10l4.8-1.7z"/><path d="M18.5 15l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/>',
+  ticket:'<path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"/><path d="M9.2 10.6c.6-1 2-1 2.5 0 .5-1 1.9-1 2.5 0 .6 1.2-1 2.6-2.5 3.6-1.5-1-3.1-2.4-2.5-3.6z"/>',
+  moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  jar:'<path d="M8 4h8M7 7h10v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z"/><path d="M9.6 12.6c.5-.9 1.7-.9 2.2 0 .4-.9 1.6-.9 2.2 0 .5 1.1-.9 2.3-2.2 3-1.3-.7-2.7-1.9-2.2-3z"/>',
+  wrench:'<path d="M14.7 6.3a4 4 0 0 0 5 5L12.8 18.2a2.1 2.1 0 0 1-3-3z"/><path d="M14.7 6.3 17 4l3 3-2.3 2.3"/>',
+  cards:'<rect x="4" y="6" width="11" height="15" rx="2"/><path d="M8 3.5h10a2 2 0 0 1 2 2V18"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2.5"/>',
+  hush:'<circle cx="12" cy="12" r="9"/><path d="M8.5 10h.01M15.5 10h.01M9 15h6M12 3v2"/><path d="M17.5 6.5 19 5"/>',
+  dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01"/>',
+};
+const icon = k => `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${IC[k] || IC.sparkle}</svg></span>`;
 const TILES = [
-  ['🐶', 'Puppy power', F('puppyPower')],
-  ['🐱', 'Kitten cuddles', F('kittenCuddles')],
-  ['🐣', 'Pocket kitten', F('pocketKitten')],
-  ['🧺', 'Catch kittens', F('catchKittens')],
-  ['🥠', 'Fortune cookie', F('fortuneCookie')],
-  ['🇭🇷', 'Croatia games', () => window.iRobFun && window.iRobFun.croatiaGames(CROATIA)],
-  ['🎉', 'Brag button', F('bragButton')],
-  ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
-  ['🤔', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
-  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
-  ['🫙', 'Reasons jar', () => open('sheetReasons')],
-  ['✨', 'More fun', () => window.iRobFun && window.iRobFun.moreFun(MORE)],
+  ['pet', 'Pocket kitten', F('pocketKitten')],
+  ['puppy', 'Puppy power', F('puppyPower')],
+  ['cuddle', 'Kitten cuddles', F('kittenCuddles')],
+  ['basket', 'Catch kittens', F('catchKittens')],
+  ['cookie', 'Fortune cookie', F('fortuneCookie')],
+  ['croatia', 'Croatia games', () => window.iRobFun && window.iRobFun.croatiaGames(CROATIA)],
+  ['ticket', 'Love coupons', F('loveCoupons')],
+  ['trophy', 'Brag button', F('bragButton')],
+  ['laugh', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
+  ['fork', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
+  ['wheel', 'Spin the wheel', () => open('sheetRoulette')],
+  ['sparkle', 'More fun', () => window.iRobFun && window.iRobFun.moreFun(MORE)],
 ];
 const CROATIA = [
   ['🧠', 'Memory match', F('memoryMatch')],
@@ -957,28 +1053,52 @@ const CROATIA = [
   ['🌊', 'Slideshow', () => startSlides()],
 ];
 const MORE = [
+  ['🤫', 'Secret words', F('secretWords')],
+  ['🫙', 'Reasons jar', () => open('sheetReasons')],
   ['🔧', 'Fix something', () => send('Help me fix something')],
   ['🃏', 'Comfort cards', () => window.iRobCards && window.iRobCards.toolkit()],
   ['🔒', 'Just us', F('dateNight')],
 ];
-function renderIdeas(){
-  const row = $('ideaRow'); row.innerHTML = '';
+async function renderIdeas(){
+  const row = $('ideaRow'); row.className = 'tiles bento'; row.innerHTML = '';
   const list = TILES.slice();
-  if (isNight()) list[9] = ['🌙', 'Help me sleep', helpMeSleep];
-  const pet = window.iRobFun && window.iRobFun.petName && window.iRobFun.petName();
-  if (pet) list[2] = ['🐱', pet.length > 14 ? pet.slice(0, 13) + '…' : pet, list[2][2]];
-  list.forEach(([e, label, fn]) => {
+  if (isNight()) list[10] = ['moon', 'Help me sleep', helpMeSleep];
+  const fun = window.iRobFun || {};
+  list.forEach(([k, label, fn]) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'tile';
-    b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label;
+    if (k === 'pet'){
+      const st = fun.petTile ? fun.petTile() : null; b.classList.add('big');
+      b.innerHTML = st ? `<span class="pt"></span><span class="pet-face" aria-hidden="true">${st.face}</span><span class="ps"></span><span class="need"><i style="width:${st.low}%"></i></span>` : `<span class="pt">Pocket kitten</span><span class="pet-face" aria-hidden="true">🧺</span><span class="ps">A kitten showed up. Tap to adopt.</span>`;
+      if (st){ b.querySelector('.pt').textContent = st.name; b.querySelector('.ps').textContent = st.line; b.setAttribute('aria-label', `${st.name}: ${st.line}`); }
+    } else if (k === 'croatia'){
+      b.classList.add('wide'); b.innerHTML = '<span class="wt">Croatia games</span><span class="ws">7 games from our trip</span>';
+      loadTrip().then(pool => { const ph = pool ? pool.filter(m => m.k === 'p') : []; if (!ph.length) return; const d = new Date(); const m = ph[(Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5) * 7) % ph.length]; b.style.backgroundImage = `url("${m.thumb}")`; });
+    } else {
+      b.innerHTML = `${icon(k)}<span></span>`; b.lastChild.textContent = label;
+      if (k === 'ticket' && fun.couponBadge){ const n = fun.couponBadge(); if (n){ const bd = document.createElement('span'); bd.className = 'badge'; bd.textContent = n; b.appendChild(bd); } }
+    }
     b.onclick = () => { setTray(false); navFrom('tray'); fn(); };
     row.appendChild(b);
   });
 }
-renderIdeas();
+setTimeout(renderIdeas, 0);
 function trayEdges(){ document.querySelectorAll('.tray-row').forEach(r => { const end = r.scrollLeft + r.clientWidth >= r.scrollWidth - 4; r.classList.toggle('at-end', end); r.parentElement.classList.toggle('at-end', end); }); }
 document.querySelectorAll('.tray-row').forEach(r => r.addEventListener('scroll', trayEdges, {passive:true}));
 document.querySelectorAll('.tray-more').forEach(b => b.onclick = () => $(b.dataset.row).scrollBy({left:200, behavior:'smooth'}));
 addEventListener('resize', trayEdges);
+(() => {
+  const comp = document.querySelector('.composer');
+  const setH = () => app.style.setProperty('--composer-h', comp.offsetHeight + 'px');
+  if (window.ResizeObserver) new ResizeObserver(setH).observe(comp); setH();
+  const tray = $('chips'), grab = $('trayGrab'); let y0 = null, dy = 0;
+  grab.onclick = () => { if (Math.abs(dy) < 4) setTray(false); };
+  grab.addEventListener('pointerdown', e => { y0 = e.clientY; dy = 0; tray.classList.add('dragging'); grab.setPointerCapture(e.pointerId); });
+  grab.addEventListener('pointermove', e => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); tray.style.transform = `translateY(${dy}px)`; });
+  const end = () => { if (y0 == null) return; y0 = null; tray.classList.remove('dragging');
+    if (dy > 70){ tray.style.transform = ''; setTray(false); } else { tray.classList.add('snap'); tray.style.transform = ''; setTimeout(() => tray.classList.remove('snap'), 220); } };
+  grab.addEventListener('pointerup', end); grab.addEventListener('pointercancel', end);
+  $('chat').addEventListener('click', e => { if (app.classList.contains('chips-open') && !e.target.closest('.msg')) setTray(false); });
+})();
 function setTray(on){ if (on) renderIdeas(); setTimeout(trayEdges, 30); app.classList.toggle('chips-open', on); $('chipsBtn').setAttribute('aria-expanded', on); }
 $('chipsBtn').onclick = () => setTray(!app.classList.contains('chips-open'));
 
@@ -1017,7 +1137,9 @@ async function send(text){
   chat.push(um); save(K.chat, chat);
   noteFollowUp(text);
   $('empty').hidden = true; app.classList.add('chatting');
+  $('today').hidden = true;
   const umNode = appendMsg(um);
+  const secretFx = !!(window.iRobFun && window.iRobFun.secretWord && window.iRobFun.secretWord(text));
   const tap = window.iRobLife && window.iRobLife.tapback(text);
   if (tap) setTimeout(() => { um.tap = tap; save(K.chat, chat); addTap(umNode, tap); }, 700);
   const tn = typingNode(); chatEl.appendChild(tn); scrollDown();
@@ -1077,6 +1199,7 @@ async function send(text){
   busy = false; grow(); setState(document.activeElement === input ? 'listening' : 'idle');
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
   if (window.iRobLife) window.iRobLife.learn(text);
+  if (!secretFx && window.iRobFun && window.iRobFun.replyEffect) window.iRobFun.replyEffect(reply);
 }
 // When she brings up her own looks, Rob says he won't comment (unless the reply already covers it).
 function withStanding(reply, text){
@@ -1280,7 +1403,6 @@ function localReply(text){
 // Reads the public trip site's own index (trip.json). Croatia days only (Sep 12–26),
 // self-hosted photos and videos only (GoPro clips live on Google Drive and are skipped).
 const TRIP = 'https://croftrobertl.github.io/croatia/';
-let tripPool = null, tripCache = [];
 function loadTrip(){
   if (tripPool) return tripPool;
   tripPool = fetch(TRIP + 'trip.json').then(r => { if (!r.ok) throw 0; return r.json(); }).then(d => {
@@ -1697,10 +1819,11 @@ $('wipe').onclick = async () => {
 };
 const pad2 = n => String(n).padStart(2, '0');
 $('backupBtn').onclick = async () => {
-  const data = {}; Object.values(K).filter(k => k !== K.lpass).forEach(k => { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch {} });
+  const data = {}; BACKUP_KEYS.filter(k => k !== K.lpass).forEach(k => { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch {} });
   const d = new Date(), name = `rob-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
   let idb = null; try { if (window.iRobCards) idb = await window.iRobCards.exportData(); } catch {}
   const blob = new Blob([JSON.stringify({app:'the-rob-you-want', v:2, saved:d.toISOString(), data, idb})], {type:'application/json'});
+  save('try_lastbackup', Date.now()); hideBanner('backup');
   const file = new File([blob], name, {type:'application/json'});
   try { if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); toast('Backup ready — keep it in Files'); return; } }
   catch (e) { if (e && e.name === 'AbortError') return; }
@@ -1710,7 +1833,7 @@ $('restoreBtn').onclick = () => $('restoreIn').click();
 $('restoreIn').onchange = async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
   let j = null; try { j = JSON.parse(await f.text()); } catch {}
-  const keys = Object.values(K);
+  const keys = BACKUP_KEYS;
   if (!j || j.app !== 'the-rob-you-want' || !j.data || typeof j.data !== 'object' || !Object.keys(j.data).every(k => keys.includes(k) && typeof j.data[k] === 'string')){ toast('That file isn\'t a backup from this app'); return; }
   if (!await askConfirm(`Replace everything on this phone with the backup from ${fmtDate(j.saved)}?`, 'Restore', true)) return;
   keys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
@@ -1784,6 +1907,9 @@ let autoRunning = false;
 async function autoMessages(){
   if (autoRunning || busy) return; autoRunning = true;
   try {
+    if (window.iRobLife) window.iRobLife.alertsBanner();
+    backupReminder();
+    if (!chat.some(m => m.role === 'user')){ renderToday(); return; }
     let posted = !!(await onThisDay());
     if (window.iRobLife && await window.iRobLife.autoPost()) posted = true;
     if (postFollowUp()) posted = true;
@@ -2100,7 +2226,19 @@ function snippetOf(text, q){ const i = text.toLowerCase().indexOf(q); const st =
   return (st > 0 ? '…' : '') + escH(part.slice(0, j)) + '<mark>' + escH(part.slice(j, j + q.length)) + '</mark>' + escH(part.slice(j + q.length)) + (i + q.length + 60 < text.length ? '…' : ''); }
 function renderSearch(){
   const q = $('searchIn').value.trim().toLowerCase(), out = $('searchOut'); out.innerHTML = '';
-  if (q.length < 2){ const n = document.createElement('p'); n.className = 'none'; n.textContent = 'Type at least two letters.'; out.appendChild(n); return; }
+  if (q.length < 2){
+    // 3H: recent searches + suggestion chips
+    const chipRow = (title, words) => { if (!words.length) return; const h = document.createElement('p'); h.className = 'sx-h'; h.textContent = title; out.appendChild(h);
+      const row = document.createElement('div'); row.className = 'sx-chips'; words.forEach(w => { const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.textContent = w; c.onclick = () => { $('searchIn').value = w; renderSearch(); }; row.appendChild(c); }); out.appendChild(row); };
+    chipRow('Recent', load('try_searches', []));
+    const pet = window.iRobFun && window.iRobFun.petName && window.iRobFun.petName();
+    const places = (tripCache || []).map(m => m.place); const topPlaces = [...new Set(places)].slice(0, 3);
+    const words = [...new Set([...(pet ? [pet] : []), 'love', 'funny', 'proud', 'fix', 'Croatia', ...topPlaces])].filter(w => [...chat, ...pocket].some(m => ((m.content || m.text || '') + '').toLowerCase().includes(w.toLowerCase())));
+    chipRow('Try', words.slice(0, 8));
+    if (!out.children.length){ const n = document.createElement('p'); n.className = 'none'; n.textContent = 'Type at least two letters.'; out.appendChild(n); }
+    return;
+  }
+  clearTimeout(renderSearch.t); renderSearch.t = setTimeout(() => { const rec = load('try_searches', []).filter(x => x.toLowerCase() !== q); rec.unshift($('searchIn').value.trim()); save('try_searches', rec.slice(0, 6)); }, 1500);
   const hits = [];
   [...chat].reverse().forEach(m => { if (!m.hold && typeof m.content === 'string' && m.content.toLowerCase().includes(q)) hits.push({who:m.role === 'user' ? 'You' : 'Rob', t:m.t, text:m.content, go:() => { close(); const el = chatEl.querySelector(`[data-id="${m.id}"]`); if (el){ el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }}); });
   pocket.forEach(p => { if (p.text && p.text.toLowerCase().includes(q)) hits.push({who:'Pocket', t:p.t, text:p.text, go:() => open('sheetPocket')}); });
@@ -2118,12 +2256,18 @@ $('searchIn').addEventListener('input', renderSearch);
   sb.title = 'Tap for ideas · press and hold for the Comfort toolkit'; })();
 
 /* 9A: desktop — a softly blurred Croatia photo behind the phone frame */
+// Desktop: the phone frame floats over a slow, Ken-Burns slideshow of trip photos with a small caption.
 async function desktopBackdrop(){
   if (!matchMedia('(min-width:900px) and (hover:hover)').matches) return;
   const pool = await loadTrip(); const photos = pool ? pool.filter(m => m.k === 'p') : []; if (!photos.length) return;
-  const bd = document.createElement('div'); bd.id = 'backdrop'; bd.setAttribute('aria-hidden', 'true'); const A1 = new Image(), B1 = new Image(); A1.alt = B1.alt = ''; bd.append(A1, B1); document.body.prepend(bd);
-  let flip = false; const swap = () => { const m = photos[Math.floor(Math.random() * photos.length)], el = flip ? B1 : A1, other = flip ? A1 : B1; el.onload = () => { el.classList.add('on'); other.classList.remove('on'); }; el.src = m.full; flip = !flip; };
-  swap(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(swap, 45000);
+  const bd = document.createElement('div'); bd.id = 'backdrop'; bd.setAttribute('aria-hidden', 'true');
+  const A1 = new Image(), B1 = new Image(); A1.alt = B1.alt = ''; const cap = document.createElement('div'); cap.className = 'bd-cap';
+  bd.append(A1, B1, cap); document.body.prepend(bd);
+  let flip = false;
+  const swap = () => { const m = photos[Math.floor(Math.random() * photos.length)], el = flip ? B1 : A1, other = flip ? A1 : B1;
+    el.onload = () => { el.classList.remove('kb'); void el.offsetWidth; el.style.setProperty('--kx', (Math.random() * 6 - 3) + '%'); el.style.setProperty('--ky', (Math.random() * 6 - 3) + '%'); el.classList.add('on', 'kb'); other.classList.remove('on'); cap.textContent = `${m.place} · ${memDate(m)}`; };
+    el.src = m.full; flip = !flip; };
+  swap(); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(swap, 16000);
 }
 
 function addLedger(text){
@@ -2135,13 +2279,58 @@ async function showStorage(){
   try { const e = await navigator.storage.estimate(); el.textContent = `${(e.usage / 1048576).toFixed(1)} MB used${e.quota ? ` of about ${Math.round(e.quota / 1048576)} MB available` : ''}`; }
   catch { el.textContent = 'Not available in this browser'; }
 }
+/* ---------- Banners (weather alerts, backup reminder) ---------- */
+function showBanner(id, html, opts = {}){
+  let b = document.querySelector(`.banner[data-id="${CSS.escape(id)}"]`);
+  if (!b){ b = document.createElement('div'); b.className = 'banner ' + (opts.kind || ''); b.dataset.id = id; $('banners').appendChild(b); }
+  b.innerHTML = `<span class="bi" aria-hidden="true">${opts.icon || '⚠️'}</span><span class="bt"></span>`;
+  b.querySelector('.bt').innerHTML = html;
+  if (opts.action){ const a = document.createElement('button'); a.type = 'button'; a.className = 'ba'; a.textContent = opts.action[0]; a.onclick = opts.action[1]; b.appendChild(a); }
+  const x = document.createElement('button'); x.type = 'button'; x.className = 'bx'; x.setAttribute('aria-label', 'Dismiss'); x.textContent = '×';
+  x.onclick = () => { b.remove(); if (opts.onDismiss) opts.onDismiss(); }; b.appendChild(x);
+  b.onclick = e => { if (e.target === b || e.target.classList.contains('bt')) b.classList.toggle('open'); };
+}
+function hideBanner(id){ const b = document.querySelector(`.banner[data-id="${CSS.escape(id)}"]`); if (b) b.remove(); }
+function backupReminder(){
+  const last = load('try_lastbackup', 0), nagged = load('try_backupnag', 0);
+  if (chat.filter(m => m.role === 'user').length < 10 && !load('try_pocketkitten', null)) return;
+  if (Date.now() - last < 30 * 864e5 || Date.now() - nagged < 7 * 864e5) return;
+  showBanner('backup', '<b>Quick favor:</b> save a backup so nothing gets lost if your phone does.', {icon:'💾', kind:'soft', action:['Back up', () => { open('sheetSettings'); }], onDismiss:() => save('try_backupnag', Date.now())});
+}
+
+/* ---------- Today card (welcome screen) ---------- */
+async function renderToday(){
+  const box = $('today'); if (!box || chat.length) return;
+  const now = new Date(), h = now.getHours();
+  const hi = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const pool = await loadTrip(); const photos = pool ? pool.filter(m => m.k === 'p') : [];
+  const day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  const photo = photos.length ? photos[(day * 7) % photos.length] : null;
+  await refreshWeather().catch(() => {});
+  const fun = window.iRobFun || {};
+  const pet = fun.petStatus ? fun.petStatus() : null;
+  const fortune = fun.fortuneOfDay ? fun.fortuneOfDay() : null;
+  if (chat.length) return;
+  box.innerHTML = '';
+  const card = document.createElement('div'); card.className = 'today-card';
+  if (photo){ const ph = document.createElement('button'); ph.type = 'button'; ph.className = 'today-photo'; ph.setAttribute('aria-label', `Today's Croatia photo: ${photo.place}`); ph.innerHTML = `<img alt="" src="${photo.thumb}"><span></span>`; ph.lastChild.textContent = photo.place; ph.onclick = () => openViewer(photo); card.appendChild(ph); }
+  const txt = document.createElement('div'); txt.className = 'today-txt';
+  const line = (cls, t) => { const p = document.createElement('p'); p.className = cls; p.textContent = t; txt.appendChild(p); };
+  line('today-hi', `${hi}, ${HER}.`);
+  line('today-date', now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'}));
+  if (WX.now) line('today-row', '🌤️ ' + WX.now.split(';')[0]);
+  if (pet) line('today-row', pet);
+  if (fortune) line('today-row today-fortune', '🥠 ' + fortune);
+  card.appendChild(txt); box.appendChild(card); box.hidden = false;
+}
+
 function pushRob(extra){
   const m = {role:'assistant', t:Date.now(), id:uid(), auto:true, ...extra};
   chat.push(m); save(K.chat, chat); renderChat(); return m;
 }
 window.iRob = {
   HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
-  closeAll(){ close(); closeViewer(); endSlides(); },
+  closeAll(){ close(); closeViewer(); endSlides(); }, showBanner, hideBanner,
   getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay, isBusy:() => busy, loadTrip, addLedger,
   saveChat:() => save(K.chat, chat),
   setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },

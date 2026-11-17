@@ -47,7 +47,7 @@ function confetti(n = 110, colors = ['#b68235', '#d9a22b', '#e8b4b8', '#8fb8c9',
 
 // ---------- Sound ----------
 let actx = null;
-const ac = () => { if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } } if (actx.state === 'suspended') actx.resume(); return actx; };
+const ac = () => { if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); soundTip(); } catch { return null; } } if (actx.state === 'suspended') actx.resume(); return actx; };
 function blip(freq = 660, dur = .09, type = 'sine', vol = .12){
   const a = ac(); if (!a) return;
   const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = freq;
@@ -663,8 +663,238 @@ function menu(id, title, items, intro){
   body.append(grid); show();
 }
 const moreFun = items => menu('funMore', 'More fun', items);
-const croatiaGames = items => menu('funCroatia', 'Croatia games', items, 'Little games made from our trip photos.');
+async function croatiaGames(items){
+  const {body, show} = sheet('funCroatia', 'Croatia games');
+  body.append(el('p', 'note', 'Little games made from our trip photos.'));
+  const grid = el('div', 'pc-grid');
+  const pool = A().loadTrip ? await A().loadTrip() : null; const ph = pool ? shuffle(pool.filter(m => m.k === 'p' && m.thumb)) : [];
+  items.forEach(([e, label, fn], i) => { const b = el('button', 'pc-card'); b.type = 'button';
+    if (ph[i]) b.style.backgroundImage = `url("${ph[i].thumb}")`;
+    b.innerHTML = `<span class="pc-e" aria-hidden="true">${e}</span><span class="pc-t"></span>`; b.querySelector('.pc-t').textContent = label; b.setAttribute('aria-label', label);
+    b.onclick = () => { stopAll(); fn(); }; grid.append(b); });
+  body.append(grid); show();
+}
 
-window.iRobFun = {puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, photoPuzzle, whichFirst, zoomDetective, tripTimeline, bragButton, moreFun, croatiaGames, confetti, stop:stopAll,
+/* ================= Effects engine (secret words + message effects) ================= */
+function fxCanvas(){
+  const c = el('canvas', 'fun-confetti'); document.body.appendChild(c);
+  const dpr = devicePixelRatio || 1; c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+  const g = c.getContext('2d'); g.scale(dpr, dpr); return {c, g, W:innerWidth, H:innerHeight};
+}
+// Generic emoji particle runner. make(i, W, H) → {x, y, vx, vy, size, rot, vr, e, delay}
+function particles(n, make, {gravity = 0, dur = 3200, fade = true} = {}){
+  if (reduced()) return;
+  const {c, g, W, H} = fxCanvas(); const ps = Array.from({length:n}, (_, i) => ({rot:0, vr:0, delay:0, ...make(i, W, H)}));
+  const t0 = performance.now(); let last = t0;
+  (function frame(t){
+    const dt = Math.min(40, t - last) / 16; last = t; const el2 = t - t0;
+    g.clearRect(0, 0, W, H);
+    ps.forEach(p => { if (el2 < p.delay) return; p.vy += gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      g.save(); g.globalAlpha = fade ? Math.max(0, Math.min(1, (dur - el2) / 600)) : 1; g.translate(p.x, p.y); g.rotate(p.rot);
+      g.font = `${p.size}px system-ui, "Apple Color Emoji", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.e, 0, 0); g.restore(); });
+    if (el2 < dur) requestAnimationFrame(frame); else c.remove();
+  })(t0);
+}
+const R = (a, b) => a + Math.random() * (b - a);
+const FX = {
+  rain:(emojis, n = 40) => particles(n, (i, W) => ({x:R(0, W), y:R(-H0(), -20), vx:R(-.4, .4), vy:R(3, 6), size:R(22, 38), vr:R(-.04, .04), e:rnd(emojis), delay:R(0, 900)}), {dur:3600}),
+  rise:(emojis, n = 26) => particles(n, (i, W, H) => ({x:R(20, W - 20), y:H + 30, vx:R(-.6, .6), vy:R(-5, -2.5), size:R(22, 40), vr:R(-.03, .03), e:rnd(emojis), delay:R(0, 800)}), {dur:3800}),
+  burst:(emojis, n = 34) => particles(n, (i, W, H) => { const a = R(0, Math.PI * 2), v = R(4, 11); return {x:W / 2, y:H * .5, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 3, size:R(20, 36), vr:R(-.1, .1), e:rnd(emojis)}; }, {gravity:.25, dur:2600}),
+  across:(e, {size = 90, y = .55, speed = 14} = {}) => particles(1, (i, W, H) => ({x:-size, y:H * y, vx:speed, vy:0, size, e}), {dur:Math.round((innerWidth + 2 * size) / speed * 16), fade:false}),
+  fireworks:() => { const cols = ['✨', '💥', '🎆', '🌟']; [0, 500, 1000, 1500].forEach(d => setTimeout(() => particles(22, (i, W, H) => { const cx = W * R(.2, .8), cy = H * R(.2, .5); const a = i / 22 * Math.PI * 2, v = R(3, 6); return {x:cx, y:cy, vx:Math.cos(a) * v, vy:Math.sin(a) * v, size:R(14, 24), e:rnd(cols)}; }, {gravity:.08, dur:1500}), d)); },
+  overlay:(cls, ms = 2600) => { if (reduced()) return; const o = el('div', 'fx-overlay ' + cls); document.body.appendChild(o); setTimeout(() => o.classList.add('out'), ms - 600); setTimeout(() => o.remove(), ms); return o; },
+  shake:() => { const a = document.getElementById('app'); if (!a || reduced()) return; a.classList.remove('fx-shake'); void a.offsetWidth; a.classList.add('fx-shake'); setTimeout(() => a.classList.remove('fx-shake'), 700); },
+  squeeze:() => { const a = document.getElementById('app'); if (!a || reduced()) return; a.classList.remove('fx-hug'); void a.offsetWidth; a.classList.add('fx-hug'); setTimeout(() => a.classList.remove('fx-hug'), 1300); },
+  bigText:(t, ms = 1400) => { if (reduced()) return; const o = el('div', 'fx-big', t); document.body.appendChild(o); setTimeout(() => o.remove(), ms); },
+  stars:() => { const o = FX.overlay('fx-night', 3200); if (!o) return; for (let i = 0; i < 26; i++){ const s = el('i', '', '✦'); s.style.left = R(0, 100) + '%'; s.style.top = R(0, 70) + '%'; s.style.animationDelay = R(0, 1.5) + 's'; s.style.fontSize = R(8, 18) + 'px'; o.append(s); } },
+  disco:() => { FX.overlay('fx-disco', 3200); FX.rain(['🪩', '✨', '💃'], 14); },
+  wave:() => { const o = FX.overlay('fx-wave', 2400); if (o) o.innerHTML = '<svg viewBox="0 0 1200 300" preserveAspectRatio="none"><path d="M0 160 C150 90 300 230 450 160 S750 90 900 160 S1150 230 1200 160 V300 H0Z" fill="rgba(46,124,170,.55)"/><path d="M0 200 C150 140 300 260 450 200 S750 140 900 200 S1150 260 1200 200 V300 H0Z" fill="rgba(80,160,200,.6)"/></svg>'; },
+  storm:() => { const o = FX.overlay('fx-storm', 3000); if (o){ o.textContent = '⛈️'; setTimeout(() => { o.textContent = '🌤️'; }, 1600); } },
+  zoomies:() => { if (reduced()) return; const o = el('div', 'fx-zoomies', '🐈'); document.body.appendChild(o); setTimeout(() => o.remove(), 2600); },
+};
+function H0(){ return innerHeight * .6; }
+
+// 1A. Secret words she can type. [match, name, description, effect]
+const SECRETS = [
+  [/\b(kittens?|kitty|kitties)\b/i, 'kitten', 'Kitten weather. Bring an umbrella. Or don\'t, they\'re soft.', () => FX.rain(['🐱', '😺', '😸', '🐈'], 36)],
+  [/\b(puppy|puppies|golden retriever|doggo)\b/i, 'puppy', 'A very good boy sprints through at 40 mph. He will not stop to explain.', () => FX.across('🐕', {size:96, y:.62, speed:12})],
+  [/\b(croatia|dubrovnik|cavtat|lokrum)\b/i, 'croatia', 'The Adriatic stops by to say hi. Please wipe your feet.', () => FX.wave()],
+  [/\b(love you|luv you|ily)\b/i, 'love you', 'Hearts. So many hearts. A medically concerning amount of hearts.', () => FX.burst(['💗', '💕', '💖', '❤️'], 40)],
+  [/\bhappy birthday\b/i, 'happy birthday', 'Balloons. Nobody had to blow them up.', () => FX.rise(['🎈', '🎈', '🎉', '🎂'], 30)],
+  [/\bpizza\b/i, 'pizza', 'It\'s raining pizza. This is the weather we were promised.', () => FX.rain(['🍕'], 30)],
+  [/\bcucumbers?\b/i, 'cucumber', 'A cucumber appears. Every cat in the app files a complaint and leaves.', () => { FX.bigText('🥒', 1600); FX.burst(['🙀', '😾', '🐈'], 18); }],
+  [/\b(coffee|caffeine|espresso)\b/i, 'coffee', 'Caffeine shakes, but for your phone.', () => { FX.rise(['☕', '☕', '⚡'], 16); FX.shake(); }],
+  [/\b(boo|halloween|spooky)\b/i, 'boo', 'Ghosts drift by. They\'re friendly. Mostly.', () => { FX.overlay('fx-dark', 3000); FX.rise(['👻', '🎃', '🦇'], 20); }],
+  [/\b(party|dance|disco)\b/i, 'party', 'Instant disco. No cover charge. Questionable lighting.', () => FX.disco()],
+  [/\b(cha-?ching|bookings?|money|rich)\b/i, 'money', 'Make it rain. Every bill is a booking. Manifesting.', () => FX.rain(['💸', '💵', '🤑'], 34)],
+  [/\bsnow\b/i, 'snow', 'Florida-legal snow. Melts in three seconds, like real Florida snow.', () => FX.rain(['❄️', '❄️', '⛄'], 40)],
+  [/\b(nap|naptime|sleepy|zzz)\b/i, 'nap', 'The whole app lies down with you. Don\'t tell anyone.', () => { FX.overlay('fx-dark', 2800); FX.rise(['💤', 'z', 'Z'], 16); }],
+  [/\b(cheers|bellini|champagne|wine)\b/i, 'cheers', 'Clink. Responsible amounts of bubbly.', () => FX.burst(['🥂', '🍾', '✨'], 26)],
+  [/\b(ugh|fml|worst day)\b/i, 'ugh', 'A tiny storm cloud passes over. The sun wins. It always does.', () => FX.storm()],
+  [/\b(yay|woohoo|hooray|let'?s go)\b/i, 'yay', 'Confetti: the international sign for "heck yes."', () => confetti(150)],
+  [/\bfireworks?\b/i, 'fireworks', 'Fourth of July, any day you want. No fingers lost.', () => FX.fireworks()],
+  [/\bsharks?\b/i, 'shark', 'Dun dun… dun dun… dun dun dun dun…', () => FX.across('🦈', {size:80, y:.85, speed:6})],
+  [/\bchocolate\b/i, 'chocolate', 'Chocolate rain. Scientists hate this one weird trick.', () => FX.rain(['🍫', '🍬'], 30)],
+  [/\bunicorns?\b/i, 'unicorn', 'A unicorn gallops by. Don\'t ask questions you don\'t want answered.', () => { FX.across('🦄', {size:84, y:.4, speed:10}); FX.rain(['🌈', '✨'], 14); }],
+  [/\b(beach|vacation)\b/i, 'beach', 'Instant vacation. Sunscreen not included.', () => FX.rise(['🌴', '☀️', '🐚', '🏖️'], 22)],
+  [/\bmeow\b/i, 'meow', 'Cat translation services are now online. Accuracy: 3%.', () => { FX.bigText('MEOW', 1500); FX.across('🐾', {size:40, y:.75, speed:5}); }],
+  [/\bzoomies\b/i, 'zoomies', '3 a.m. cat energy, delivered on demand.', () => FX.zoomies()],
+  [/\bbubbles?\b/i, 'bubbles', 'Bubbles float up. Popping them is optional but encouraged.', () => FX.rise(['🫧', '🫧', '🫧'], 30)],
+  [/\btacos?\b/i, 'taco', 'It\'s raining tacos, from out of the sky.', () => FX.rain(['🌮'], 30)],
+  [/\b(best husband|rob is the best)\b/i, 'best husband', 'Correct answer. Prize awarded. Crown issued.', () => { FX.rain(['👑', '🏆'], 22); confetti(80); }],
+  [/\bhugs?\b/i, 'hug', 'The whole app hugs you. Gently. With consent.', () => { FX.squeeze(); FX.rise(['🤗', '💛'], 10); }],
+  [/\b(boom|mic drop)\b/i, 'boom', 'Mic drop. Everybody stand back.', () => { FX.bigText('💥', 1000); FX.shake(); }],
+  [/\b(rainbow)\b/i, 'rainbow', 'A rainbow. Free of charge. Pot of gold sold separately.', () => FX.overlay('fx-rainbow', 2600)],
+  [/\b(goodnight|good night|night night)\b/i, 'good night', 'The lights go down and the stars come out.', () => FX.stars()],
+];
+function secretWord(text){
+  const hit = SECRETS.find(s => s[0].test(text)); if (!hit) return false;
+  hit[3](); const found = get('try_secrets_found', []); if (!found.includes(hit[1])){ found.push(hit[1]); put('try_secrets_found', found); if (found.length === 1 && A()) A().toast('🤫 You found a secret word! See them all in More fun.'); }
+  return true;
+}
+// 1B. Effects on Rob's replies
+const REPLY_FX = [
+  [/\b(congrat\w*|proud of you|crushed it|nailed it|you did it)\b/i, 1, () => { confetti(120); FX.rise(['🏆'], 6); }],
+  [/\b(good ?night|sweet dreams|sleep well)\b/i, 1, () => FX.stars()],
+  [/\bhappy birthday\b/i, 1, () => FX.rise(['🎈', '🎈', '🎉'], 26)],
+  [/\bhigh[- ]five\b/i, 1, () => { FX.bigText('✋', 900); FX.shake(); }],
+  [/\bcheers\b/i, 1, () => FX.burst(['🥂', '✨'], 18)],
+  [/\b(hug|hugs)\b/i, .8, () => FX.squeeze()],
+  [/\b(boom|mic drop)\b/i, 1, () => FX.bigText('💥', 900)],
+  [/\b(you'?ve got this|go get (it|'?em)|let'?s go)\b/i, .6, () => FX.rise(['💪', '🔥'], 12)],
+  [/\blove you\b/i, .25, () => FX.rise(['💗', '💕'], 10)],
+  [/\b(haha|lol|hilarious)\b/i, .25, () => FX.rise(['😂'], 8)],
+  [/\b(kitten|kitty)\b/i, .3, () => FX.across('🐾', {size:34, y:.8, speed:5})],
+];
+function replyEffect(text){ const hit = REPLY_FX.find(([re, p]) => re.test(text) && Math.random() < p); if (hit) setTimeout(hit[2], 250); return !!hit; }
+function secretWords(){
+  const {body, show} = sheet('funSecrets', 'Secret words');
+  const found = get('try_secrets_found', []);
+  body.append(el('p', 'note', `Type one of these in a message and watch what happens. You've found ${found.length} of ${SECRETS.length}.`));
+  const list = el('div', 'sw-list');
+  SECRETS.forEach(([, word, desc, run]) => { const row = el('button', 'sw-row' + (found.includes(word) ? ' found' : '')); row.type = 'button';
+    row.innerHTML = '<span class="sw-word"></span><span class="sw-desc"></span><span class="sw-try" aria-hidden="true">Try</span>'; row.querySelector('.sw-word').textContent = '“' + word + '”'; row.querySelector('.sw-desc').textContent = desc;
+    row.setAttribute('aria-label', `Try the secret word ${word}`); row.onclick = () => { A().close(); setTimeout(run, 350); }; list.append(row); });
+  body.append(list, el('p', 'note', 'Rob has some too: congratulate him, say good night, or ask for a high five.')); show();
+}
+
+/* ================= 1C. The kitten roams the app (naps on buttons until you tap it) ================= */
+const NAP_SPOTS = [['chipsBtn', 'on the ✦ button'], ['send', 'on the send button'], ['menuBtn', 'on the menu'], ['miniAvatar', 'on your photo of Rob']];
+let roamer = null;
+function roam(force){
+  const p = petLoad(); if (!p || roamer || p.asleep && !force) return;
+  if (!force && Math.random() < .5) return;
+  const input = document.getElementById('input');
+  const spots = NAP_SPOTS.filter(([id]) => { const b = document.getElementById(id); if (!b || !b.offsetParent) return false; if (id === 'send' && input && input.value.trim()) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight; });
+  if (!spots.length) return;
+  const [id, where] = rnd(spots), btn = document.getElementById(id), r = btn.getBoundingClientRect();
+  const k = el('button', 'roam-cat'); k.type = 'button'; k.setAttribute('aria-label', `${p.name} is napping ${where}. Tap to move them.`);
+  k.innerHTML = `<span class="rc-face">${p.asleep ? '😴' : rnd(['😺', '😽', '😸'])}</span><span class="rc-z" aria-hidden="true">z</span>`;
+  Object.entries(p.worn || {}).forEach(([slot, e]) => { if (slot === 'head') { const a = el('span', 'rc-acc', e); k.append(a); } });
+  const size = Math.max(34, Math.min(46, r.width + 6));
+  Object.assign(k.style, {left:(r.left + r.width / 2 - size / 2) + 'px', top:(r.top + r.height / 2 - size / 2 - 4) + 'px', width:size + 'px', height:size + 'px', fontSize:(size - 8) + 'px'});
+  document.body.appendChild(k); roamer = {k, id};
+  const leave = (msg) => { k.classList.add('hop'); blip(760, .07, 'triangle'); const b2 = el('span', 'rc-say', msg || rnd(['mrrp!', 'mrow?', 'prrt', '*offended meow*', 'fine.'])); b2.style.left = k.style.left; b2.style.top = (parseFloat(k.style.top) - 22) + 'px'; document.body.appendChild(b2);
+    setTimeout(() => { k.remove(); b2.remove(); roamer = null; }, 700); const s = get(PK, null); if (s){ s.love = Math.min(100, (s.love || 0) + 4); put(PK, s); } };
+  k.onclick = e => { e.preventDefault(); e.stopPropagation(); leave(); };
+  // a real cat would not move just because you started typing… but we're nice, so it moves off "send" when needed
+  if (input) input.addEventListener('input', function off(){ if (roamer && roamer.id === 'send' && input.value.trim()){ input.removeEventListener('input', off); leave('fine, type.'); } });
+  const away = setTimeout(() => { if (roamer && roamer.k === k) leave(''); }, 90000 + Math.random() * 60000);
+  stoppersRoam.push(() => clearTimeout(away));
+}
+const stoppersRoam = [];
+function walkAcross(){ const p = petLoad(); if (!p || p.asleep || roamer || reduced()) return; FX.across(rnd(['🐈', '🐈‍⬛']), {size:44, y:.86, speed:4}); }
+setTimeout(() => roam(true), 4000);
+setInterval(() => { if (document.visibilityState !== 'visible') return; Math.random() < .5 ? roam() : walkAcross(); }, 4 * 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => roam(), 2500); });
+
+/* ================= 1H. Love coupons ================= */
+const COUPONS = [
+  'One back rub. Fifteen minutes. No rushing, no "is that good?" every ten seconds.',
+  'I do the dishes tonight. All of them. Even the pan you "let soak."',
+  'Your movie pick. Zero complaints. I will even stay awake.',
+  'Breakfast in bed, coffee exactly how you like it.',
+  'One free "you were right." Use it wisely. It does not expire.',
+  'A night off: I handle dinner and bedtime. You do absolutely nothing.',
+  'Foot rub during your show. Two full episodes.',
+  'Date night. You pick the place, I plan everything else.',
+  'I clean the litter box for a whole week. Without sighing.',
+  'A surprise treat, delivered. You won\'t know when. Suspense.',
+  'A long walk together, phones in pockets.',
+  'Get out of one chore. Any chore. No questions asked.',
+  'Unlimited couch cuddles tonight. Blanket included.',
+  'I run that errand you\'ve been dreading.',
+  'Kitchen dance party. Your song. My questionable moves.',
+  'A handwritten love note, delivered within 24 hours.',
+  'Sleep in. I\'ve got the whole morning.',
+  'One automatic "yes" to whatever you want to do this weekend.',
+  'An ice cream run, right now, no questions asked.',
+  'Scalp massage, ten minutes, eyes closed.',
+  'I plan a surprise mini day trip. You just show up.',
+  'Your car: washed and gassed up. On me.',
+  'I\'ll watch the show you love and pretend I\'m not into it. (I\'m into it.)',
+  'Five minutes of me listing things I love about you. Out loud. No interrupting.',
+];
+let spicy = null;
+async function loadSpicy(){
+  if (spicy) return spicy;
+  const pw = get(US_PASS, null) || (usData ? 'unlocked' : null);
+  if (usData && usData.coupons) return (spicy = usData.coupons);
+  if (pw && pw !== 'unlocked'){ try { const d = await openUs(pw); usData = d; return (spicy = d.coupons || []); } catch {} }
+  return null;
+}
+const todayKey = () => new Date().toDateString();
+function couponBadge(){ const c = get('try_coupons', {wallet:[], day:''}); return c.day === todayKey() ? 0 : 1; }
+async function loveCoupons(){
+  const {body, show} = sheet('funCoupons', 'Love coupons');
+  const st = get('try_coupons', {wallet:[], day:''});
+  const sp = await loadSpicy();
+  const draw = () => {
+    body.innerHTML = '';
+    if (st.day !== todayKey()){
+      const pool = sp && sp.length && Math.random() < .35 ? sp.map(t => ({t, spicy:true})) : COUPONS.map(t => ({t}));
+      const used = new Set(st.wallet.map(w => w.t)); const fresh = pool.filter(x => !used.has(x.t)); const pick = rnd(fresh.length ? fresh : pool);
+      body.append(el('p', 'note', 'Today\'s coupon is under the foil. Scratch it with your finger.'));
+      const card = el('div', 'cp-card' + (pick.spicy ? ' spicy' : '')); const txt = el('p', 'cp-text', pick.t); const tag = el('span', 'cp-tag', pick.spicy ? '🔥 Just us' : '💛 Love coupon');
+      const cv = el('canvas', 'cp-foil'); card.append(tag, txt, el('span', 'cp-from', 'Redeemable with Rob · no expiration'), cv); body.append(card);
+      requestAnimationFrame(() => {
+        const w = card.clientWidth, h = card.clientHeight, d = devicePixelRatio || 1; cv.width = w * d; cv.height = h * d; const g = cv.getContext('2d'); g.scale(d, d);
+        const grd = g.createLinearGradient(0, 0, w, h); grd.addColorStop(0, '#c9a35c'); grd.addColorStop(.5, '#f1d999'); grd.addColorStop(1, '#b68235'); g.fillStyle = grd; g.fillRect(0, 0, w, h);
+        g.fillStyle = 'rgba(90,60,20,.55)'; g.font = '600 16px Lora, Georgia, serif'; g.textAlign = 'center'; g.fillText('Scratch here ✦', w / 2, h / 2 + 6);
+        g.globalCompositeOperation = 'destination-out'; let n = 0, done = false;
+        const scratch = e => { const r = cv.getBoundingClientRect(); const x = e.clientX - r.left, y = e.clientY - r.top; g.beginPath(); g.arc(x, y, 22, 0, Math.PI * 2); g.fill(); if (++n % 12 === 0) blip(1200 + Math.random() * 400, .02, 'square', .02);
+          if (!done && n > 45){ done = true; cv.classList.add('gone'); st.day = todayKey(); st.wallet.unshift({id:Date.now().toString(36), t:pick.t, spicy:!!pick.spicy, got:Date.now()}); put('try_coupons', st); confetti(60); setTimeout(draw, 1400); } };
+        cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); scratch(e); cv.onpointermove = scratch; });
+        cv.addEventListener('pointerup', () => { cv.onpointermove = null; });
+      });
+    } else body.append(el('p', 'note', 'New coupon tomorrow. Here\'s your wallet.'));
+    const wallet = st.wallet.filter(w => !w.used && (!w.spicy || sp));
+    if (wallet.length){ body.append(el('p', 'cp-h', 'Your wallet'));
+      wallet.forEach(w => { const row = el('div', 'cp-row' + (w.spicy ? ' spicy' : '')); row.append(el('span', 'cp-rt', w.t)); const b = el('button', 'btn', 'Redeem'); b.type = 'button';
+        b.onclick = async () => { const msg = `I'm redeeming my love coupon: "${w.t}" 💛`;
+          try { if (navigator.share){ await navigator.share({text:msg}); } else { location.href = 'sms:&body=' + encodeURIComponent(msg); } } catch (e){ if (e && e.name === 'AbortError') return; }
+          w.used = Date.now(); put('try_coupons', st); A().toast('Redeemed! Rob has been notified (well, he will be when he reads it).'); draw(); };
+        row.append(b); body.append(row); }); }
+    const usedN = st.wallet.filter(w => w.used).length; if (usedN) body.append(el('p', 'note', `${usedN} coupon${usedN > 1 ? 's' : ''} redeemed so far.`));
+  };
+  draw(); show();
+}
+
+/* ================= 2.6. First-sound tip (iPhone silent switch mutes web sounds) ================= */
+function soundTip(){ if (get('try_soundtip', false)) return; put('try_soundtip', true); setTimeout(() => A() && A().toast('🔈 Sounds play when your ringer switch is on.'), 600); }
+
+function petTile(){
+  const p = petLoad(); if (!p) return null;
+  const [face, line] = petFace(p);
+  return {name:p.name, face, line:line.replace(p.name + ' ', '').replace(/^./, c => c.toUpperCase()), low:Math.round(Math.min(p.food, p.fun, p.love, p.energy, p.clean))};
+}
+function petStatus(){
+  const p = petLoad(); if (!p) return null;
+  const [face, line] = petFace(p);
+  return `${face} ${line}`;
+}
+function fortuneOfDay(){ const d = new Date(); return FORTUNES[(d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate()) % FORTUNES.length]; }
+
+window.iRobFun = {petStatus, fortuneOfDay, petTile, secretWord, replyEffect, secretWords, loveCoupons, couponBadge, roam, FX, puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, photoPuzzle, whichFirst, zoomDetective, tripTimeline, bragButton, moreFun, croatiaGames, confetti, stop:stopAll,
   petName:() => (get(PK, null) || {}).name || null};
 })();
