@@ -247,16 +247,31 @@
 .pc-t{font:600 14px/1.15 var(--head);letter-spacing:.05em;text-transform:uppercase}
 .pc-card:active{transform:scale(.97)}
 
-/* Hidden playlist (♫ in the header) */
+/* Hidden playlist (♫ in the header): controls styled like the Croatia site's player */
 .music-btn{opacity:.55;color:var(--title)}
 .music-btn svg{width:20px;height:20px}
 .music-btn.playing{opacity:1;color:var(--bronze);animation:noteBob 1.6s ease-in-out infinite}
 @keyframes noteBob{50%{transform:translateY(-2px) rotate(-6deg)}}
-.music-bar{position:absolute;top:calc(var(--safe-t, 0px) + 58px);right:10px;z-index:16;display:flex;align-items:center;gap:2px;max-width:calc(100% - 20px);padding:4px 10px 4px 4px;border-radius:999px;
-  background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);box-shadow:0 6px 18px rgba(60,40,10,.16);animation:actsIn .2s ease-out}
+.music-bar{position:absolute;top:calc(var(--safe-t, 0px) + 58px);right:10px;z-index:16;display:flex;align-items:center;gap:6px;max-width:calc(100% - 20px);padding:10px 18px 10px 12px;border-radius:999px;
+  background:color-mix(in srgb,var(--surface) 88%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);border:1px solid var(--line);box-shadow:0 10px 28px rgba(60,40,10,.18),0 1px 0 rgba(255,255,255,.5) inset;animation:actsIn .2s ease-out}
 .music-bar[hidden]{display:none}
-.mb-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--title)}
-.mb-btn svg{width:18px;height:18px}
-.mb-btn:nth-child(2){background:var(--blue);color:#fff}
-.mb-title{min-width:0;max-width:170px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-left:6px;font:600 12.5px/1.2 var(--body);color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.music-btn.playing{animation:none}}
+.mb-btn{position:relative;display:grid;place-items:center;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,background .15s ease,color .15s ease}
+.mb-btn svg{display:block}
+.mb-skip{width:40px;height:40px;border-radius:50%;background:transparent;color:var(--title)}
+.mb-skip svg{width:19px;height:19px}
+.mb-skip:active{transform:scale(.9);background:var(--tint)}
+.mb-play{width:48px;height:48px;border-radius:50%;color:#fff;background:linear-gradient(160deg,var(--bronze),var(--blue-deep,#7d5411));border:2px solid rgba(255,255,255,.92);box-shadow:0 3px 12px rgba(60,40,10,.35)}
+.mb-play > svg:not(.mb-ring){width:20px;height:20px;position:relative;z-index:1}
+.mb-play:not(.on) > svg:not(.mb-ring){margin-left:2px}
+.mb-play:active{transform:scale(.93)}
+.mb-ring{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);transform:rotate(-90deg);pointer-events:none}
+.mb-ring circle{fill:none;stroke-width:2.4}
+.mb-ring .tr{stroke:color-mix(in srgb,var(--bronze) 18%,transparent)}
+.mb-ring .pr{stroke:var(--bronze);stroke-linecap:round;stroke-dasharray:150.8;stroke-dashoffset:150.8;transition:stroke-dashoffset .5s linear}
+.mb-btn:focus-visible{outline:2px solid var(--bronze);outline-offset:3px}
+.mb-title{display:flex;flex-direction:column;min-width:0;max-width:150px;margin-left:6px;line-height:1.2}
+.mb-title b{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:600 13px/1.25 var(--body);color:var(--ink)}
+.mb-title small{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:400 11px/1.25 var(--body);color:var(--ink-soft);letter-spacing:.02em}
+.mb-title.loading b{animation:mbPulse 1s ease-in-out infinite}
+@keyframes mbPulse{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.music-btn.playing,.mb-title.loading b{animation:none}.mb-ring .pr{transition:none}}
