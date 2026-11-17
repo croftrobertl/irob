@@ -15,7 +15,7 @@ for (const s of list){
   if (!s.src || !fs.existsSync(s.src)){ songs.push({title: s.title, artist: s.artist, file: null}); continue; }
   const data = fs.readFileSync(s.src);
   const id = createHash('sha256').update(data).digest('hex').slice(0, 16);   // stable, reveals nothing about the song
-  fs.writeFileSync(`music/${id}.bin`, await seal(data));
+  if (!fs.existsSync(`music/${id}.bin`)) fs.writeFileSync(`music/${id}.bin`, await seal(data));   // already sealed songs stay untouched
   songs.push({title: s.title, artist: s.artist, file: `${id}.bin`});
 }
 fs.writeFileSync('music/playlist.bin', await seal(new TextEncoder().encode(JSON.stringify({v: 1, songs}))));
