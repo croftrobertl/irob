@@ -159,7 +159,7 @@ function suggest(text, reply){
     if (o.length && !foody && !o.some(x => mentions(x.place))){ const x = o[Math.floor(Math.random() * o.length)]; mark('food'); return `Dinner idea: your usual from ${x.place}. ${x.order.charAt(0).toUpperCase() + x.order.slice(1)}. Just saying.`; }
   }
   if (/\b(coffee|caffeine|so tired this morning|need energy)\b/i.test(text) && profile.coffee && fresh('coffee') && !/coffee/i.test(reply) && new Date().getHours() < 15){
-    mark('coffee'); return `Go get yourself an ${profile.coffee.replace(/^an? /i, '')}. Friend's orders.`;
+    mark('coffee'); return `Go get yourself an ${profile.coffee.replace(/^an? /i, '')}. Husband's orders.`;
   }
   if (/\b(craving|something sweet|chocolate|dessert|treat myself)\b/i.test(text) && (profile.sweet || profile.dessert) && fresh('sweet') && !foody){
     mark('sweet'); return `This feels like a ${profile.sweet || profile.dessert} situation.`;
@@ -182,7 +182,7 @@ function prompt(){
   let p = '';
   if (profile && profile.prompt) p += '\n\n[[PRIVATE]]\nHOW TO USE WHAT YOU KNOW: at most ONE personal detail per reply, and plenty of replies should use none. Never name more than one cat, one food or one fact in the same reply, and never stack suggestions. No coffee or caffeine suggestions after 3 PM. Talk about her, not about the list.\n\n' + profile.prompt;
   const notes = get(NOTES, []);
-  if (notes.length) p += `${profile ? '' : '\n\n[[PRIVATE]]'}\n\nTHINGS SHE'S TOLD YOU (newest last; bring one up when it genuinely fits, like a friend who remembers):\n- ` + notes.slice(-25).map(n => n.text).join('\n- ');
+  if (notes.length) p += `${profile ? '' : '\n\n[[PRIVATE]]'}\n\nTHINGS SHE'S TOLD YOU (newest last; bring one up when it genuinely fits, like a husband who listens):\n- ` + notes.slice(-25).map(n => n.text).join('\n- ');
   if (p) p += '\n[[/PRIVATE]]';
   if (alerts.length) p += `\n\nACTIVE WEATHER ALERTS where she lives: ${alerts.map(a => a.headline).join('; ')}. If it's serious, check that she's safe.`;
   return p;

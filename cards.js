@@ -139,10 +139,10 @@ const FLIPS = [
 const FACTS = ["Survived 100% of your hardest days so far","Kept the people you love fed, safe and loved","Made someone smile this week, probably without noticing","Kept going on days you really didn't want to","Showed up for your kids, again and again","Asked for comfort instead of pretending — that takes guts"];
 const NOTES = ["You're my favorite notification.","Proof you're doing great: you're still trying. That counts double.","Somewhere a golden retriever is thinking about you. So am I.","You're allowed to rest before you're finished.","Your laugh is still one of the best sounds in the world.","Today's forecast: a little lighter than yesterday."];
 const TICKETS = [
-  {id:'date', title:'Friend outing', detail:'You pick the place — Rob drives and pays.', kind:'fun'},
-  {id:'breakfast', title:'Breakfast is made', detail:'Coffee exactly how you like it, ready when you wake up.', kind:'fun'},
-  {id:'dance', title:'Kitchen dance party', detail:'One silly song, full volume, no judging.', kind:'fun'},
-  {id:'movie', title:'Movie night, your pick', detail:'Your movie, extra snacks, zero complaints.', kind:'fun'},
+  {id:'date', title:'Date night', detail:'You pick the place — Rob plans the rest.', kind:'romantic'},
+  {id:'breakfast', title:'Breakfast in bed', detail:'Coffee exactly how you like it, no getting up.', kind:'romantic'},
+  {id:'dance', title:'Slow dance in the kitchen', detail:'One song, lights low, no phones.', kind:'romantic'},
+  {id:'movie', title:'Movie night, your pick', detail:'Your movie, extra snacks, zero complaints.', kind:'romantic'},
   {id:'bedtime', title:'Bedtime takeover', detail:'You\'re off duty tonight — Rob handles bedtime.', kind:'practical'},
   {id:'dinner', title:'Dinner\'s handled', detail:'Rob cooks, orders or figures it out. You rest.', kind:'practical'},
   {id:'nap', title:'Two-hour nap', detail:'Guaranteed quiet. Kids and chaos handled.', kind:'practical'},
