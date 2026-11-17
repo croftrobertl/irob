@@ -725,6 +725,9 @@ function robReplies(){
   });
   return out;
 }
+// Night mode: "get some rest" once per night, not in every reply.
+const REST = /\b(get some (rest|sleep|shut-?eye)|rest up|get (some )?sleep|go to (bed|sleep)|good ?night|drift off|catch some (rest|sleep|z'?s)|well[- ]earned rest|try to (rest|sleep)|head(ing)? to bed|bedtime|sleep well|some rest)\b/i;
+const restSaid = () => chat.some(m => m.role === 'assistant' && !m.hold && Date.now() - (m.t || 0) < 4 * 3600e3 && REST.test(m.content));
 const attractRecent = () => robReplies().slice(-8).some(t => ATTRACT.test(t));
 // Explicit "we're just friends" lines; dropped from AI replies when Rob said where things stand recently.
 const FRIENDS_ONLY = /\b(just friends|only friends|friends, not|not romantic|no romance|(we'?re|we are|me are|glad we'?re|grateful we'?re|happy we'?re) (just )?friends|being your friend|as your friend)\b/i;
@@ -1025,9 +1028,10 @@ function scrubLooks(text, herText){
   const funRecent = robReplies().slice(-8).some(t => USED_FUN.test(t));
   const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
   const friendCap = standingRecent() && !ATTRACT_TOPIC.test(herText || '');
+  const restCap = restSaid() && !/\b(sleep|tired|bed|rest|exhausted|insomnia|can'?t sleep)\b/i.test(herText || '');
   const avoid = window.iRobLife && window.iRobLife.avoidRe();
   let questions = 0;
-  const kept = parts.filter(p => !(/\?\s*$/.test(p) && ++questions > 1 && !/^\s*\d+[.)]/.test(p))).filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(friendCap && FRIENDS_ONLY.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
+  const kept = parts.filter(p => !(/\?\s*$/.test(p) && ++questions > 1 && !/^\s*\d+[.)]/.test(p))).filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(friendCap && FRIENDS_ONLY.test(p)) && !(restCap && REST.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
@@ -1115,7 +1119,7 @@ function systemPrompt(){
   if (window.iRobLife) p += window.iRobLife.prompt();
   if (WX.now) p += ` Weather where she lives (Winter Park, Florida): ${WX.now}. Mention the weather only when it naturally fits (a rainy afternoon, a hot day, a storm coming), not every message, and never as small talk filler.`;
   if (mode) p += '\n\n' + MODES[mode].sys;
-  if (isNight()) p += '\n\nIt is late at night where she is. Keep replies extra short (1 to 3 sentences), soft and calming, and gently encourage rest.';
+  if (isNight()) p += '\n\nIt is late at night where she is. Keep replies extra short (1 to 3 sentences), soft and calming.' + (restSaid() ? ' You already encouraged her to rest tonight, so don\'t mention sleep, rest or bed again unless she brings it up.' : ' You can gently encourage rest once, but only once tonight.');
   return p;
 }
 function clean(t){
