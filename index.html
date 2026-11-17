@@ -755,6 +755,21 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retur
 
 let chat = load(K.chat, []).filter(m => !m.hold);        // [{role:'user'|'assistant', content, t, id}]
 let pocket = load(K.pocket, []);    // [{id, text, t, tags}]
+// One-time cleanup: remove the old "just friends / find someone else / not attracted" lines from saved chats and the Pocket.
+(() => {
+  if (load('try_cleaned_friends', false)) return;
+  const OLD2 = /\b(only her friend|you('?re| are) not attracted|haven'?t been attracted|attraction (has been|is) gone|sorry (i|for) (ever )?(assum|acting like))/i;
+  const OLD = {test: t => NOT_US.test(t) || OLD2.test(t)};
+  const FOLLOW = /^\s*(that'?s a role|it doesn'?t change|really\b|i believe you will|i get it now|you never have to|i'?ve got your back|that wasn'?t fair|and i'?ll cheer)/i;
+  const strip = t => { const parts = t.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || [t]; const keep = []; let drop = false;
+    parts.forEach(x => { if (OLD.test(x)){ drop = true; return; } if (drop && /\S/.test(x) && (FOLLOW.test(x) || x.trim().length <= 40)){ drop = false; return; } if (/\S/.test(x)) drop = false; keep.push(x); });
+    const out = keep.join('').replace(/\n{3,}/g, '\n\n').trim(); return out.length >= 25 ? out : ''; };
+  let changed = 0;
+  chat = chat.map(m => { if (m.role !== 'assistant' || !OLD.test(m.content)) return m; changed++; const c = strip(m.content); return c ? {...m, content:c} : null; }).filter(Boolean);
+  pocket = pocket.filter(x => { const bad = OLD.test(x.text || ''); if (bad) changed++; return !bad; });
+  if (changed){ save(K.chat, chat); save(K.pocket, pocket); }
+  save('try_cleaned_friends', true);
+})();
 let ledger = load(K.ledger, []);    // [{id, text, t}]
 let busy = false;
 
