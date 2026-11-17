@@ -275,3 +275,27 @@
 .mb-title.loading b{animation:mbPulse 1s ease-in-out infinite}
 @keyframes mbPulse{50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.music-btn.playing,.mb-title.loading b{animation:none}.mb-ring .pr{transition:none}}
+
+/* Full-screen games: content grows to fill the screen */
+.fun-sheet.full .body{justify-content:flex-start;gap:14px;padding-bottom:calc(var(--safe-b,0px) + 18px)}
+.fun-sheet.full .pp-stage{flex:1;min-height:200px;width:100%}
+.fun-sheet.full .pp-stage .kc-media{max-height:none;height:100%;object-fit:contain}
+.fun-sheet.full .pp-btn{width:170px;height:170px;font-size:26px;margin-bottom:8px}
+.fun-sheet.full .kc-pad{max-width:none;flex:1;display:grid;place-items:center}
+.fun-sheet.full .kc-pic .kc-media{max-height:58vh}
+.fun-sheet.full .catch{flex:1;display:flex}
+.fun-sheet.full .catch{min-height:0;position:relative}
+.fun-sheet.full .catch canvas{position:absolute;inset:0;width:100%}
+.fun-sheet.full .mm-grid{max-width:min(100%,62vh)}
+.fun-sheet.full .mm-grid.hard{max-width:min(100%,52vh)}
+.fun-sheet.full .pz{max-width:min(100%,58vh)}
+.fun-sheet.full .zd{height:auto;flex:1;min-height:220px}
+.fun-sheet.full .wf-card{max-height:none}
+.fun-sheet.full .wf-pair{flex:1}
+.fun-sheet.full .tl-grid{max-width:min(100%,60vh)}
+.fun-sheet.full .tg-room{height:clamp(220px,40vh,380px)}
+.fun-sheet.full .fc{flex:1}
+.fun-sheet.full .fc-cookie{transform:scale(1.4)}
+.fun-sheet.full .cp-card{max-width:420px;min-height:200px}
+.fun-sheet.full .us-dice{max-width:520px}
+.fun-sheet.full .us-die{font-size:18px}

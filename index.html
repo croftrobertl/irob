@@ -431,6 +431,16 @@ h1,.status{position:relative;z-index:1}
   display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
   padding-bottom:calc(var(--safe-b) + 8px);box-shadow:0 -10px 40px rgba(0,0,0,.15)}
 .sheet.show{transform:none}
+/* Games fill the whole screen, like Take Me Back */
+.sheet.full{top:0;max-height:none;height:100%;border-radius:0;padding-top:var(--safe-t)}
+.sheet.full .grab{display:none}
+.sheet.full header{padding-top:10px}
+.sheet.full .body{flex:1;min-height:0;display:flex;flex-direction:column}
+#sheetGame .game-photo{height:auto;flex:1;min-height:180px}
+#sheetGame.answered .game-photo{flex:.7}
+#sheetGame .game-opts .btn{min-height:52px;line-height:1.25;font-size:14px}
+#sheetGame .gmap{height:clamp(110px,20vh,200px)}
+#sheetRoulette .wheel-wrap{width:min(88vw,46vh,420px)}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--grab);margin:9px auto 4px}
 .sheet header{display:flex;align-items:center;padding:4px 10px 6px 20px}
 .sheet header .back-btn{margin:0 4px 0 -12px;flex:none}
@@ -635,7 +645,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       </div>
     </div>
   </section>
-  <section class="sheet" id="sheetGame" aria-label="Where was this" role="dialog" aria-modal="true">
+  <section class="sheet full" id="sheetGame" aria-label="Where was this" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Where was this?</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
@@ -645,7 +655,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <p class="game-score" id="gScore"></p>
     </div>
   </section>
-  <section class="sheet" id="sheetRoulette" aria-label="Fun roulette" role="dialog" aria-modal="true">
+  <section class="sheet full" id="sheetRoulette" aria-label="Fun roulette" role="dialog" aria-modal="true">
     <div class="grab"></div>
     <header><h2>Fun roulette</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
@@ -1400,7 +1410,7 @@ function loadTrip(){
         if (/^in-flight/i.test(it.city || '')) return;
         const place = (it.city || pl.name || day.area || 'Croatia').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
         const geo = (typeof it.lat === 'number' && typeof it.lng === 'number') ? {lat:it.lat, lng:it.lng} : {};
-        if (it.kind === 'photo' && it.full && it.src) pool.push({k:'p', id:it.full, full:TRIP + it.full, thumb:TRIP + it.src, place, date:day.date, time:it.time || '', ...geo});
+        if (it.kind === 'photo' && it.full && it.src) pool.push({k:'p', id:it.full, full:TRIP + it.full, thumb:TRIP + it.src, place, spot:(it.place || place).trim(), date:day.date, time:it.time || '', ...geo});
         else if (it.kind === 'video' && it.type === 'self_hosted' && it.url && it.poster && (it.dur || 0) <= 60) pool.push({k:'v', id:it.url, url:TRIP + it.url, thumb:TRIP + it.poster, place, date:day.date, time:it.time || '', ...geo});
       }));
     });
@@ -2010,16 +2020,19 @@ function nextRound(){
     $('gScore').textContent = ''; return;
   }
   game.round++; $('sheetGame').classList.remove('answered'); $('gReveal').hidden = true; $('gMap').hidden = false; $('gMap').nextElementSibling.hidden = false;
-  const m = pool[Math.floor(Math.random() * pool.length)];
-  const opts = [m.place]; while (opts.length < 4){ const p2 = places[Math.floor(Math.random() * places.length)]; if (!opts.includes(p2)) opts.push(p2); }
+  const m = pool[Math.floor(Math.random() * pool.length)], answer = m.spot || m.place;
+  const spots = [...new Set(pool.map(x => x.spot || x.place))].filter(x => x !== answer);
+  const near = spots.filter(x => x.endsWith(m.place)), far = spots.filter(x => !x.endsWith(m.place));
+  const shuffle = a => a.sort(() => Math.random() - .5);
+  const opts = [answer, ...shuffle(near).slice(0, 2)]; shuffle(far).forEach(x => { if (opts.length < 4) opts.push(x); }); shuffle(near).forEach(x => { if (opts.length < 4 && !opts.includes(x)) opts.push(x); });
   opts.sort(() => Math.random() - .5);
   $('gImg').src = m.full; $('gScore').textContent = `Photo ${game.round} of ${game.total} · ${game.score} right`;
   const box = $('gOpts'); box.innerHTML = '';
   opts.forEach(o => { const b = document.createElement('button'); b.className = 'btn ghost'; b.type = 'button'; b.textContent = o;
     b.onclick = () => {
-      const right = o === m.place; if (right) game.score++;
-      box.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === m.place) x.className = 'btn right'; else if (x === b) x.className = 'btn wrong'; });
-      $('gMsg').textContent = (right ? 'Yes! ' : 'So close — ') + `${m.place}, ${memDate(m)}.`;
+      const right = o === answer; if (right) game.score++;
+      box.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === answer) x.className = 'btn right'; else if (x === b) x.className = 'btn wrong'; });
+      $('gMsg').textContent = (right ? 'Yes! ' : 'So close. It was ') + `${answer}, ${memDate(m)}.`;
       $('sheetGame').classList.add('answered'); $('gReveal').hidden = false; mapInto($('gMap'), m.lat, m.lng, 13);
       $('gNext').textContent = game.round >= game.total ? 'See my score' : 'Next photo'; $('gNext').onclick = nextRound;
       $('gScore').textContent = `Photo ${game.round} of ${game.total} · ${game.score} right`;

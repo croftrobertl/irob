@@ -17,7 +17,7 @@ const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 function sheet(id, title){
   let s = document.getElementById(id);
   if (!s){
-    s = el('section', 'sheet fun-sheet'); s.id = id; s.setAttribute('role', 'dialog'); s.setAttribute('aria-modal', 'true'); s.setAttribute('aria-label', title);
+    s = el('section', 'sheet fun-sheet' + (/^fun(More|Secrets)$/.test(id) ? '' : ' full')); s.id = id; s.setAttribute('role', 'dialog'); s.setAttribute('aria-modal', 'true'); s.setAttribute('aria-label', title);
     s.innerHTML = `<div class="grab"></div><header><h2></h2><button class="icon-btn" data-close aria-label="Close">${X}</button></header><div class="body"></div>`;
     s.querySelector('[data-close]').onclick = () => { stopAll(); A().close(); };
     document.getElementById('scrim').before(s);
@@ -92,13 +92,13 @@ function puppyPower(){
   let busy = false;
   btn.onclick = async () => {
     if (busy) return; busy = true; btn.classList.add('pressed'); blip(520, .08, 'triangle'); setTimeout(() => blip(780, .12, 'triangle'), 90);
-    presses++; put('try_pp', presses); paint();
+    presses++; put('try_pp', presses);
     if (presses % 3 === 0) confetti(); else confetti(40);
     stage.innerHTML = '<p class="note">Fetching a good dog…</p>';
     const item = await critter('golden'); stage.innerHTML = ''; stage.append(media(item, 'A golden retriever'));
     btn.classList.remove('pressed'); busy = false;
   };
-  body.append(stage, btn, meter, level); paint(); show();
+  body.append(stage, btn); show();
 }
 
 /* ================= B. Kitten cuddles ================= */
@@ -307,7 +307,7 @@ function catchKittens(){
   body.append(hud, wrap, info, start); show();
   let run = null;
   const g = cv.getContext('2d');
-  const size = () => { const w = wrap.clientWidth || 320, h = Math.min(420, Math.round(innerHeight * .45)); const d = devicePixelRatio || 1; cv.width = w * d; cv.height = h * d; cv.style.height = h + 'px'; g.setTransform(d, 0, 0, d, 0, 0); return {w, h}; };
+  const size = () => { const w = wrap.clientWidth || 320, h = Math.max(260, Math.round(wrap.getBoundingClientRect().height) || Math.round(innerHeight * .6)); const d = devicePixelRatio || 1; cv.width = w * d; cv.height = h * d; cv.style.height = h + 'px'; g.setTransform(d, 0, 0, d, 0, 0); return {w, h}; };
   const move = e => { if (!run) return; const r = cv.getBoundingClientRect(); run.bx = Math.max(30, Math.min(run.w - 30, (e.touches ? e.touches[0].clientX : e.clientX) - r.left)); };
   cv.addEventListener('pointermove', move); cv.addEventListener('pointerdown', move); cv.addEventListener('touchmove', e => { e.preventDefault(); move(e); }, {passive:false});
   start.onclick = () => {
