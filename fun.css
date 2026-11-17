@@ -422,3 +422,8 @@
 .icon-btn[aria-label="Close"]{background-image:url(icons/34.webp);background-size:20px 20px}
 .act[aria-label="Read aloud"]{background-image:url(icons/35.webp);background-size:20px 20px}
 .mic.on{background-color:rgba(179,65,46,.18)}
+/* Pocket Kitten painted icons (sized by the surrounding font-size, so every spot keeps its old scale) */
+.pic{width:1.2em;height:1.2em;object-fit:contain;vertical-align:-.25em;display:inline-block;pointer-events:none;-webkit-user-drag:none}
+.tg-furn .pic,.tg-cat .acc .pic{width:1.15em;height:1.15em;vertical-align:bottom}
+.tg-furn.f-tree .pic{width:1.3em;height:1.3em}
+.tg-meta .pic{width:1.3em;height:1.3em;vertical-align:-.35em}

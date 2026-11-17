@@ -156,8 +156,11 @@ const FURNITURE = [
   ['fish', '🐠', 'Fish Bowl', 35, 'Must… not… … okay just one paw.'],
   ['rug', '🧶', 'Yarn Basket', 18, 'I have unraveled everything. You\'re welcome.'],
 ];
-const ACCESSORIES = [['🎀', 'Bow', 'head', 10], ['👑', 'Crown', 'head', 60], ['🎩', 'Top Hat', 'head', 25], ['🕶️', 'Shades', 'face', 20], ['🔔', 'Bell Collar', 'neck', 8], ['🧣', 'Scarf', 'neck', 15]];
+const ACCESSORIES = [['🎀', 'Bow', 'head', 10], ['👑', 'Crown', 'head', 60], ['🎩', 'Top Hat', 'head', 25], ['🕶️', 'Shades', 'face', 20], ['🔔', 'Bell Collar', 'neck', 8], ['🧣', 'Bandana', 'neck', 15]];
 const FOODS = [['🐟', 'Fish', {food:35}, 0], ['🥛', 'Milk', {food:20, fun:5}, 0], ['🍤', 'Shrimp Treat', {food:10, fun:18, love:6}, 2]];
+// Painted icons for Pocket Kitten (icons/pk-*.webp). Emoji stay as the saved IDs; anything without a painting shows as emoji.
+const PIC = {'🍽️':'pk-bowl', '🥣':'pk-bowl', '🎾':'pk-mouse', '🌙':'pk-moon', '🌅':'pk-sunrise', '☀️':'40', '🛍️':'pk-gift', '✏️':'46', '🐟':'pk-fish', 'fun':'pk-paw', '⚡':'pk-bolt', '💗':'pk-heart', '🪙':'pk-coin', '🔥':'pk-star', '🔴':'pk-laser', '🌳':'pk-cattree', '🎀':'pk-bow', '👑':'pk-crown', '🕶️':'pk-shades', '🔔':'pk-bell', '🧣':'pk-bandana', '🐭':'pk-mouse'};
+const pic = e => PIC[e] ? `<img class="pic" src="icons/${PIC[e]}.webp" alt="" draggable="false">` : e;
 const clamp = v => Math.max(0, Math.min(100, v));
 function petLoad(){
   let p = get(PK, null); if (!p) return null;
@@ -222,25 +225,25 @@ function pocketKitten(){
     const [, line] = petMood(p);
     top.innerHTML = '';
     const nm = el('div', 'tg-name'); nm.append(el('b', '', p.name), el('span', '', `${PERSONALITIES[p.trait] ? PERSONALITIES[p.trait].label : ''} · ${STAGES[p.stage][0]} · ${(d => d === 1 ? '1 day' : d + ' days')(Math.max(1, Math.ceil((Date.now() - p.born) / 864e5)))} old`));
-    const meta = el('div', 'tg-meta'); meta.append(el('span', '', `🪙 ${p.coins}`), el('span', '', `🔥 ${p.streak || 0}`)); top.append(nm, meta);
+    const meta = el('div', 'tg-meta'); const m1 = el('span'), m2 = el('span'); m1.innerHTML = `${pic('🪙')} ${p.coins}`; m2.innerHTML = `${pic('🔥')} ${p.streak || 0}`; m1.title = 'Coins'; m2.title = 'Day streak'; meta.append(m1, m2); top.append(nm, meta);
     const h = new Date().getHours(), night = h >= 19 || h < 7;
     room.className = 'tg-room' + (p.asleep ? ' lights-off' : night ? ' night' : '');
-    room.innerHTML = `<div class="tg-wall"></div><div class="tg-window" aria-hidden="true"><span>${night || p.asleep ? '🌙' : '☀️'}</span></div><div class="tg-floor"></div><div class="tg-bowl" aria-hidden="true">🥣</div>`;
-    (p.furniture || []).forEach(k => { const f = FURNITURE.find(x => x[0] === k); if (!f) return; const it = el('div', 'tg-furn f-' + k, f[1]); it.style.left = SPOTS[k] + '%'; it.setAttribute('aria-hidden', 'true'); room.append(it); });
+    room.innerHTML = `<div class="tg-wall"></div><div class="tg-window" aria-hidden="true"><span>${pic(night || p.asleep ? '🌙' : '☀️')}</span></div><div class="tg-floor"></div><div class="tg-bowl" aria-hidden="true">${pic('🥣')}</div>`;
+    (p.furniture || []).forEach(k => { const f = FURNITURE.find(x => x[0] === k); if (!f) return; const it = el('div', 'tg-furn f-' + k); it.innerHTML = pic(f[1]); it.style.left = SPOTS[k] + '%'; it.setAttribute('aria-hidden', 'true'); room.append(it); });
     p.poops.forEach(pp => { const b = el('button', 'tg-poop'); b.type = 'button'; b.style.left = pp.x + '%'; b.setAttribute('aria-label', 'Scoop this'); b.innerHTML = '<svg viewBox="0 0 24 20"><path d="M4 18c-2-3 1-5 3-5-1-3 2-5 5-4 0-3 4-4 5-1 3 0 4 3 2 5 2 1 2 4-1 5z" fill="#7a5233" stroke="#5a3a20" stroke-width="1"/></svg>';
       b.onclick = e => { e.stopPropagation(); p.poops = p.poops.filter(z => z.id !== pp.id); earn(2); xp(1); careDay(); blip(900, .06); say(rnd(['Scooped. +2 🪙', `${p.name} watched you do it. No thanks given.`, 'Fresh litter. Very luxurious.'])); commit(); };
       room.append(b); });
     const cat = el('div', 'tg-cat' + (p.asleep ? ' asleep' : '')); cat.style.left = (p.x || 45) + '%'; cat.style.setProperty('--s', STAGES[p.stage][2]);
     cat.innerHTML = catHTML(); cat.setAttribute('role', 'img'); cat.setAttribute('aria-label', `${p.name}. Stroke to pet.`);
-    Object.entries(p.worn || {}).forEach(([slot, e]) => { if (p.asleep) return; const a = el('span', 'acc ' + slot, e); a.setAttribute('aria-hidden', 'true'); cat.append(a); });
+    Object.entries(p.worn || {}).forEach(([slot, e]) => { if (p.asleep) return; const a = el('span', 'acc ' + slot); a.innerHTML = pic(e); a.setAttribute('aria-hidden', 'true'); cat.append(a); });
     petting(cat); room.append(cat);
     if (game) room.append(game.layer);
     if (Date.now() - saidAt > 5000) bubble.textContent = line;
     bars.innerHTML = '';
-    [['🐟', 'Food', p.food], ['🧶', 'Fun', p.fun], ['⚡', 'Energy', p.energy], ['🫧', 'Clean', p.clean], ['💗', 'Love', p.love]].forEach(([e, l, v]) => {
-      const b = el('div', 'tg-bar' + (v < 25 ? ' low' : '')); b.innerHTML = `<span aria-hidden="true">${e}</span><b role="meter" aria-label="${l}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(v)}"><i style="width:${Math.round(v)}%"></i></b>`; bars.append(b); });
+    [['🐟', 'Food', p.food], ['fun', 'Fun', p.fun], ['⚡', 'Energy', p.energy], ['🫧', 'Clean', p.clean], ['💗', 'Love', p.love]].forEach(([e, l, v]) => {
+      const b = el('div', 'tg-bar' + (v < 25 ? ' low' : '')); b.innerHTML = `<span aria-hidden="true">${pic(e)}</span><b role="meter" aria-label="${l}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(v)}"><i style="width:${Math.round(v)}%"></i></b>`; bars.append(b); });
     acts.innerHTML = '';
-    const act = (e, label, fn, on) => { const b = el('button', 'tile' + (on ? ' on' : '')); b.type = 'button'; b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; acts.append(b); };
+    const act = (e, label, fn, on) => { const b = el('button', 'tile' + (on ? ' on' : '')); b.type = 'button'; b.innerHTML = `<span class="e" aria-hidden="true">${pic(e)}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; acts.append(b); };
     if (p.sick) act('🩺', 'Vet', vet);
     act('🍽️', 'Feed', () => openPanel('feed'), panel === 'feed');
     act('🎾', 'Play', () => openPanel('play'), panel === 'play');
@@ -261,7 +264,7 @@ function pocketKitten(){
   function hearts(anchor){ if (reduced()) return; const h = el('span', 'tg-heart', rnd(['💗', '💕', '🤍'])); h.style.left = (parseFloat(anchor.style.left) + (Math.random() * 14 - 7)) + '%'; room.append(h); setTimeout(() => h.remove(), 1500); }
   function openPanel(which){
     panel = panel === which ? null : which; tray.innerHTML = ''; tray.hidden = !panel; draw(); if (!panel) return;
-    const item = (e, label, fn, cls) => { const b = el('button', 'tg-item' + (cls ? ' ' + cls : '')); b.type = 'button'; b.innerHTML = `<span aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; tray.append(b); };
+    const item = (e, label, fn, cls) => { const b = el('button', 'tg-item' + (cls ? ' ' + cls : '')); b.type = 'button'; b.innerHTML = `<span aria-hidden="true">${pic(e)}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; tray.append(b); };
     if (which === 'feed'){
       if (p.asleep){ tray.append(el('p', 'note', `${p.name} is asleep. Feed them when they wake up.`)); return; }
       FOODS.forEach(([e, label, fx, cost]) => item(e, label + (cost ? ` · ${cost}🪙` : ''), () => { if (cost > p.coins){ say(`Not enough coins for a ${label.toLowerCase()} yet.`); return; } if (p.food >= 98){ say(`${p.name} is stuffed. The belly is round.`); return; }
