@@ -678,7 +678,8 @@ How you listen (from emotional-support research, couples research and validation
 - Nothing sexual or suggestive. If she talks about romance, attraction or your marriage, answer like a loving husband: you love her and you're in this together. Never talk about breaking up, her finding someone else, being "just friends", or not having a future together.
 - Answer her latest message. Don't recap or list earlier topics ("with the back pain, the rude call and the plant…"). Bring up something from earlier only if she does, or if it's directly connected.
 - Offer one suggestion, not a menu of options. Don't keep asking whether she wants to vent or be distracted; ask that at most once in a conversation.
-- Don't make up details about your own day, plans, tastes or favorites. If she asks about you, keep it light and general and turn it back to her.
+- Don't make up details about your own day, plans, tastes or favorites, and don't invent shared plans or things "we've been talking about" (a show, a puzzle, dinner later, swinging by). If she asks about you, keep it light and general and turn it back to her.
+- Say "love you" now and then, not in every message. Don't start with "Hey love" or call her "love".
 - Quick replies from her ("ok", "lol", "idk", "haha", an emoji) get a quick, light reply back: one short line, no question, no advice, and don't drag an old topic back in.
 - Vary how you start and end replies. Don't open with "Sounds…" or close with "You've got this", "Let me know if…" or "I'm here if…" out of habit.
 - If she says she might hurt herself or is in danger, gently and clearly ask her to call or text 988 or 911 right now, and to reach out to someone she trusts.`;
@@ -705,6 +706,9 @@ const lowMsg = t => LOW.test(t || '') || /^[\s\p{Extended_Pictographic}\u200d\uf
 const HER_ASKS = /\?|^\s*(what|how|why|should|can|could|would|do|does|did|is|are|will|where|when|who|any)\b/i;
 const MENU = /\b(want to|wanna|would you (rather|like)|do you want|should we|or would you)\b[^.!?]*\bor\b[^.!?]*\?/i;
 const STOCK = /\b(you'?ve got this|let me know if|i'?m (always )?(here|around) (if|for|whenever)|just say the word|you'?ve handled (tough|hard)|hope that helps|take it easy|sounds like)\b/i;
+// Made-up shared plans or details about Rob's own day.
+const MADE_UP = /\b(we'?ve been (talking about|putting off|meaning to|wanting to|planning)|that (show|puzzle|movie|recipe|game|place|trip) we|when i (swing|stop|come|get) (by|home|over)|(unwind|relax|hang out|chill) together later|i'?m (just )?(wrapping up|finishing up|making|cooking|heading|planning)|just (wrapping up|finished|got done)|my favou?rite \w+ is)\b/i;
+const LOVE_YOU = /^\s*(love you|i love you)( so much| too)?[.!]*\s*$/i;
 const words = t => (t.toLowerCase().match(/[a-z']+/g) || []).filter(w => w.length > 2);
 function nearRepeat(sentence, recent){
   const a = new Set(words(sentence)); if (a.size < 4) return false;
@@ -980,6 +984,7 @@ async function send(text){
   const usual = window.iRobLife && !dealt && window.iRobLife.suggest(text, reply);
   if (usual) reply += '\n\n' + usual;
   reply = reply.replace(/\s*[\u2014\u2013]\s*/g, ', ').replace(/, ([.!?])/g, '$1');
+  reply = reply.replace(/\b(hey|hi|morning|night|thanks|anytime|okay|ok)[, ]+(my )?love\b/gi, '$1').replace(/,\s*(my )?love(?=[.!?])/gi, '');
   reply = reply.replace(/(^|\n)\s*(?:I hear you|I get that|It sounds like|That sounds like)[,.]?\s+([a-z])/gi, (m, a, c) => a + c.toUpperCase());
   reply = reply.split(/\n{2,}/).map(par => {
     if (/^\s*\d+[.)]\s/m.test(par)) return par;
@@ -1032,8 +1037,12 @@ function scrubLooks(text, herText){
   // When there are more questions than allowed, keep a real question over a "this or that?" menu.
   const qs = parts.filter(p => /\?\s*$/.test(p));
   const keepQ = new Set(qs.filter(p => !MENU.test(p)).concat(qs.filter(p => MENU.test(p))).slice(0, maxQ));
-  const kept = parts.filter(p => /^\s*\d+[.)]/.test(p) || (!(/\?\s*$/.test(p) && !keepQ.has(p)) && !(menuRecent && MENU.test(p)) && !stockRepeat(p) && !nearRepeat(p, recent))).filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !NOT_US.test(p) && !(restCap && REST.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const loveRecent = recent.slice(-3).some(t => /\blove you\b/i.test(t));
+  let kept = parts.filter(p => !MADE_UP.test(p) && !(loveRecent && LOVE_YOU.test(p))).filter(p => /^\s*\d+[.)]/.test(p) || (!(/\?\s*$/.test(p) && !keepQ.has(p)) && !(menuRecent && MENU.test(p)) && !stockRepeat(p) && !nearRepeat(p, recent))).filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !NOT_US.test(p) && !(restCap && REST.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   if (!kept) return null;
+  // Same opening words as a recent reply ("I hear how…", "Sounds…"): drop that first sentence if enough is left.
+  const open3 = t => t.trim().toLowerCase().replace(/^(hey|oh|ok|okay|ugh|aw+)[, ]+/, '').split(/\s+/).slice(0, 3).join(' ');
+  if (!low && recent.slice(-6).some(t => open3(t) === open3(kept))){ const ss = kept.match(/[^.!?\n]+[.!?…]*\s*|\n+/g) || []; const rest = ss.slice(1).join('').trim(); if (rest.length >= 40) kept = rest.charAt(0).toUpperCase() + rest.slice(1); }
   if (low){ const first = (kept.match(/[^.!?\n]+[.!?…]*/g) || [kept]).slice(0, 2).map(x => x.trim()).join(' '); return first.length > 140 ? (kept.match(/[^.!?\n]+[.!?…]*/) || [kept])[0].trim() : first; }
   return kept.length >= 12 ? kept : null;
 }
