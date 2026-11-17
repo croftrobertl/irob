@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Rob's Voice Test</title>
+<style>
+@font-face{font-family:"Cinzel";font-weight:400 600;font-display:swap;src:url(../fonts/cinzel-latin.woff2) format("woff2")}
+@font-face{font-family:"Lora";font-weight:400 600;font-display:swap;src:url(../fonts/lora-400-latin.woff2) format("woff2")}
+:root{--bg:#f3f2f2;--card:#f8f4f4;--ink:#201f1d;--soft:#696560;--line:#d7d3d3;--bronze:#b68235;--deep:#7d5411;--fill:#8f6219;--good:#3f7d4a;--bad:#a8452f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#171410;--card:#221d17;--ink:#ece6dd;--soft:#b3aa9e;--line:#3a3226;--bronze:#d9a22b;--deep:#e0b45a;--fill:#b8863a;--good:#7cc48a;--bad:#e07a62;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Lora",Georgia,serif;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}
+main{max-width:560px;margin:0 auto;display:grid;gap:14px}
+h1{margin:4px 0 0;font:600 24px/1.2 "Cinzel",Georgia,serif;letter-spacing:.05em;color:var(--deep)}
+.lead{margin:0;color:var(--soft)}
+section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:10px}
+h2{margin:0;font:600 15px/1.2 "Cinzel",Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--deep)}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:6px;border-radius:50%;background:var(--fill);color:#fff;font:600 13px/1 system-ui}
+button{font:600 15px/1 "Lora",Georgia,serif;padding:13px 16px;min-height:46px;border-radius:14px;border:0;background:var(--fill);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--deep);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:default}
+button.rec{background:#b3412e}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--bronze);transition:width .2s}
+.note{margin:0;font-size:14px;color:var(--soft)}
+.script{margin:0;padding:10px 12px;border-left:3px solid var(--bronze);background:var(--bg);border-radius:6px;font-style:italic}
+textarea{width:100%;min-height:90px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:16px/1.4 "Lora",Georgia,serif}
+.stats{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px;font-variant-numeric:tabular-nums}
+.stats b{text-align:right}
+.ok{color:var(--good)}.bad{color:var(--bad)}
+audio{width:100%}
+.small{font-size:12px;color:var(--soft)}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Rob's Voice Test</h1>
+    <p class="lead">Can Erica's iPhone speak Rob's replies in Rob's real voice, for free, with nothing leaving the phone? This page finds out.</p>
+  </div>
+
+  <section>
+    <h2><span class="step">1</span>Load the voice engine</h2>
+    <p class="note">One-time download of about 150 MB. It's saved on this phone afterwards. Wi-Fi recommended.</p>
+    <button id="load">Load the engine</button>
+    <div class="bar" aria-hidden="true"><i id="loadBar"></i></div>
+    <p class="note" id="loadMsg">Not loaded yet.</p>
+  </section>
+
+  <section>
+    <h2><span class="step">2</span>Record Rob's voice</h2>
+    <p class="note">Somewhere quiet, phone about a foot away. Read this in your normal, relaxed voice (about 10 seconds):</p>
+    <p class="script">"Hey, it's me. I was just thinking about you today. I hope your afternoon is going okay, and if it isn't, come tell me about it. I love you."</p>
+    <div class="row"><button id="rec" disabled>● Record</button><button class="ghost" id="upload" disabled>Or choose a voice memo</button></div>
+    <input type="file" id="file" accept="audio/*" hidden>
+    <audio id="sample" controls hidden></audio>
+    <p class="note" id="recMsg">Load the engine first.</p>
+  </section>
+
+  <section>
+    <h2><span class="step">3</span>Hear Rob say anything</h2>
+    <label class="note" for="text">Type what Rob should say:</label>
+    <textarea id="text">Hey you. I'm proud of you for getting through today. Go grab a snack, you've earned it. Love you.</textarea>
+    <div class="row"><button id="say" disabled>▶ Say it in Rob's voice</button><button class="ghost" id="stop" disabled>Stop</button><button class="ghost" id="iphone">Compare: iPhone voice</button></div>
+    <div class="stats" id="stats" hidden></div>
+  </section>
+
+  <section>
+    <h2>What the numbers mean</h2>
+    <p class="note"><b>First sound</b> is how long Erica would wait before Rob starts talking. Under 2 seconds feels natural. <b>Speed</b> above 1.0× means the phone speaks faster than it can talk, so playback never stutters.</p>
+    <p class="small" id="device"></p>
+    <p class="small">Voice model: Kyutai Pocket TTS (CC-BY-4.0), run in the browser with pocket-tts-js (MIT). Nothing you record is uploaded.</p>
+  </section>
+</main>
+<script type="module">
+import { PocketTTS, StreamingPlayer } from './lib/index.js';
+const $ = id => document.getElementById(id);
+const tts = new PocketTTS({ language: 'english_2026-04', quantized: true, voiceCloning: true });
+let player = null, voice = null, t0 = 0;
+const fmt = n => n >= 1048576 ? (n / 1048576).toFixed(0) + ' MB' : (n / 1024).toFixed(0) + ' KB';
+$('device').textContent = `This device: ${navigator.hardwareConcurrency || '?'} cores · ${crossOriginIsolated ? 'multi-threaded' : 'single-threaded (normal on iPhone web pages)'} · ${navigator.userAgent.match(/(iPhone OS [\d_]+|Mac OS X [\d_]+|Android [\d.]+|Windows NT [\d.]+)/)?.[0] || 'unknown OS'}`;
+const stat = rows => { const s = $('stats'); s.hidden = false; s.innerHTML = rows.map(([k, v, cls]) => `<span>${k}</span><b class="${cls || ''}">${v}</b>`).join(''); };
+
+$('load').onclick = async () => {
+  $('load').disabled = true; t0 = performance.now(); const files = {};
+  try {
+    await tts.load(info => {
+      if (info.type === 'progress' && info.label){ files[info.label] = info; const done = Object.values(files).reduce((a, f) => a + (f.loaded || 0), 0), total = Object.values(files).reduce((a, f) => a + (f.total || 0), 0);
+        if (total) $('loadBar').style.width = Math.min(100, done / total * 100) + '%'; $('loadMsg').textContent = `Downloading… ${fmt(done)}${total ? ' of ' + fmt(total) : ''}`; }
+      else if (info.status) $('loadMsg').textContent = ({'loading-runtime':'Starting the engine…','loading-bundle':'Reading the model list…'})[info.status] || 'Getting ready…';
+    });
+    $('loadBar').style.width = '100%';
+    $('loadMsg').innerHTML = `<span class="ok">Ready</span> in ${((performance.now() - t0) / 1000).toFixed(1)} s.`;
+    $('rec').disabled = $('upload').disabled = false; $('recMsg').textContent = 'Tap Record, read the line, then tap Stop.';
+  } catch (e){ $('loadMsg').innerHTML = `<span class="bad">Couldn't load:</span> ${e.message}`; $('load').disabled = false; }
+};
+
+async function useAudio(arrayBuf){
+  $('recMsg').textContent = 'Learning Rob\'s voice…';
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const decoded = await ctx.decodeAudioData(arrayBuf); const mono = decoded.getChannelData(0).slice();
+  const tc = performance.now();
+  voice = await tts.cloneVoice(mono, { inputSampleRate: decoded.sampleRate });
+  $('recMsg').innerHTML = `<span class="ok">Got it.</span> Learned from ${Math.min(10, decoded.duration).toFixed(1)} s of audio in ${((performance.now() - tc) / 1000).toFixed(1)} s. Now try step 3.`;
+  $('say').disabled = false; ctx.close();
+}
+let rec = null, chunks = [];
+$('rec').onclick = async () => {
+  if (rec){ rec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+    chunks = []; rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = async () => { stream.getTracks().forEach(t => t.stop()); const blob = new Blob(chunks, { type: rec.mimeType || 'audio/mp4' }); rec = null; $('rec').textContent = '● Record again'; $('rec').classList.remove('rec');
+      $('sample').src = URL.createObjectURL(blob); $('sample').hidden = false; try { await useAudio(await blob.arrayBuffer()); } catch (e){ $('recMsg').innerHTML = `<span class="bad">Couldn't use that recording:</span> ${e.message}`; } };
+    rec.start(); $('rec').textContent = '■ Stop'; $('rec').classList.add('rec'); $('recMsg').textContent = 'Recording… read the line, then tap Stop.';
+    setTimeout(() => { if (rec) rec.stop(); }, 15000);
+  } catch (e){ $('recMsg').innerHTML = `<span class="bad">Microphone blocked.</span> Allow it in Settings → Apps → Safari → Microphone, then reload.`; }
+};
+$('upload').onclick = () => $('file').click();
+$('file').onchange = async e => { const f = e.target.files[0]; if (!f) return; $('sample').src = URL.createObjectURL(f); $('sample').hidden = false; try { await useAudio(await f.arrayBuffer()); } catch (err){ $('recMsg').innerHTML = `<span class="bad">Couldn't read that file:</span> ${err.message}`; } };
+
+$('say').onclick = async () => {
+  const text = $('text').value.trim(); if (!text || !voice) return;
+  if (!player) player = new StreamingPlayer({ sampleRate: tts.sampleRate }); await player.resume(); player.reset && player.reset();
+  $('say').disabled = true; $('stop').disabled = false;
+  const ts = performance.now(); let first = null;
+  try {
+    const m = await tts.generate(text, { voice, onChunk: (audio, meta) => { if (first == null) first = performance.now() - ts; player.play(audio, meta); } });
+    player.flush();
+    const total = (performance.now() - ts) / 1000, speed = m && m.rtfx ? m.rtfx : (m && m.audioDuration ? m.audioDuration / m.genTime : null);
+    stat([['First sound after', `${(first / 1000).toFixed(1)} s`, first < 2000 ? 'ok' : 'bad'], ['Speed', speed ? `${speed.toFixed(2)}× real time` : '?', speed >= 1 ? 'ok' : 'bad'], ['Speech length', m && m.audioDuration ? `${m.audioDuration.toFixed(1)} s` : '?'], ['Total time', `${total.toFixed(1)} s`]]);
+  } catch (e){ stat([['Error', e.message, 'bad']]); }
+  $('say').disabled = false; $('stop').disabled = true;
+};
+$('stop').onclick = async () => { await tts.stop(); player && player.stop(); $('stop').disabled = true; $('say').disabled = false; };
+$('iphone').onclick = () => { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance($('text').value)); };
+window.__voiceTest = { tts, PocketTTS };
+</script>
+</body>
+</html>
