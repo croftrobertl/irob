@@ -110,13 +110,19 @@ function kittenCuddles(){
   const pic = el('div', 'kc-pic'); pad.append(pic);
   const hint = el('p', 'kc-hint', 'Press and hold to cuddle');
   const hearts = el('div', 'kc-hearts'); pad.append(hearts);
+  const ARM = side => `<svg class="sq-arm ${side}" viewBox="0 0 180 90" aria-hidden="true"><path d="M0 20 h86 v50 h-86z" fill="#f48fb1"/><circle cx="20" cy="32" r="5" fill="#fff"/><circle cx="48" cy="56" r="5" fill="#fff"/><circle cx="70" cy="30" r="5" fill="#fff"/>
+    <path d="M84 14 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 10" fill="#fff" stroke="#f06292" stroke-width="2"/>
+    <path d="M94 32 h40 a14 14 0 0 1 0 28 h-40z" fill="#f2c6a5"/><path d="M134 30 c14 -2 26 4 28 14 c2 10 -6 18 -18 20 c-10 2 -14 -4 -10 -10" fill="#f2c6a5" stroke="#d9a080" stroke-width="2"/>
+    <path d="M148 38 q6 4 4 10 M152 48 q4 4 0 9" stroke="#d9a080" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+  const squeezer = el('div', 'squeezer'); squeezer.innerHTML = ARM('l') + ARM('r') + '<span class="sq-bow" aria-hidden="true">🎀</span>'; pad.append(squeezer);
   let snd = null, t0 = 0, raf = 0, heartT = 0;
   critter('cat').then(item => { pic.innerHTML = ''; pic.append(media(item, 'A cute kitten')); });
   const tick = () => {
     const s = (performance.now() - t0) / 1000;
     snd && snd.set(Math.min(.9, .15 + s * .08));
     pad.style.setProperty('--melt', Math.min(1, s / 10).toFixed(3));
-    hint.textContent = LOAF[Math.min(LOAF.length - 1, Math.floor(s / 3.5))];
+    hint.textContent = s < 1.2 ? 'SO. MUCH. LOVE.' : LOAF[Math.min(LOAF.length - 1, Math.floor((s - 1.2) / 3))];
+    if (Math.random() < .03) blip(1200 + Math.random() * 500, .06, 'sine', .05);
     if (performance.now() - heartT > 450 && !reduced()){ heartT = performance.now(); const h = el('span', '', rnd(['💗', '💕', '🤍', '💞'])); h.style.left = 20 + Math.random() * 60 + '%'; hearts.append(h); setTimeout(() => h.remove(), 1800); }
     raf = requestAnimationFrame(tick);
   };
@@ -321,13 +327,29 @@ function pocketKitten(){
 }
 
 /* ================= D. Catch the kittens ================= */
+function drawCuke(g, x, y, rot){
+  g.save(); g.translate(x, y); g.rotate(rot || 0);
+  const grd = g.createLinearGradient(0, -9, 0, 9); grd.addColorStop(0, '#7cc95a'); grd.addColorStop(.5, '#3f9a35'); grd.addColorStop(1, '#2a6e25');
+  g.fillStyle = grd; g.strokeStyle = '#225c1e'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(0, 0, 22, 9, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+  g.fillStyle = '#9fdc7c'; [-12, -4, 5, 13].forEach((bx, i) => { g.beginPath(); g.arc(bx, i % 2 ? -3 : 3, 1.5, 0, 7); g.fill(); });
+  g.fillStyle = '#5a8f2a'; g.beginPath(); g.ellipse(21, 0, 2.5, 3.5, 0, 0, 7); g.fill(); g.restore();
+}
+function drawSpray(g, x, y){
+  g.save(); g.translate(x, y);
+  g.fillStyle = '#f4f7fb'; g.strokeStyle = '#8fa3b8'; g.lineWidth = 1.5;
+  g.beginPath(); g.roundRect ? g.roundRect(-9, -6, 18, 26, 5) : g.rect(-9, -6, 18, 26); g.fill(); g.stroke();
+  g.fillStyle = '#3d8be0'; g.beginPath(); g.rect(-6, -16, 12, 10); g.fill();
+  g.beginPath(); g.moveTo(6, -14); g.lineTo(15, -12); g.lineTo(15, -8); g.lineTo(6, -8); g.fill();
+  g.fillStyle = 'rgba(80,160,255,.55)'; for (let i = 0; i < 5; i++){ g.beginPath(); g.arc(19 + i * 3, -10 + (i % 2 ? -2 : 2), 1.4, 0, 7); g.fill(); }
+  g.fillStyle = '#9fc8f5'; g.beginPath(); g.rect(-7, 6, 14, 12); g.fill(); g.restore();
+}
 function catchKittens(){
   const {body, show} = sheet('funCatch', 'Catch the kittens');
   const best = get('try_catchbest', 0);
   const wrap = el('div', 'catch'); const cv = el('canvas'); wrap.append(cv);
   const hud = el('div', 'catch-hud'); const score = el('span', '', 'Score 0'); const time = el('span', '', '30s'); hud.append(score, time);
   const start = el('button', 'btn', 'Start'); start.type = 'button';
-  const info = el('p', 'note', `Catch 🐱 (+1) and golden retrievers 🐶 (+3). Dodge the cucumbers 🥒 (−2). Best: ${best}.`);
+  const info = el('p', 'note', `Catch 🐱 (+1) and golden retrievers 🐶 (+3). Dodge cucumbers (−2) and the dreaded spray bottle (−3). Best: ${best}.`);
   body.append(hud, wrap, info, start); show();
   let run = null;
   const g = cv.getContext('2d');
@@ -341,20 +363,14 @@ function catchKittens(){
       if (!run) return;
       const left = Math.max(0, 30 - (t - run.t0) / 1000);
       const dt = Math.min(50, t - (run.last || t)); run.last = t;
-      if (t - run.spawn > Math.max(320, 760 - (30 - left) * 15)){ run.spawn = t; const r = Math.random(); run.items.push({x:20 + Math.random() * (w - 40), y:-30, v:1.6 + Math.random() * 1.6 + (30 - left) * .05, e:r < .14 ? '🐶' : r < .3 ? '🥒' : '🐱'}); }
+      if (t - run.spawn > Math.max(320, 760 - (30 - left) * 15)){ run.spawn = t; const r = Math.random(); run.items.push({x:20 + Math.random() * (w - 40), y:-30, v:1.6 + Math.random() * 1.6 + (30 - left) * .05, e:r < .14 ? '🐶' : r < .26 ? 'cuke' : r < .36 ? 'spray' : '🐱', rot:R(-.5, .5)}); }
       g.clearRect(0, 0, w, h);
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      // Cucumbers: little white drops squirt from the top end and fade out quickly (they never reach the floor).
-      run.items.forEach(it => { if (it.e === '🥒' && Math.random() < .35) run.drops.push({x:it.x + 9, y:it.y - 13, vx:.4 + Math.random() * 1.2, vy:-1.2 - Math.random() * 1.2, r:1.4 + Math.random() * 1.4, life:1}); });
-      run.drops.forEach(d => { d.vy += .09 * dt / 16; d.x += d.vx * dt / 16; d.y += d.vy * dt / 16; d.life -= .035 * dt / 16; });
-      run.drops = run.drops.filter(d => d.life > 0);
-      run.drops.forEach(d => { g.globalAlpha = Math.max(0, d.life); g.fillStyle = '#ffffff'; g.strokeStyle = 'rgba(90,110,90,.45)'; g.lineWidth = .8; g.beginPath(); g.arc(d.x, d.y, d.r, 0, Math.PI * 2); g.fill(); g.stroke(); });
-      g.globalAlpha = 1;
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      run.items.forEach(it => { it.y += it.v * dt / 16; g.fillText(it.e, it.x, it.y); });
+      run.items.forEach(it => { it.y += it.v * dt / 16; if (it.e === 'cuke') drawCuke(g, it.x, it.y, it.rot); else if (it.e === 'spray') drawSpray(g, it.x, it.y); else g.fillText(it.e, it.x, it.y); });
       g.font = '40px system-ui, "Apple Color Emoji", sans-serif'; g.fillText('🧺', run.bx, h - 26);
       run.items = run.items.filter(it => {
-        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === '🥒' ? -2 : 1; if (it.e === '🥒') for (let k = 0; k < 10; k++) run.drops.push({x:it.x, y:h - 44, vx:(Math.random() - .5) * 4, vy:-1.5 - Math.random() * 2.5, r:1.4 + Math.random(), life:1}); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
+        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === 'cuke' ? -2 : it.e === 'spray' ? -3 : 1; if (it.e === 'spray'){ FX.bigText('💦'); } else if (it.e === 'cuke') FX.shake(); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
         return it.y < h + 30;
       });
       score.textContent = `Score ${run.score}`; time.textContent = `${Math.ceil(left)}s`;
@@ -404,7 +420,12 @@ function fortuneCookie(){
   const {body, show} = sheet('funFortune', 'Fortune cookie');
   const stage = el('div', 'fc');
   const cookie = el('button', 'fc-cookie'); cookie.type = 'button'; cookie.setAttribute('aria-label', 'Crack the fortune cookie');
-  cookie.innerHTML = '<span class="l">🥠</span><span class="r">🥠</span>';
+  const half = side => `<svg class="fc-half ${side}" viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fcg${side}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d08a"/><stop offset=".55" stop-color="#e0a24c"/><stop offset="1" stop-color="#b9772e"/></linearGradient></defs>
+    <path d="${side === 'l' ? 'M100 30 C70 14 18 34 20 92 C48 70 80 76 100 112 Z' : 'M100 30 C130 14 182 34 180 92 C152 70 120 76 100 112 Z'}" fill="url(#fcg${side})" stroke="#a5672a" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="${side === 'l' ? 'M36 80 C44 52 68 38 94 40' : 'M164 80 C156 52 132 38 106 40'}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="5" stroke-linecap="round"/>
+    <path d="${side === 'l' ? 'M100 112 C86 92 62 82 40 86' : 'M100 112 C114 92 138 82 160 86'}" fill="none" stroke="rgba(140,80,20,.35)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${side === 'l' ? 58 : 142}" cy="58" r="2" fill="rgba(140,80,20,.35)"/><circle cx="${side === 'l' ? 76 : 124}" cy="70" r="1.6" fill="rgba(140,80,20,.3)"/></svg>`;
+  cookie.innerHTML = half('l') + half('r') + '<span class="fc-paper" aria-hidden="true"></span>';
   const slip = el('p', 'fc-slip'); slip.hidden = true;
   const hint = el('p', 'note', 'Tap to crack it open.');
   const again = el('button', 'btn ghost', 'Another cookie'); again.type = 'button'; again.hidden = true;
@@ -413,7 +434,8 @@ function fortuneCookie(){
     if (cookie.classList.contains('open')) return;
     let i; do { i = Math.floor(Math.random() * FORTUNES.length); } while (i === last); last = i;
     cookie.classList.add('open'); blip(300, .06, 'square', .06); setTimeout(() => blip(220, .08, 'square', .05), 60);
-    setTimeout(() => { slip.textContent = FORTUNES[i]; slip.hidden = false; hint.hidden = true; again.hidden = false; }, reduced() ? 0 : 380);
+    if (!reduced()){ const r2 = cookie.getBoundingClientRect(); add(Array.from({length:14}, () => ({e:rnd(['🟫', '🟧']), x:r2.left + r2.width / 2 + R(-20, 20), y:r2.top + r2.height * .6, vx:R(-3, 3), vy:R(-4, -1), g:.3, size:R(5, 9), vr:R(-.2, .2), life:900}))); }
+    setTimeout(() => { slip.textContent = FORTUNES[i]; slip.hidden = false; hint.hidden = true; again.hidden = false; }, reduced() ? 0 : 650);
   };
   again.onclick = () => { cookie.classList.remove('open'); slip.hidden = true; hint.hidden = false; again.hidden = true; };
   stage.append(cookie, slip); body.append(stage, hint, again); show();
@@ -699,44 +721,89 @@ async function croatiaGames(items){
   body.append(grid); show();
 }
 
-/* ================= Effects engine (secret words + message effects) ================= */
-function fxCanvas(){
-  const c = el('canvas', 'fun-confetti'); document.body.appendChild(c);
-  const dpr = devicePixelRatio || 1; c.width = innerWidth * dpr; c.height = innerHeight * dpr;
-  const g = c.getContext('2d'); g.scale(dpr, dpr); return {c, g, W:innerWidth, H:innerHeight};
-}
-// Generic emoji particle runner. make(i, W, H) → {x, y, vx, vy, size, rot, vr, e, delay}
-function particles(n, make, {gravity = 0, dur = 3200, fade = true} = {}){
-  if (reduced()) return;
-  const {c, g, W, H} = fxCanvas(); const ps = Array.from({length:n}, (_, i) => ({rot:0, vr:0, delay:0, ...make(i, W, H)}));
-  const t0 = performance.now(); let last = t0;
-  (function frame(t){
-    const dt = Math.min(40, t - last) / 16; last = t; const el2 = t - t0;
-    g.clearRect(0, 0, W, H);
-    ps.forEach(p => { if (el2 < p.delay) return; p.vy += gravity * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
-      g.save(); g.globalAlpha = fade ? Math.max(0, Math.min(1, (dur - el2) / 600)) : 1; g.translate(p.x, p.y); g.rotate(p.rot);
-      g.font = `${p.size}px system-ui, "Apple Color Emoji", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.e, 0, 0); g.restore(); });
-    if (el2 < dur) requestAnimationFrame(frame); else c.remove();
-  })(t0);
-}
+/* ================= Effects engine v2 (secret words + message effects) =================
+   One shared full-screen canvas, emoji pre-rendered to sprites (no font jank), every particle eases in and out,
+   scenes (waves, night sky, storm, disco, rainbow) are painted on the canvas instead of popping DOM overlays. */
 const R = (a, b) => a + Math.random() * (b - a);
+const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+const sprites = new Map();
+function sprite(e, size){
+  const key = e + size; if (sprites.has(key)) return sprites.get(key);
+  const d = Math.min(3, devicePixelRatio || 1), c = document.createElement('canvas'); c.width = c.height = Math.ceil(size * 1.3 * d);
+  const g = c.getContext('2d'); g.scale(d, d); g.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, size * .65, size * .7);
+  const s = {c, w:size * 1.3}; sprites.set(key, s); return s;
+}
+const stage = {c:null, g:null, W:0, H:0, items:[], scenes:[], raf:0};
+function ensureStage(){
+  if (stage.c) return;
+  const c = el('canvas', 'fx-stage'); document.body.appendChild(c); stage.c = c; stage.g = c.getContext('2d');
+  const fit = () => { const d = Math.min(2, devicePixelRatio || 1); stage.W = innerWidth; stage.H = innerHeight; c.width = stage.W * d; c.height = stage.H * d; stage.g.setTransform(d, 0, 0, d, 0, 0); };
+  fit(); addEventListener('resize', fit);
+}
+function run(){
+  if (stage.raf) return; let last = performance.now();
+  const frame = t => {
+    const dt = Math.min(48, t - last) / 16.67; last = t; const {g, W, H} = stage;
+    g.clearRect(0, 0, W, H);
+    stage.scenes = stage.scenes.filter(s => { const k = (t - s.t0) / s.dur; if (k >= 1) return false; s.draw(g, W, H, k, t); return true; });
+    stage.items = stage.items.filter(p => {
+      const age = t - p.t0; if (age < 0) return true; if (age > p.life) return false;
+      p.vy += (p.g || 0) * dt; p.vx *= p.drag || 1; p.vy *= p.drag || 1; p.x += p.vx * dt + (p.sway ? Math.sin((age / 1000 + p.ph) * p.sway) * .8 : 0); p.y += p.vy * dt; p.rot += (p.vr || 0) * dt;
+      const a = Math.min(ease(age / 220), ease((p.life - age) / 500)), sc = p.pop ? .4 + .6 * ease(age / 260) : 1;
+      const s = sprite(p.e, p.size); g.save(); g.globalAlpha = a * (p.alpha || 1); g.translate(p.x, p.y); g.rotate(p.rot); g.scale(sc * (p.flip ? -1 : 1), sc); g.drawImage(s.c, -s.w / 2, -s.w / 2, s.w, s.w); g.restore();
+      return true; });
+    if (stage.items.length || stage.scenes.length) stage.raf = requestAnimationFrame(frame); else { stage.raf = 0; g.clearRect(0, 0, W, H); }
+  };
+  stage.raf = requestAnimationFrame(frame);
+}
+const add = list => { if (reduced()) return; ensureStage(); const t = performance.now(); list.forEach(p => { p.t0 = t + (p.delay || 0); p.rot = p.rot || 0; stage.items.push(p); }); run(); };
+const scene = (dur, draw) => { if (reduced()) return; ensureStage(); stage.scenes.push({t0:performance.now(), dur, draw}); run(); };
 const FX = {
-  rain:(emojis, n = 40) => particles(n, (i, W) => ({x:R(0, W), y:R(-H0(), -20), vx:R(-.4, .4), vy:R(3, 6), size:R(22, 38), vr:R(-.04, .04), e:rnd(emojis), delay:R(0, 900)}), {dur:3600}),
-  rise:(emojis, n = 26) => particles(n, (i, W, H) => ({x:R(20, W - 20), y:H + 30, vx:R(-.6, .6), vy:R(-5, -2.5), size:R(22, 40), vr:R(-.03, .03), e:rnd(emojis), delay:R(0, 800)}), {dur:3800}),
-  burst:(emojis, n = 34) => particles(n, (i, W, H) => { const a = R(0, Math.PI * 2), v = R(4, 11); return {x:W / 2, y:H * .5, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 3, size:R(20, 36), vr:R(-.1, .1), e:rnd(emojis)}; }, {gravity:.25, dur:2600}),
-  across:(e, {size = 90, y = .55, speed = 14} = {}) => particles(1, (i, W, H) => ({x:-size, y:H * y, vx:speed, vy:0, size, e}), {dur:Math.round((innerWidth + 2 * size) / speed * 16), fade:false}),
-  fireworks:() => { const cols = ['✨', '💥', '🎆', '🌟']; [0, 500, 1000, 1500].forEach(d => setTimeout(() => particles(22, (i, W, H) => { const cx = W * R(.2, .8), cy = H * R(.2, .5); const a = i / 22 * Math.PI * 2, v = R(3, 6); return {x:cx, y:cy, vx:Math.cos(a) * v, vy:Math.sin(a) * v, size:R(14, 24), e:rnd(cols)}; }, {gravity:.08, dur:1500}), d)); },
-  overlay:(cls, ms = 2600) => { if (reduced()) return; const o = el('div', 'fx-overlay ' + cls); document.body.appendChild(o); setTimeout(() => o.classList.add('out'), ms - 600); setTimeout(() => o.remove(), ms); return o; },
+  rain:(emojis, n = 36) => add(Array.from({length:n}, () => ({e:rnd(emojis), x:R(0, innerWidth), y:R(-80, -20), vx:R(-.3, .3), vy:R(2.4, 4.4), size:R(24, 40), vr:R(-.02, .02), sway:R(1, 2.5), ph:R(0, 6), life:R(3200, 4200), delay:R(0, 1400), pop:true}))),
+  rise:(emojis, n = 24) => add(Array.from({length:n}, () => ({e:rnd(emojis), x:R(20, innerWidth - 20), y:innerHeight + 30, vx:R(-.3, .3), vy:R(-3.6, -2), size:R(24, 42), vr:R(-.01, .01), sway:R(1.5, 3), ph:R(0, 6), life:R(3400, 4400), delay:R(0, 1200), pop:true}))),
+  burst:(emojis, n = 34) => add(Array.from({length:n}, () => { const a = R(0, Math.PI * 2), v = R(3, 9); return {e:rnd(emojis), x:innerWidth / 2, y:innerHeight * .48, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 2, g:.16, drag:.985, size:R(22, 38), vr:R(-.05, .05), life:R(2000, 2800), pop:true}; })),
+  // emoji animals face left, so they're mirrored to run forward
+  across:(e, {size = 90, y = .55, speed = 9} = {}) => add([{e, x:-size, y:innerHeight * y, vx:speed, vy:0, size, flip:true, life:(innerWidth + size * 2) / speed * 16.67, sway:3, ph:0}]),
+  bigText:t => { const o = el('div', 'fx-big', t); document.body.appendChild(o); setTimeout(() => o.remove(), 1500); },
   shake:() => { const a = document.getElementById('app'); if (!a || reduced()) return; a.classList.remove('fx-shake'); void a.offsetWidth; a.classList.add('fx-shake'); setTimeout(() => a.classList.remove('fx-shake'), 700); },
   squeeze:() => { const a = document.getElementById('app'); if (!a || reduced()) return; a.classList.remove('fx-hug'); void a.offsetWidth; a.classList.add('fx-hug'); setTimeout(() => a.classList.remove('fx-hug'), 1300); },
-  bigText:(t, ms = 1400) => { if (reduced()) return; const o = el('div', 'fx-big', t); document.body.appendChild(o); setTimeout(() => o.remove(), ms); },
-  stars:() => { const o = FX.overlay('fx-night', 3200); if (!o) return; for (let i = 0; i < 26; i++){ const s = el('i', '', '✦'); s.style.left = R(0, 100) + '%'; s.style.top = R(0, 70) + '%'; s.style.animationDelay = R(0, 1.5) + 's'; s.style.fontSize = R(8, 18) + 'px'; o.append(s); } },
-  disco:() => { FX.overlay('fx-disco', 3200); FX.rain(['🪩', '✨', '💃'], 14); },
-  wave:() => { const o = FX.overlay('fx-wave', 2400); if (o) o.innerHTML = '<svg viewBox="0 0 1200 300" preserveAspectRatio="none"><path d="M0 160 C150 90 300 230 450 160 S750 90 900 160 S1150 230 1200 160 V300 H0Z" fill="rgba(46,124,170,.55)"/><path d="M0 200 C150 140 300 260 450 200 S750 140 900 200 S1150 260 1200 200 V300 H0Z" fill="rgba(80,160,200,.6)"/></svg>'; },
-  storm:() => { const o = FX.overlay('fx-storm', 3000); if (o){ o.textContent = '⛈️'; setTimeout(() => { o.textContent = '🌤️'; }, 1600); } },
-  zoomies:() => { if (reduced()) return; const o = el('div', 'fx-zoomies', '🐈'); document.body.appendChild(o); setTimeout(() => o.remove(), 2600); },
+  fireworks:() => { const cols = ['#ffd36b', '#ff7aa2', '#7ad7ff', '#b98cff', '#ffffff', '#ffb36b'];
+    for (let k = 0; k < 6; k++){ const cx = R(.2, .8), cy = R(.18, .45), col = rnd(cols), t1 = k * 380;
+      scene(2200 + t1, (g, W, H, kk, t) => { const el2 = kk * (2200 + t1) - t1; if (el2 < 0) return; const up = Math.min(1, el2 / 500);
+        if (up < 1){ g.fillStyle = col; g.beginPath(); g.arc(W * cx, H * (1 - (1 - cy) * ease(up)), 3, 0, 7); g.fill(); return; }
+        const e2 = (el2 - 500) / 1500, r = ease(e2) * Math.min(W, H) * .22; g.globalAlpha = Math.max(0, 1 - e2);
+        for (let i = 0; i < 28; i++){ const a = i / 28 * Math.PI * 2; const x = W * cx + Math.cos(a) * r, y = H * cy + Math.sin(a) * r + e2 * e2 * 40; g.fillStyle = col; g.beginPath(); g.arc(x, y, 2.6 * (1 - e2) + .6, 0, 7); g.fill(); }
+        g.globalAlpha = 1; }); } },
+  // The Adriatic rolls in: layered waves with foam crests and sparkles, then slides back out
+  wave:() => scene(3600, (g, W, H, k, t) => {
+    const lvl = k < .45 ? ease(k / .45) : 1 - ease((k - .55) / .45) * (k > .55 ? 1 : 0), top = H * (1 - .5 * lvl);
+    const layers = [['rgba(14,92,128,.55)', 0, 18, .9], ['rgba(28,140,170,.55)', 18, 14, 1.3], ['rgba(64,184,200,.6)', 34, 11, 1.8]];
+    layers.forEach(([col, off, amp, sp]) => { const y0 = top + off; g.fillStyle = col; g.beginPath(); g.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) g.lineTo(x, y0 + Math.sin(x / 70 + t / 1000 * sp) * amp + Math.sin(x / 31 + t / 700) * amp * .35); g.lineTo(W, H); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2; g.beginPath(); for (let x = 0; x <= W; x += 8){ const y = y0 + Math.sin(x / 70 + t / 1000 * sp) * amp + Math.sin(x / 31 + t / 700) * amp * .35; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); });
+    for (let i = 0; i < 26; i++){ const x = (i * 97 + t / 9) % W, y = top + 60 + ((i * 53) % Math.max(1, H - top - 40)); g.fillStyle = `rgba(255,255,255,${.35 + .35 * Math.sin(t / 200 + i)})`; g.beginPath(); g.arc(x, y, 1.6, 0, 7); g.fill(); } }),
+  stars:() => scene(4200, (g, W, H, k, t) => {
+    const a = Math.min(ease(k / .2), ease((1 - k) / .25)); const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, `rgba(8,10,34,${.85 * a})`); grd.addColorStop(1, `rgba(40,30,80,${.6 * a})`); g.fillStyle = grd; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++){ const x = (i * 137.5) % W, y = (i * 71.3) % (H * .75), tw = .5 + .5 * Math.sin(t / 400 + i * 1.7); g.fillStyle = `rgba(255,248,220,${a * tw})`; g.beginPath(); g.arc(x, y, i % 9 ? 1.2 : 2.2, 0, 7); g.fill(); }
+    if (k > .3 && k < .6){ const s = (k - .3) / .3, x = W * (.15 + .7 * s), y = H * (.12 + .25 * s); const sg = g.createLinearGradient(x - 90, y - 32, x, y); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(1, `rgba(255,255,255,${a})`); g.strokeStyle = sg; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x - 90, y - 32); g.lineTo(x, y); g.stroke(); }
+    g.font = `${Math.min(W, H) * .16}px "Apple Color Emoji",system-ui`; g.globalAlpha = a; g.fillText('🌙', W * .72, H * .2); g.globalAlpha = 1; }),
+  disco:() => scene(3600, (g, W, H, k, t) => { const a = Math.min(ease(k / .15), ease((1 - k) / .25)); g.globalCompositeOperation = 'source-over';
+    g.fillStyle = `rgba(20,10,40,${.45 * a})`; g.fillRect(0, 0, W, H);
+    ['255,64,160', '64,200,255', '255,220,64', '150,90,255', '80,255,170'].forEach((c, i) => { const ang = t / 700 + i * 1.26, x = W / 2 + Math.cos(ang) * W * .38, y = H * .45 + Math.sin(ang * 1.3) * H * .3, r = Math.min(W, H) * .42;
+      const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, `rgba(${c},${.55 * a})`); rg.addColorStop(1, `rgba(${c},0)`); g.fillStyle = rg; g.fillRect(0, 0, W, H); });
+    g.font = '64px "Apple Color Emoji",system-ui'; g.textAlign = 'center'; g.globalAlpha = a; g.save(); g.translate(W / 2, 70 + Math.sin(t / 300) * 6); g.rotate(Math.sin(t / 500) * .2); g.fillText('🪩', 0, 0); g.restore(); g.globalAlpha = 1; }),
+  storm:() => { scene(3600, (g, W, H, k, t) => { const a = Math.min(ease(k / .15), ease((1 - k) / .2)), clear = ease((k - .55) / .3);
+      g.fillStyle = `rgba(40,48,66,${.55 * a * (1 - clear)})`; g.fillRect(0, 0, W, H);
+      if (k > .2 && k < .24 || k > .36 && k < .38) { g.fillStyle = `rgba(255,255,240,${.6 * a})`; g.fillRect(0, 0, W, H); }
+      g.strokeStyle = `rgba(190,210,235,${.6 * a * (1 - clear)})`; g.lineWidth = 1.4; g.beginPath(); for (let i = 0; i < 70; i++){ const x = (i * 53 + t * .9) % (W + 40) - 20, y = (i * 97 + t * 1.6) % H; g.moveTo(x, y); g.lineTo(x - 6, y + 16); } g.stroke();
+      if (clear > 0){ const rg = g.createRadialGradient(W * .78, H * .12, 0, W * .78, H * .12, Math.max(W, H) * .7); rg.addColorStop(0, `rgba(255,214,120,${.55 * clear * a})`); rg.addColorStop(1, 'rgba(255,214,120,0)'); g.fillStyle = rg; g.fillRect(0, 0, W, H); }
+      g.font = `${Math.min(W, H) * .22}px "Apple Color Emoji",system-ui`; g.textAlign = 'center'; g.globalAlpha = a; g.fillText(clear > .3 ? '🌤️' : '⛈️', W * .5 + (k - .5) * 60, H * .24); g.globalAlpha = 1; }); },
+  rainbow:() => scene(3400, (g, W, H, k) => { const a = Math.min(ease(k / .2), ease((1 - k) / .3)), reveal = ease(k / .45);
+    ['#ff5a5a', '#ffa54a', '#ffe14a', '#5ad06a', '#4aa8ff', '#8a6bff'].forEach((c, i) => { g.strokeStyle = c; g.globalAlpha = .55 * a; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.arc(W / 2, H * .72, Math.min(W, H) * .62 - i * 14, Math.PI, Math.PI + Math.PI * reveal); g.stroke(); });
+    g.globalAlpha = 1; }),
+  dim:(ms = 3000, a0 = .5) => scene(ms, (g, W, H, k) => { g.fillStyle = `rgba(10,8,24,${a0 * Math.min(ease(k / .2), ease((1 - k) / .3))})`; g.fillRect(0, 0, W, H); }),
+  zoomies:() => { if (reduced() || !window.iRobCat) return; const o = el('div', 'fx-zoomies'); o.innerHTML = window.iRobCat.sitting(((get(PK, null) || {}).coat) || 'orange', 'wide'); document.body.appendChild(o); setTimeout(() => o.remove(), 2700); },
 };
-function H0(){ return innerHeight * .6; }
 
 // 1A. Secret words she can type. [match, name, description, effect]
 const SECRETS = [
@@ -746,13 +813,13 @@ const SECRETS = [
   [/\b(love you|luv you|ily)\b/i, 'love you', 'Hearts. So many hearts. A medically concerning amount of hearts.', () => FX.burst(['💗', '💕', '💖', '❤️'], 40)],
   [/\bhappy birthday\b/i, 'happy birthday', 'Balloons. Nobody had to blow them up.', () => FX.rise(['🎈', '🎈', '🎉', '🎂'], 30)],
   [/\bpizza\b/i, 'pizza', 'It\'s raining pizza. This is the weather we were promised.', () => FX.rain(['🍕'], 30)],
-  [/\bcucumbers?\b/i, 'cucumber', 'A cucumber appears. Every cat in the app files a complaint and leaves.', () => { FX.bigText('🥒', 1600); FX.burst(['🙀', '😾', '🐈'], 18); }],
+  [/\bcucumbers?\b/i, 'cucumber', 'A cucumber appears. Every cat in the app files a complaint and leaves.', () => { FX.bigText('🥒'); FX.burst(['🙀', '😾', '🐈'], 18); }],
   [/\b(coffee|caffeine|espresso)\b/i, 'coffee', 'Caffeine shakes, but for your phone.', () => { FX.rise(['☕', '☕', '⚡'], 16); FX.shake(); }],
-  [/\b(boo|halloween|spooky)\b/i, 'boo', 'Ghosts drift by. They\'re friendly. Mostly.', () => { FX.overlay('fx-dark', 3000); FX.rise(['👻', '🎃', '🦇'], 20); }],
+  [/\b(boo|halloween|spooky)\b/i, 'boo', 'Ghosts drift by. They\'re friendly. Mostly.', () => { FX.dim(3600, .55); FX.rise(['👻', '🎃', '🦇'], 22); }],
   [/\b(party|dance|disco)\b/i, 'party', 'Instant disco. No cover charge. Questionable lighting.', () => FX.disco()],
   [/\b(cha-?ching|bookings?|money|rich)\b/i, 'money', 'Make it rain. Every bill is a booking. Manifesting.', () => FX.rain(['💸', '💵', '🤑'], 34)],
   [/\bsnow\b/i, 'snow', 'Florida-legal snow. Melts in three seconds, like real Florida snow.', () => FX.rain(['❄️', '❄️', '⛄'], 40)],
-  [/\b(nap|naptime|sleepy|zzz)\b/i, 'nap', 'The whole app lies down with you. Don\'t tell anyone.', () => { FX.overlay('fx-dark', 2800); FX.rise(['💤', 'z', 'Z'], 16); }],
+  [/\b(nap|naptime|sleepy|zzz)\b/i, 'nap', 'The whole app lies down with you. Don\'t tell anyone.', () => { FX.dim(3200, .45); FX.rise(['💤', '💤', '🌙'], 14); }],
   [/\b(cheers|bellini|champagne|wine)\b/i, 'cheers', 'Clink. Responsible amounts of bubbly.', () => FX.burst(['🥂', '🍾', '✨'], 26)],
   [/\b(ugh|fml|worst day)\b/i, 'ugh', 'A tiny storm cloud passes over. The sun wins. It always does.', () => FX.storm()],
   [/\b(yay|woohoo|hooray|let'?s go)\b/i, 'yay', 'Confetti: the international sign for "heck yes."', () => confetti(150)],
@@ -761,14 +828,14 @@ const SECRETS = [
   [/\bchocolate\b/i, 'chocolate', 'Chocolate rain. Scientists hate this one weird trick.', () => FX.rain(['🍫', '🍬'], 30)],
   [/\bunicorns?\b/i, 'unicorn', 'A unicorn gallops by. Don\'t ask questions you don\'t want answered.', () => { FX.across('🦄', {size:84, y:.4, speed:10}); FX.rain(['🌈', '✨'], 14); }],
   [/\b(beach|vacation)\b/i, 'beach', 'Instant vacation. Sunscreen not included.', () => FX.rise(['🌴', '☀️', '🐚', '🏖️'], 22)],
-  [/\bmeow\b/i, 'meow', 'Cat translation services are now online. Accuracy: 3%.', () => { FX.bigText('MEOW', 1500); FX.across('🐾', {size:40, y:.75, speed:5}); }],
+  [/\bmeow\b/i, 'meow', 'Cat translation services are now online. Accuracy: 3%.', () => { FX.bigText('MEOW'); FX.across('🐾', {size:40, y:.75, speed:5}); }],
   [/\bzoomies\b/i, 'zoomies', '3 a.m. cat energy, delivered on demand.', () => FX.zoomies()],
   [/\bbubbles?\b/i, 'bubbles', 'Bubbles float up. Popping them is optional but encouraged.', () => FX.rise(['🫧', '🫧', '🫧'], 30)],
   [/\btacos?\b/i, 'taco', 'It\'s raining tacos, from out of the sky.', () => FX.rain(['🌮'], 30)],
   [/\b(best husband|rob is the best)\b/i, 'best husband', 'Correct answer. Prize awarded. Crown issued.', () => { FX.rain(['👑', '🏆'], 22); confetti(80); }],
   [/\bhugs?\b/i, 'hug', 'The whole app hugs you. Gently. With consent.', () => { FX.squeeze(); FX.rise(['🤗', '💛'], 10); }],
-  [/\b(boom|mic drop)\b/i, 'boom', 'Mic drop. Everybody stand back.', () => { FX.bigText('💥', 1000); FX.shake(); }],
-  [/\b(rainbow)\b/i, 'rainbow', 'A rainbow. Free of charge. Pot of gold sold separately.', () => FX.overlay('fx-rainbow', 2600)],
+  [/\b(boom|mic drop)\b/i, 'boom', 'Mic drop. Everybody stand back.', () => { FX.bigText('💥'); FX.shake(); }],
+  [/\b(rainbow)\b/i, 'rainbow', 'A rainbow. Free of charge. Pot of gold sold separately.', () => FX.rainbow()],
   [/\b(goodnight|good night|night night)\b/i, 'good night', 'The lights go down and the stars come out.', () => FX.stars()],
 ];
 function secretWord(text){
@@ -781,10 +848,10 @@ const REPLY_FX = [
   [/\b(congrat\w*|proud of you|crushed it|nailed it|you did it)\b/i, 1, () => { confetti(120); FX.rise(['🏆'], 6); }],
   [/\b(good ?night|sweet dreams|sleep well)\b/i, 1, () => FX.stars()],
   [/\bhappy birthday\b/i, 1, () => FX.rise(['🎈', '🎈', '🎉'], 26)],
-  [/\bhigh[- ]five\b/i, 1, () => { FX.bigText('✋', 900); FX.shake(); }],
+  [/\bhigh[- ]five\b/i, 1, () => { FX.bigText('✋'); FX.shake(); }],
   [/\bcheers\b/i, 1, () => FX.burst(['🥂', '✨'], 18)],
   [/\b(hug|hugs)\b/i, .8, () => FX.squeeze()],
-  [/\b(boom|mic drop)\b/i, 1, () => FX.bigText('💥', 900)],
+  [/\b(boom|mic drop)\b/i, 1, () => FX.bigText('💥')],
   [/\b(you'?ve got this|go get (it|'?em)|let'?s go)\b/i, .6, () => FX.rise(['💪', '🔥'], 12)],
   [/\blove you\b/i, .25, () => FX.rise(['💗', '💕'], 10)],
   [/\b(haha|lol|hilarious)\b/i, .25, () => FX.rise(['😂'], 8)],

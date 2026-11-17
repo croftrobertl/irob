@@ -220,13 +220,14 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .gattr{font-size:10.5px;color:var(--ink-soft);text-align:right;margin-top:3px}
 .game-score{font:400 13px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);text-align:center;margin:6px 0 0}
 /* roulette */
-.wheel-wrap{position:relative;width:min(260px,70vw);aspect-ratio:1;margin:8px auto 14px}
-.wheel{position:absolute;inset:0;border-radius:50%;border:6px solid var(--card);box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(45,43,43,.15);
-  background:conic-gradient(#efe4d2 0 45deg,#d9a22b 45deg 90deg,#f3e3dc 90deg 135deg,#2d6a7c 135deg 180deg,#efe4d2 180deg 225deg,#b68235 225deg 270deg,#f3e3dc 270deg 315deg,#7d5411 315deg 360deg);
-  transition:transform 3.4s cubic-bezier(.15,.7,.2,1)}
-.wheel span{position:absolute;left:50%;top:50%;font-size:28px;line-height:1;transform-origin:0 0}
-.pointer{position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--coral);z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
-.dare{background:var(--card);border-radius:8px;box-shadow:inset 0 0 0 1px var(--line);border-top:4px solid var(--coral);padding:16px;text-align:center;font:600 22px/1.35 var(--display)}
+.wheel-wrap{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:10px auto 18px;filter:drop-shadow(0 12px 22px rgba(60,40,10,.25))}
+.wheel{position:absolute;inset:0;border-radius:50%;border:8px solid #fff8ea;box-shadow:0 0 0 2px #b68235,inset 0 0 0 2px rgba(0,0,0,.06);background:#f4e6cf;transition:transform 3.6s cubic-bezier(.12,.75,.16,1)}
+.wheel-svg{display:block;width:100%;height:100%}
+.pointer{position:absolute;left:50%;top:-16px;transform:translateX(-50%);width:34px;height:42px;z-index:1;background:linear-gradient(#c4523e,#8f2f20);clip-path:polygon(50% 100%,0 22%,0 0,100% 0,100% 22%);border-radius:6px 6px 0 0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+.dare{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line),0 8px 20px rgba(60,40,10,.1);border-top:4px solid var(--bronze);padding:18px 16px;text-align:center}
+.dare-ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--deep)}.dare-ic svg{width:26px;height:26px}
+.dare b{font:600 18px/1.2 var(--head);letter-spacing:.04em;color:var(--title)}
+.dare span:last-child{font:400 17px/1.4 var(--body)}
 /* home */
 .check{display:flex;gap:12px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--line)}
 .check input{width:22px;height:22px;accent-color:var(--blue);flex:none;margin-top:1px}
@@ -657,11 +658,11 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </section>
   <section class="sheet full" id="sheetRoulette" aria-label="Fun roulette" role="dialog" aria-modal="true">
     <div class="grab"></div>
-    <header><h2>Fun roulette</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+    <header><h2>Fun Roulette</h2><button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
     <div class="body">
       <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
       <div class="btns"><button class="btn" id="spinBtn">Spin</button></div>
-      <div id="dareBox" hidden style="margin-top:14px"><div class="dare" id="dareTxt"></div><div class="btns"><button class="btn" id="dareDone">I did it!</button><button class="btn ghost" id="dareAgain">Spin again</button></div></div>
+      <div id="dareBox" hidden style="margin-top:14px"><div class="dare"><span class="dare-ic" id="dareIcon"></span><b id="dareTitle"></b><span id="dareTxt"></span></div><div class="btns"><button class="btn" id="dareDone">I did it!</button><button class="btn ghost" id="dareAgain">Spin again</button></div></div>
     </div>
   </section>
   <section class="sheet" id="sheetHome" aria-label="Home and fixes" role="dialog" aria-modal="true">
@@ -2041,16 +2042,65 @@ function nextRound(){
 
 
 /* ================= C2: Fun roulette ================= */
-const DARES = [['💃', 'Kitchen dance party', 'Kitchen dance party: one song, full volume, no judging.'], ['🍦', 'Ice cream for dinner', 'Ice cream for dinner — or at least for dessert. Rob\'s orders.'], ['📸', 'Silliest selfie', 'Take the silliest selfie you can. Bonus points if the kids join in.'], ['🎶', 'Sing it loud', 'Sing one song from high school out loud. Every word counts.'], ['🌅', 'Five minutes of sky', 'Go outside and watch the sky for five whole minutes.'], ['🃏', 'One quick game', 'Play one quick game — cards, a board game, or rock-paper-scissors, best of five.'], ['🛁', 'Spa night', 'Spa night: bath, face mask, phone in another room.'], ['🍕', 'Weird snack challenge', 'Build the weirdest snack you can — and actually eat it.']];
-(() => { const w = $('wheel'); DARES.forEach(([e], i) => { const sp = document.createElement('span'); sp.textContent = e; const a = (i * 45 + 22.5) * Math.PI / 180, r = 37; sp.style.transform = `translate(calc(-50% + ${Math.sin(a) * r}cqw), calc(-50% - ${Math.cos(a) * r}cqw))`; w.appendChild(sp); }); w.style.containerType = 'inline-size'; })();
+const WI = {
+  dance:'<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  cone:'<path d="M7 10a5 5 0 0 1 10 0z"/><path d="M7.5 10 12 21l4.5-11"/><path d="M9 14l5-2M10 17l4-2"/>',
+  camera:'<rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8.5 7l1.5-3h4l1.5 3"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+  cards:'<rect x="4" y="6" width="11" height="15" rx="2"/><path d="M8 3.5h10a2 2 0 0 1 2 2V18M8 11.5l1.5 2 1.5-2-1.5-2z"/>',
+  bath:'<path d="M3 12h18v2a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M6 12V6a2 2 0 0 1 4 0M7 19l-1 2M17 19l1 2"/>',
+  snack:'<path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 3c-2.5 2-2.5 6 0 8v10"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  car:'<path d="M5 16v-5l2-5h10l2 5v5M3 16h18M7 16v3M17 16v3"/><path d="M7.5 13h.01M16.5 13h.01"/>',
+  pencil:'<path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  cat:'<path d="M5.5 10 6.3 4.5l3.7 3M18.5 10l-.8-5.5-3.7 3"/><path d="M5 14.5a7 6.5 0 0 0 14 0c0-3.8-3.1-7-7-7s-7 3.2-7 7z"/><path d="M9.5 13.5v.1M14.5 13.5v.1"/>',
+  gift:'<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18V6H3zM12 6v14M12 6c-1-3-5-3-5-1s5 1 5 1 5 1 5-1-4-2-5 1"/>',
+  plant:'<path d="M7 14h10l-1.5 7h-7z"/><path d="M12 14V8M12 8c0-3 3-5 6-5 0 3-3 5-6 5zM12 10.5c0-2-2-4-5-4 0 2 2 4 5 4z"/>',
+  heart:'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+};
+const DARES = [
+  ['dance', 'Kitchen dance party', 'Kitchen dance party: one song, full volume, no judging.'],
+  ['cone', 'Ice cream for dinner', 'Ice cream for dinner. Or at least for dessert. Rob\'s orders.'],
+  ['camera', 'Silliest selfie', 'Take the silliest selfie you possibly can. Bonus points if the cats are in it.'],
+  ['mic', 'Sing it loud', 'Sing one song from high school out loud. Every word counts.'],
+  ['sun', 'Five minutes of sky', 'Go outside and look at the sky for five whole minutes. No phone.'],
+  ['cards', 'One quick game', 'Play one quick game: cards, a board game, or rock-paper-scissors, best of five.'],
+  ['bath', 'Spa night', 'Spa night: bath, face mask, phone in another room.'],
+  ['snack', 'Weird snack challenge', 'Build the weirdest snack you can, and actually eat it.'],
+  ['phone', 'Call a funny friend', 'Call the person who always makes you laugh. Just to say hi.'],
+  ['car', 'Windows-down drive', 'One song, windows down, volume up. Sing like nobody is watching.'],
+  ['pencil', 'Brag list', 'Write down three things you did well this week. Big or tiny.'],
+  ['star', 'Make a wish', 'Find the first star tonight and make a wish. You\'re allowed to make it a big one.'],
+  ['cat', 'Cat photoshoot', 'Give your cat a full photoshoot. Dramatic lighting encouraged.'],
+  ['gift', 'Tiny treat', 'Buy yourself one tiny treat today. Under $10. No guilt.'],
+  ['plant', 'Corner makeover', 'Rearrange one little corner of a room. Make it feel new.'],
+  ['heart', 'Make someone\'s day', 'Send someone a message telling them something you love about them.'],
+];
+const SEG = 360 / DARES.length, WHEEL_COLS = ['#b68235', '#f4e6cf', '#2d6a7c', '#f6dfd6', '#7d5411', '#efe4d2', '#a8452f', '#e9d6b4'];
+(() => {
+  const w = $('wheel'), R0 = 100, ns = 'http://www.w3.org/2000/svg';
+  let svg = `<svg viewBox="0 0 200 200" class="wheel-svg" aria-hidden="true">`;
+  DARES.forEach(([ic], i) => { const a0 = (i * SEG - 90) * Math.PI / 180, a1 = ((i + 1) * SEG - 90) * Math.PI / 180, col = WHEEL_COLS[i % WHEEL_COLS.length];
+    const x0 = 100 + R0 * Math.cos(a0), y0 = 100 + R0 * Math.sin(a0), x1 = 100 + R0 * Math.cos(a1), y1 = 100 + R0 * Math.sin(a1);
+    const light = /^#(f|e)/.test(col), mid = (i + .5) * SEG;
+    svg += `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A${R0} ${R0} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${col}" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>`;
+    svg += `<g transform="rotate(${mid} 100 100) translate(100 ${100 - R0 * .72}) rotate(${-0}) scale(.62) translate(-12 -12)"><g fill="none" stroke="${light ? '#7d5411' : '#fff'}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${WI[ic]}</g></g>`; });
+  for (let i = 0; i < DARES.length; i++){ const a = (i * SEG - 90) * Math.PI / 180; svg += `<circle cx="${(100 + 96.5 * Math.cos(a)).toFixed(2)}" cy="${(100 + 96.5 * Math.sin(a)).toFixed(2)}" r="1.9" fill="#fff6dc" stroke="#b68235" stroke-width=".6"/>`; }
+  svg += `<circle cx="100" cy="100" r="17" fill="url(#hub)" stroke="#fff" stroke-width="2.5"/><defs><radialGradient id="hub" cx="40%" cy="35%"><stop offset="0" stop-color="#f3c98f"/><stop offset="1" stop-color="#7d5411"/></radialGradient></defs><path d="M100 90l2.4 7.2 7.6.4-6 4.6 2.2 7.3-6.2-4.3-6.2 4.3 2.2-7.3-6-4.6 7.6-.4z" fill="#fff"/></svg>`;
+  w.innerHTML = svg;
+})();
 let wheelTurn = 0, currentDare = null, spinning = false;
 function spin(){
   if (spinning) return; spinning = true; $('dareBox').hidden = true;
-  const i = Math.floor(Math.random() * DARES.length); wheelTurn += 360 * (4 + Math.floor(Math.random() * 2));
-  const target = wheelTurn + (360 - (i * 45 + 22.5)) % 360;
+  const i = Math.floor(Math.random() * DARES.length); wheelTurn += 360 * (5 + Math.floor(Math.random() * 2));
+  const target = wheelTurn + (360 - (i * SEG + SEG / 2)) % 360;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   $('wheel').style.transform = `rotate(${target}deg)`;
-  setTimeout(() => { spinning = false; currentDare = DARES[i]; $('dareTxt').textContent = DARES[i][0] + ' ' + DARES[i][2]; $('dareBox').hidden = false; wheelTurn = target - target % 360 + 360; }, reduce ? 50 : 3500);
+  // ticking as segments pass the pointer
+  if (!reduce && window.AudioContext){ try { const ac = spin.ac || (spin.ac = new AudioContext()); let n = 0; const tick = () => { if (n > 26) return; const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 1400; g.gain.setValueAtTime(.05, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .03); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + .03); n++; setTimeout(tick, 40 + n * n * 4.6); }; tick(); } catch {} }
+  setTimeout(() => { spinning = false; currentDare = DARES[i]; $('dareIcon').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${WI[DARES[i][0]]}</svg>`; $('dareTitle').textContent = DARES[i][1]; $('dareTxt').textContent = DARES[i][2]; $('dareBox').hidden = false; wheelTurn = target - target % 360 + 360; if (window.iRobFun) window.iRobFun.confetti(60); }, reduce ? 50 : 3600);
 }
 $('spinBtn').onclick = spin; $('dareAgain').onclick = spin;
 $('dareDone').onclick = () => { if (!currentDare) return; addLedger('Had fun: ' + currentDare[1].toLowerCase()); toast('Added to your Good Things Ledger 🎉'); $('dareBox').hidden = true; };

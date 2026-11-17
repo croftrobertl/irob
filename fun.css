@@ -361,3 +361,43 @@
 .tg-h{grid-column:1/-1;margin:4px 0 0;font:400 11px/1 var(--head);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-align:left}
 .fun-sheet.full .tg-room{height:auto;flex:1;min-height:230px}
 .fun-sheet.full #funPet .body{gap:10px}
+
+/* Effects v2 */
+.fx-stage{position:fixed;inset:0;width:100vw;height:100vh;z-index:199;pointer-events:none}
+.fx-big{position:fixed;left:50%;top:42%;z-index:200;transform:translate(-50%,-50%);font:700 96px/1 var(--head);color:var(--bronze);text-shadow:0 6px 30px rgba(0,0,0,.25);pointer-events:none;animation:bigPop2 1.5s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes bigPop2{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}22%{transform:translate(-50%,-50%) scale(1.08);opacity:1}35%{transform:translate(-50%,-50%) scale(1)}78%{opacity:1}100%{transform:translate(-50%,-62%) scale(.96);opacity:0}}
+.fx-zoomies{position:fixed;z-index:200;width:70px;height:78px;pointer-events:none;animation:zoomies2 2.6s cubic-bezier(.45,0,.55,1) forwards;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+@keyframes zoomies2{0%{left:-80px;top:18%;transform:rotate(-8deg)}25%{left:calc(100% - 80px);top:18%;transform:rotate(8deg)}50%{left:calc(100% - 80px);top:76%;transform:rotate(-6deg)}75%{left:10px;top:76%;transform:rotate(6deg)}100%{left:-90px;top:30%;transform:rotate(0)}}
+.fx-hug{animation:fxHug2 1.2s cubic-bezier(.3,1.5,.5,1)}
+@keyframes fxHug2{25%{transform:scale(.95,.97)}55%{transform:scale(1.01)}}
+
+/* Fortune cookie (drawn) */
+.fc-cookie{position:relative;width:220px;height:154px;border:0;background:none;padding:0;cursor:pointer;filter:drop-shadow(0 10px 14px rgba(120,70,20,.25))}
+.fc-cookie .fc-half{position:absolute;inset:0;width:100%;height:100%;transition:transform .55s cubic-bezier(.3,1.4,.5,1)}
+.fc-cookie:not(.open):hover .fc-half,.fc-cookie:not(.open):active .fc-half{animation:wiggle .5s}
+@keyframes wiggle{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.fc-cookie.open .fc-half.l{transform:translate(-26px,10px) rotate(-14deg)}
+.fc-cookie.open .fc-half.r{transform:translate(26px,10px) rotate(14deg)}
+.fc-paper{position:absolute;left:50%;top:48%;width:10px;height:6px;background:#fffdf6;border:1px solid #e7dcc4;border-radius:2px;transform:translate(-50%,-50%);opacity:0;transition:width .45s .25s,opacity .2s .2s}
+.fc-cookie.open .fc-paper{opacity:1;width:120px;top:60%}
+.fc-slip{animation:slipIn2 .45s cubic-bezier(.3,1.3,.5,1)}
+@keyframes slipIn2{from{transform:translateY(-14px) scaleY(.3);opacity:0}}
+.fun-sheet.full .fc-cookie{transform:scale(1.25)}
+
+/* Kitten cuddles squeezer: frilly arms burst in, squeeze the photo out of shape, then leave */
+.kc-pad{overflow:hidden}
+.kc-pic{transition:transform .5s cubic-bezier(.3,1.5,.5,1),border-radius .5s}
+.kc-pad.holding .kc-pic{transform:scaleX(calc(.82 - var(--melt) * .3)) scaleY(calc(1.06 + var(--melt) * .16));border-radius:38%;animation:squish .5s ease-in-out infinite alternate}
+@keyframes squish{to{transform:scaleX(calc(.76 - var(--melt) * .3)) scaleY(calc(1.1 + var(--melt) * .16))}}
+.squeezer{position:absolute;inset:0;pointer-events:none}
+.sq-arm{position:absolute;top:50%;width:46%;height:auto;transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.sq-arm.l{left:0;transform:translate(-110%,-50%)}
+.sq-arm.r{right:0;transform:translate(110%,-50%) scaleX(-1)}
+.kc-pad.holding .sq-arm.l{transform:translate(-8%,-50%);animation:armL .5s ease-in-out infinite alternate}
+.kc-pad.holding .sq-arm.r{transform:translate(8%,-50%) scaleX(-1);animation:armR .5s ease-in-out infinite alternate}
+@keyframes armL{to{transform:translate(4%,-50%)}}
+@keyframes armR{to{transform:translate(-4%,-50%) scaleX(-1)}}
+.sq-bow{position:absolute;top:-40px;left:50%;font-size:34px;transform:translateX(-50%);transition:top .45s cubic-bezier(.3,1.4,.5,1)}
+.kc-pad.holding .sq-bow{top:6px;animation:bowBob .5s ease-in-out infinite alternate}
+@keyframes bowBob{to{transform:translateX(-50%) rotate(12deg)}}
+@media (prefers-reduced-motion:reduce){.kc-pad.holding .kc-pic,.kc-pad.holding .sq-arm,.sq-bow{animation:none}}
