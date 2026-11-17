@@ -176,13 +176,20 @@ h1.brand{font:600 44px/1 var(--display);letter-spacing:.01em;text-transform:none
 .say textarea{min-height:110px;resize:vertical;font-family:var(--body)}
 .say .out{white-space:pre-wrap;background:var(--card);border-radius:8px;box-shadow:inset 0 0 0 1px var(--line);padding:14px 16px;margin-top:12px}
 /* game */
-.game-photo{position:relative;border-radius:8px;overflow:hidden;background:var(--thumb-bg);aspect-ratio:4/3}
+.game-photo{position:relative;border-radius:8px;overflow:hidden;background:var(--thumb-bg);height:clamp(140px,30vh,300px);transition:height .25s}
+#sheetGame.answered .game-photo{height:clamp(110px,20vh,200px)}
+#sheetGame .body{padding-bottom:8px}
+@media (max-height:620px){#sheetGame.answered .game-photo{height:clamp(90px,16vh,160px)}#sheetGame .gmap{height:clamp(70px,13vh,120px)}#sheetGame .game-opts .btn{padding:9px 8px;font-size:14px}#sheetGame.answered .game-score{display:none}}
+.g-next{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+.g-next .note{flex:1;margin:0;font-size:14px;line-height:1.3}
+.g-next .btn{flex:none}
 .game-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.game-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.game-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+#sheetGame.answered .game-opts{margin:8px 0}
 .game-opts .btn{padding:12px 10px;font-size:15px}
 .game-opts .btn.right{background:var(--good);color:#fff}
 .game-opts .btn.wrong{background:var(--coral);color:#fff}
-.gmap{position:relative;width:100%;height:150px;border-radius:8px;overflow:hidden;background:var(--thumb-bg)}
+.gmap{position:relative;width:100%;height:clamp(90px,16vh,150px);border-radius:8px;overflow:hidden;background:var(--thumb-bg)}
 .gmap img{position:absolute;width:256px;height:256px;max-width:none}
 .gmap i{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--coral);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45)}
 .gattr{font-size:10.5px;color:var(--ink-soft);text-align:right;margin-top:3px}
@@ -575,7 +582,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     <div class="body">
       <div class="game-photo"><img id="gImg" alt="A photo from Croatia"></div>
       <div class="game-opts" id="gOpts"></div>
-      <div id="gReveal" hidden><div class="gmap" id="gMap"><i></i></div><div class="gattr">Map © OpenStreetMap contributors</div><p class="note" id="gMsg"></p><div class="btns"><button class="btn" id="gNext">Next photo</button></div></div>
+      <div id="gReveal" hidden><div class="g-next"><p class="note" id="gMsg"></p><button class="btn" id="gNext">Next photo</button></div><div class="gmap" id="gMap"><i></i></div><div class="gattr">Map © OpenStreetMap contributors</div></div>
       <p class="game-score" id="gScore"></p>
     </div>
   </section>
@@ -924,11 +931,10 @@ const TILES = [
   ['🎉', 'Brag button', F('bragButton')],
   ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
   ['🤔', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
-  ['🍕', 'Pick dinner', () => send('Just pick dinner for me tonight. Decide, don\'t ask.')],
+  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
   ['✨', 'More fun', () => window.iRobFun && window.iRobFun.moreFun(MORE)],
 ];
 const MORE = [
-  ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
   ['🌊', 'Croatia trip', () => startSlides()],
   ['🫙', 'Reasons jar', () => open('sheetReasons')],
   ['🔧', 'Fix something', () => send('Help me fix something')],
@@ -939,7 +945,7 @@ const MORE = [
 function renderIdeas(){
   const row = $('ideaRow'); row.innerHTML = '';
   const list = TILES.slice();
-  if (isNight()) list[7] = ['🌙', 'Help me sleep', helpMeSleep];
+  if (isNight()) list[10] = ['🌙', 'Help me sleep', helpMeSleep];
   const pet = window.iRobFun && window.iRobFun.petName && window.iRobFun.petName();
   if (pet) list[2] = ['🐱', pet.length > 14 ? pet.slice(0, 13) + '…' : pet, list[2][2]];
   list.forEach(([e, label, fn]) => {
@@ -1853,7 +1859,7 @@ function nextRound(){
     $('gNext').textContent = 'Play again'; $('gNext').onclick = () => { game = {round:0, score:0, total:5}; nextRound(); };
     $('gScore').textContent = ''; return;
   }
-  game.round++; $('gReveal').hidden = true; $('gMap').hidden = false; $('gMap').nextElementSibling.hidden = false;
+  game.round++; $('sheetGame').classList.remove('answered'); $('gReveal').hidden = true; $('gMap').hidden = false; $('gMap').nextElementSibling.hidden = false;
   const m = pool[Math.floor(Math.random() * pool.length)];
   const opts = [m.place]; while (opts.length < 4){ const p2 = places[Math.floor(Math.random() * places.length)]; if (!opts.includes(p2)) opts.push(p2); }
   opts.sort(() => Math.random() - .5);
@@ -1864,7 +1870,7 @@ function nextRound(){
       const right = o === m.place; if (right) game.score++;
       box.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === m.place) x.className = 'btn right'; else if (x === b) x.className = 'btn wrong'; });
       $('gMsg').textContent = (right ? 'Yes! ' : 'So close — ') + `${m.place}, ${memDate(m)}.`;
-      $('gReveal').hidden = false; mapInto($('gMap'), m.lat, m.lng, 13);
+      $('sheetGame').classList.add('answered'); $('gReveal').hidden = false; mapInto($('gMap'), m.lat, m.lng, 13);
       $('gNext').textContent = game.round >= game.total ? 'See my score' : 'Next photo'; $('gNext').onclick = nextRound;
       $('gScore').textContent = `Photo ${game.round} of ${game.total} · ${game.score} right`;
     }; box.appendChild(b); });

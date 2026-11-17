@@ -131,59 +131,169 @@ function kittenCuddles(){
   body.append(pad, hint, another); show();
 }
 
-/* ================= C. Pocket kitten ================= */
+/* ================= C. Pocket kitten (a little tamagotchi) ================= */
 const PK = 'try_pocketkitten';
-const STAGES = [['kitten', 0], ['young cat', 12], ['grown cat', 40], ['royal cat', 90]];
-function petState(){
-  const p = get(PK, null); if (!p) return null;
-  const hrs = ms => (Date.now() - ms) / 36e5;
-  p.food = Math.max(0, 100 - hrs(p.fedAt) * 6);      // hungry after ~12 hours
-  p.fun = Math.max(0, 100 - hrs(p.playedAt) * 5);    // bored after ~16 hours
-  p.love = Math.max(0, 100 - hrs(p.pettedAt) * 4);
+const STAGES = [['kitten', 0, 64], ['young cat', 25, 74], ['grown cat', 70, 84], ['royal cat', 150, 92]];
+const SHOP = [
+  ['🎀', 'Bow', 'head', 10], ['🌸', 'Flower', 'head', 12], ['🎩', 'Top hat', 'head', 25], ['👑', 'Crown', 'head', 60],
+  ['🕶️', 'Shades', 'face', 20], ['🧣', 'Scarf', 'neck', 15], ['🔔', 'Bell collar', 'neck', 8], ['🦋', 'Butterfly friend', 'side', 30],
+];
+const FOODS = [['🐟', 'Fish', {food:35}, 0], ['🥛', 'Milk', {food:20, fun:5}, 0], ['🍤', 'Treat', {food:10, fun:18, love:6}, 2]];
+const clamp = v => Math.max(0, Math.min(100, v));
+function petLoad(){
+  let p = get(PK, null); if (!p) return null;
+  if (!p.v){ // upgrade from the first version
+    const h = ms => (Date.now() - ms) / 36e5;
+    p = {v:2, name:p.name, born:p.born, xp:(p.xp || 0) * 2, coins:10, t:Date.now(), food:clamp(100 - h(p.fedAt) * 6), fun:clamp(100 - h(p.playedAt) * 5), love:clamp(100 - h(p.pettedAt) * 4), energy:80, poops:[], poopClock:Date.now(), asleep:false, owned:[], worn:{}, days:p.days || [], streak:1, lastEvent:0, gifts:0};
+  }
+  // time passes while she's away
+  const hrs = Math.min(72, (Date.now() - p.t) / 36e5);
+  if (hrs > 0){
+    p.food = clamp(p.food - hrs * 6); p.fun = clamp(p.fun - hrs * (p.asleep ? 1 : 5)); p.love = clamp(p.love - hrs * 4);
+    p.energy = clamp(p.energy + (p.asleep ? hrs * 14 : -hrs * 3));
+    if (p.asleep && p.energy >= 100 && Date.now() - p.sleptAt > 3 * 36e5) p.asleep = false;
+    while (!p.asleep && p.poops.length < 3 && Date.now() - p.poopClock > 5 * 36e5){ p.poopClock += 5 * 36e5; p.poops.push({x:15 + Math.random() * 70, id:Math.random().toString(36).slice(2, 7)}); }
+    p.t = Date.now();
+  }
+  p.clean = clamp(100 - p.poops.length * 30);
+  p.sick = p.sick || (p.food < 8 && (p.clean < 40 || p.fun < 8));
   p.stage = STAGES.filter(s => p.xp >= s[1]).length - 1;
   return p;
 }
-function petMood(p){
+const petSave = p => { p.t = Date.now(); const {stage, clean, ...keep} = p; put(PK, keep); };
+function petFace(p){
+  if (p.sick) return ['🤒', `${p.name} isn't feeling great. Time for the vet.`];
+  if (p.asleep) return ['😴', `${p.name} is asleep in a perfect circle. Shh.`];
   if (p.food < 25) return ['😿', `${p.name} is staring at the food bowl. Dramatically.`];
+  if (p.clean < 40) return ['😾', `${p.name} would like the litter box cleaned. Immediately.`];
+  if (p.energy < 20) return ['🥱', `${p.name} can barely keep their eyes open.`];
   if (p.fun < 25) return ['🙀', `${p.name} has started knocking things off the counter. Boredom.`];
-  if (p.love < 25) return ['😾', `${p.name} would like some attention. Now, please.`];
-  const h = new Date().getHours();
-  if (h >= 22 || h < 6) return ['😴', `${p.name} is asleep in a perfect circle.`];
-  if (p.food > 75 && p.fun > 75 && p.love > 75) return ['😻', `${p.name} is the happiest cat in Florida.`];
-  return ['😺', `${p.name} is doing just fine. Purring a little.`];
+  if (p.love < 25) return ['😼', `${p.name} is pretending not to want attention. (They want attention.)`];
+  if (p.food > 70 && p.fun > 70 && p.love > 70) return ['😻', `${p.name} is the happiest cat in Florida.`];
+  return ['😺', rnd([`${p.name} is people-watching from the window.`, `${p.name} is doing just fine. Purring a little.`, `${p.name} is grooming one paw very seriously.`])];
 }
 function pocketKitten(){
   const {body, show} = sheet('funPet', 'Pocket kitten');
-  const p0 = petState();
-  if (!p0){
+  if (!petLoad()){
     const f = el('form', 'pet-new');
     f.innerHTML = '<div class="pet-egg" aria-hidden="true">🧺</div><p>A kitten showed up in a basket. It needs a name.</p><label class="sr" for="petName">Kitten name</label><input id="petName" maxlength="20" placeholder="Name your kitten" autocomplete="off"><button class="btn">Adopt</button>';
     f.onsubmit = e => { e.preventDefault(); const n = f.querySelector('input').value.trim(); if (!n) return;
-      const now = Date.now(); put(PK, {name:n, born:now, fedAt:now, playedAt:now, pettedAt:now, xp:0, days:[]}); confetti(60); pocketKitten(); };
+      const now = Date.now(); put(PK, {v:2, name:n, born:now, xp:0, coins:10, t:now, food:80, fun:80, love:80, energy:90, poops:[], poopClock:now, asleep:false, owned:[], worn:{}, days:[], streak:0, lastEvent:now, gifts:0}); confetti(60); pocketKitten(); };
     body.append(f); show(); setTimeout(() => f.querySelector('input').focus(), 350); return;
   }
-  const view = el('div', 'pet');
-  const render = () => {
-    const p = petState(); const [face, line] = petMood(p);
-    view.innerHTML = '';
-    const pet = el('div', 'pet-cat', face); pet.style.fontSize = (64 + p.stage * 14) + 'px'; pet.setAttribute('role', 'img'); pet.setAttribute('aria-label', `${p.name}, ${STAGES[p.stage][0]}`);
-    if (p.stage >= 3) pet.dataset.crown = '👑';
-    const name = el('h3', 'pet-name', p.name); const sub = el('p', 'pet-sub', `${STAGES[p.stage][0]} · ${(d => d === 1 ? '1 day' : d + ' days')(Math.max(1, Math.ceil((Date.now() - p.born) / 864e5)))} old`);
-    const say = el('p', 'pet-line', line);
-    const bars = el('div', 'pet-bars');
-    [['🐟', 'Food', p.food], ['🧶', 'Fun', p.fun], ['💗', 'Love', p.love]].forEach(([e, l, v]) => { const b = el('div', 'pet-bar'); b.innerHTML = `<span aria-hidden="true">${e}</span><span class="sr">${l}</span><b><i style="width:${Math.round(v)}%"></i></b>`; bars.append(b); });
-    const acts = el('div', 'pet-acts');
-    const act = (emoji, label, key, reply) => { const b = el('button', 'tile'); b.type = 'button'; b.innerHTML = `<span class="e" aria-hidden="true">${emoji}</span><span>${label}</span>`;
-      b.onclick = () => { const s = get(PK, null); s[key] = Date.now(); const today = new Date().toDateString(); s.days = (s.days || []).filter(d => d !== today).concat(today).slice(-120); s.xp = (s.xp || 0) + 1; const before = petState().stage; put(PK, s);
-        blip(key === 'fedAt' ? 520 : key === 'playedAt' ? 700 : 880, .1, 'triangle'); render(); view.querySelector('.pet-line').textContent = reply.replace('{n}', s.name);
-        const after = petState().stage; if (after > before){ confetti(); A().toast(`${s.name} grew into a ${STAGES[after][0]}!`); } };
-      acts.append(b); };
-    act('🐟', 'Feed', 'fedAt', rnd(['{n} inhaled it. Zero chewing.', '{n} ate, then looked at you like you forgot dessert.', 'Nom. {n} approves.']));
-    act('🧶', 'Play', 'playedAt', rnd(['{n} attacked the yarn with full commitment.', '{n} did a sideways hop. Elite athlete.', 'Zoomies achieved.']));
-    act('🤍', 'Pet', 'pettedAt', rnd(['{n} is purring so loud the neighbors can hear.', '{n} headbutted your hand. That means love.', 'Slow blink from {n}. You are trusted.']));
-    view.append(pet, name, sub, say, bars, acts);
-  };
-  render(); body.append(view); show();
+  let p = petLoad(), panel = null, laser = null;
+  const top = el('div', 'tg-top'); const room = el('div', 'tg-room'); const bubble = el('p', 'tg-say');
+  const bars = el('div', 'tg-bars'); const acts = el('div', 'tg-acts'); const tray = el('div', 'tg-panel'); tray.hidden = true;
+  body.append(top, room, bubble, bars, acts, tray);
+  const say = (t, ms) => { bubble.textContent = t; bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop'); };
+  const gain = (k, n) => { p[k] = clamp(p[k] + n); };
+  const earn = n => { p.coins += n; };
+  // daily visit streak (+5 coins on the first care of a new day)
+  const careDay = () => { const today = new Date().toDateString(); if ((p.days || []).includes(today)) return;
+    const y = new Date(Date.now() - 864e5).toDateString(); p.streak = (p.days || []).includes(y) ? (p.streak || 0) + 1 : 1; p.days = (p.days || []).concat(today).slice(-120); earn(5); A().toast(`Day ${p.streak} streak! +5 🪙`); };
+  const xp = n => { const before = p.stage; p.xp += n; p.stage = STAGES.filter(s => p.xp >= s[1]).length - 1; if (p.stage > before){ confetti(); A().toast(`${p.name} grew into a ${STAGES[p.stage][0]}!`); } };
+  const commit = () => { p.clean = clamp(100 - p.poops.length * 30); petSave(p); draw(); };
+
+  function draw(){
+    const [face, line] = petFace(p);
+    top.innerHTML = '';
+    const nm = el('div', 'tg-name'); nm.append(el('b', '', p.name), el('span', '', `${STAGES[p.stage][0]} · ${(d => d === 1 ? '1 day' : d + ' days')(Math.max(1, Math.ceil((Date.now() - p.born) / 864e5)))} old`));
+    const meta = el('div', 'tg-meta'); meta.append(el('span', '', `🪙 ${p.coins}`), el('span', '', `🔥 ${p.streak || 0}`));
+    top.append(nm, meta);
+    const h = new Date().getHours(); room.className = 'tg-room' + (p.asleep ? ' lights-off' : h >= 19 || h < 7 ? ' night' : '');
+    room.innerHTML = `<div class="tg-window" aria-hidden="true">${h >= 19 || h < 7 ? '🌙' : '☀️'}</div><div class="tg-floor"></div><div class="tg-bowl" aria-hidden="true">🥣</div>`;
+    p.poops.forEach(pp => { const b = el('button', 'tg-poop', '💩'); b.type = 'button'; b.style.left = pp.x + '%'; b.setAttribute('aria-label', 'Clean this up');
+      b.onclick = e => { e.stopPropagation(); p.poops = p.poops.filter(z => z.id !== pp.id); earn(2); xp(1); careDay(); blip(900, .06); say(rnd(['Sparkling. +2 🪙', `${p.name} watched you do it. No thanks given.`, 'Fresh litter. Very luxurious.'])); commit(); };
+      room.append(b); });
+    const cat = el('button', 'tg-cat'); cat.type = 'button'; cat.style.fontSize = STAGES[p.stage][2] + 'px';
+    cat.setAttribute('aria-label', `Pet ${p.name}`); cat.style.left = (p.x || 50) + '%';
+    cat.innerHTML = `<span class="f">${face}</span>`;
+    Object.entries(p.worn || {}).forEach(([slot, e]) => { const a = el('span', 'acc ' + slot, e); a.setAttribute('aria-hidden', 'true'); cat.append(a); });
+    cat.onclick = () => {
+      if (p.asleep){ say(`${p.name} is asleep. Gentle pets only. 💤`); return; }
+      gain('love', 8); if (!p.lastPetCoin || Date.now() - p.lastPetCoin > 60000){ earn(1); p.lastPetCoin = Date.now(); }
+      xp(1); careDay(); blip(880, .08); hearts(cat);
+      say(rnd([`${p.name} is purring so loud the neighbors can hear.`, `${p.name} headbutted your hand. That means love.`, `Slow blink from ${p.name}. You are trusted.`, `${p.name} rolled over. It's a trap. Pet anyway.`])); commit();
+    };
+    room.append(cat);
+    if (laser) room.append(laser.dot);
+    bubble.textContent = line;
+    bars.innerHTML = '';
+    [['🐟', 'Food', p.food], ['🧶', 'Fun', p.fun], ['⚡', 'Energy', p.energy], ['🫧', 'Clean', p.clean], ['💗', 'Love', p.love]].forEach(([e, l, v]) => {
+      const b = el('div', 'tg-bar' + (v < 25 ? ' low' : '')); b.innerHTML = `<span aria-hidden="true">${e}</span><b role="meter" aria-label="${l}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(v)}"><i style="width:${Math.round(v)}%"></i></b>`; bars.append(b); });
+    acts.innerHTML = '';
+    const act = (e, label, fn, on) => { const b = el('button', 'tile' + (on ? ' on' : '')); b.type = 'button'; b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; acts.append(b); };
+    if (p.sick) act('🩺', 'Vet', vet);
+    act('🍽️', 'Feed', () => openPanel('feed'), panel === 'feed');
+    act('🔴', 'Play', playLaser);
+    act(p.asleep ? '🌅' : '🌙', p.asleep ? 'Wake' : 'Sleep', toggleSleep);
+    act('👒', 'Closet', () => openPanel('closet'), panel === 'closet');
+    if (!p.sick) act('✏️', 'Rename', rename);
+  }
+  function hearts(anchor){ if (reduced()) return; for (let i = 0; i < 3; i++){ const h = el('span', 'tg-heart', rnd(['💗', '💕', '🤍'])); h.style.left = (parseFloat(anchor.style.left) + (Math.random() * 16 - 8)) + '%'; h.style.animationDelay = i * .12 + 's'; room.append(h); setTimeout(() => h.remove(), 1600); } }
+  function openPanel(which){
+    panel = panel === which ? null : which; tray.innerHTML = ''; tray.hidden = !panel; draw(); if (!panel) return;
+    if (which === 'feed'){
+      if (p.asleep){ tray.append(el('p', 'note', `${p.name} is asleep. Feed them when they wake up.`)); return; }
+      FOODS.forEach(([e, label, fx, cost]) => { const b = el('button', 'tg-item'); b.type = 'button'; b.innerHTML = `<span aria-hidden="true">${e}</span><span>${label}${cost ? ` · ${cost}🪙` : ''}</span>`;
+        b.onclick = () => { if (cost > p.coins){ say(`Not enough coins for a ${label.toLowerCase()} yet.`); return; } if (p.food >= 98){ say(`${p.name} is stuffed. Belly is round.`); return; }
+          p.coins -= cost; Object.entries(fx).forEach(([k, v]) => gain(k, v)); xp(2); careDay(); blip(520, .1, 'triangle');
+          say(rnd([`${p.name} inhaled the ${label.toLowerCase()}. Zero chewing.`, `${p.name} ate, then looked at you like you forgot dessert.`, `Nom. ${p.name} approves.`])); commit(); };
+        tray.append(b); });
+    }
+    if (which === 'closet'){
+      SHOP.forEach(([e, label, slot, price]) => { const owned = (p.owned || []).includes(e), worn = (p.worn || {})[slot] === e;
+        const b = el('button', 'tg-item' + (worn ? ' worn' : '')); b.type = 'button'; b.innerHTML = `<span aria-hidden="true">${e}</span><span>${label}${owned ? (worn ? ' · wearing' : '') : ` · ${price}🪙`}</span>`;
+        b.onclick = () => {
+          if (!owned){ if (p.coins < price){ say(`${label} costs ${price} 🪙. Keep caring for ${p.name} to earn more.`); return; } p.coins -= price; p.owned = (p.owned || []).concat(e); confetti(40); }
+          p.worn = p.worn || {}; if (p.worn[slot] === e) delete p.worn[slot]; else p.worn[slot] = e;
+          say(p.worn[slot] === e ? rnd([`${p.name} looks incredible. Fashion icon.`, `${p.name} refuses to take it off now.`]) : `${label} off. Back to natural beauty.`); commit(); openPanel('closet'); openPanel('closet'); };
+        tray.append(b); });
+    }
+  }
+  function playLaser(){
+    if (p.asleep){ say(`${p.name} is asleep. Play later.`); return; }
+    if (p.energy < 10){ say(`${p.name} is too tired to play. Nap first.`); return; }
+    if (laser) return;
+    panel = null; tray.hidden = true;
+    const dot = el('button', 'tg-laser'); dot.type = 'button'; dot.setAttribute('aria-label', 'Tap the laser dot');
+    let hits = 0; laser = {dot};
+    const jump = () => { dot.style.left = 8 + Math.random() * 84 + '%'; dot.style.top = 15 + Math.random() * 60 + '%'; p.x = Math.max(10, Math.min(90, parseFloat(dot.style.left))); const c = room.querySelector('.tg-cat'); if (c) c.style.left = p.x + '%'; };
+    dot.onclick = e => { e.stopPropagation(); hits++; blip(700 + hits * 20, .05); jump(); };
+    say(`Laser time! Tap the red dot. ${p.name} is ready.`); draw(); jump();
+    const iv = setInterval(jump, 900);
+    const end = () => { clearInterval(iv); laser = null; dot.remove(); };
+    stoppers.push(end);
+    setTimeout(() => { if (!laser) return; end(); gain('fun', 10 + hits * 4); gain('energy', -12); earn(Math.min(10, hits)); xp(2 + Math.floor(hits / 3)); careDay();
+      say(hits >= 8 ? `${hits} catches! ${p.name} is a professional hunter. +${Math.min(10, hits)} 🪙` : `${hits} catches. ${p.name} is pleased and slightly out of breath. +${Math.min(10, hits)} 🪙`); commit(); }, 12000);
+  }
+  function toggleSleep(){
+    p.asleep = !p.asleep; if (p.asleep) p.sleptAt = Date.now(); careDay();
+    say(p.asleep ? `Lights out. ${p.name} curled into a ball. 💤` : (p.energy > 70 ? `${p.name} woke up and stretched for a full minute.` : `${p.name} woke up grumpy. More sleep next time.`)); commit();
+  }
+  function vet(){ p.sick = false; gain('food', 40); gain('fun', 20); gain('love', 20); p.poops = []; careDay(); say(`The vet says ${p.name} is going to be just fine. Extra cuddles prescribed.`); commit(); }
+  function rename(){
+    tray.innerHTML = ''; panel = 'rename'; tray.hidden = false;
+    const f = el('form', 'tg-rename'); f.innerHTML = `<label class="sr" for="petRename">New name</label><input id="petRename" maxlength="20" value="${p.name.replace(/"/g, '&quot;')}"><button class="btn">Save</button>`;
+    f.onsubmit = e => { e.preventDefault(); const n = f.querySelector('input').value.trim(); if (!n) return; p.name = n; panel = null; tray.hidden = true; commit(); };
+    tray.append(f);
+  }
+  // little random events, at most every 4 hours
+  if (!p.asleep && Date.now() - (p.lastEvent || 0) > 4 * 36e5 && Math.random() < .5){
+    p.lastEvent = Date.now();
+    const ev = rnd([
+      () => { earn(3); p.gifts = (p.gifts || 0) + 1; return `${p.name} left a gift for you: a toy mouse 🐭. Very proud. +3 🪙`; },
+      () => { gain('fun', 10); return `${p.name} knocked a pen off the table, then looked right at you.`; },
+      () => { xp(3); return `${p.name} learned a new trick: sitting on whatever you're using.`; },
+      () => { gain('love', 10); return `${p.name} was waiting by the door for you.`; },
+    ])();
+    petSave(p); setTimeout(() => say(ev), 400);
+  }
+  // wander around the room
+  const wander = setInterval(() => { if (laser || p.asleep) return; p.x = 15 + Math.random() * 70; const c = room.querySelector('.tg-cat'); if (c) c.style.left = p.x + '%'; }, 3500);
+  const refresh = setInterval(() => { const q = petLoad(); Object.assign(p, {food:q.food, fun:q.fun, love:q.love, energy:q.energy, poops:q.poops, sick:q.sick}); petSave(p); draw(); }, 60000);
+  stoppers.push(() => { clearInterval(wander); clearInterval(refresh); });
+  draw(); show();
 }
 
 /* ================= D. Catch the kittens ================= */
@@ -202,7 +312,7 @@ function catchKittens(){
   cv.addEventListener('pointermove', move); cv.addEventListener('pointerdown', move); cv.addEventListener('touchmove', e => { e.preventDefault(); move(e); }, {passive:false});
   start.onclick = () => {
     const {w, h} = size(); start.hidden = true;
-    run = {w, h, bx:w / 2, items:[], score:0, t0:performance.now(), last:0, spawn:0};
+    run = {w, h, bx:w / 2, items:[], drops:[], puddles:[], score:0, t0:performance.now(), last:0, spawn:0};
     const loop = t => {
       if (!run) return;
       const left = Math.max(0, 30 - (t - run.t0) / 1000);
@@ -210,10 +320,22 @@ function catchKittens(){
       if (t - run.spawn > Math.max(320, 760 - (30 - left) * 15)){ run.spawn = t; const r = Math.random(); run.items.push({x:20 + Math.random() * (w - 40), y:-30, v:1.6 + Math.random() * 1.6 + (30 - left) * .05, e:r < .14 ? '🐶' : r < .3 ? '🥒' : '🐱'}); }
       g.clearRect(0, 0, w, h);
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      // Cucumbers drip juice: drops fall faster than the cucumber, splash on the floor, and leave a fading puddle.
+      run.items.forEach(it => { if (it.e === '🥒' && Math.random() < .22) run.drops.push({x:it.x + (Math.random() * 16 - 8), y:it.y + 12, vx:(Math.random() - .5) * 1.1, vy:it.v * 1.15 + Math.random() * .8, r:1.6 + Math.random() * 1.8}); });
+      run.drops.forEach(d => { d.vy += .12 * dt / 16; d.x += d.vx * dt / 16; d.y += d.vy * dt / 16; });
+      run.drops = run.drops.filter(d => {
+        if (d.y >= h - 6){ if (!d.splash){ for (let k = 0; k < 3; k++) run.drops.push({x:d.x, y:h - 7, vx:(Math.random() - .5) * 2.4, vy:-1.5 - Math.random() * 1.6, r:1.1, splash:true}); if (Math.random() < .25) run.puddles.push({x:d.x, a:.55, w:6 + Math.random() * 10}); } return false; }
+        return d.y > -20;
+      });
+      run.puddles.forEach(pd => { pd.a -= .004 * dt / 16; pd.w += .02 * dt / 16; });
+      run.puddles = run.puddles.filter(pd => pd.a > 0).slice(-40);
+      run.puddles.forEach(pd => { g.fillStyle = `rgba(118,190,84,${pd.a})`; g.beginPath(); g.ellipse(pd.x, h - 3, pd.w, 2.5, 0, 0, Math.PI * 2); g.fill(); });
+      run.drops.forEach(d => { g.fillStyle = 'rgba(126,200,90,.85)'; g.beginPath(); if (d.splash) g.arc(d.x, d.y, d.r, 0, Math.PI * 2); else { g.moveTo(d.x, d.y - d.r * 2.2); g.quadraticCurveTo(d.x + d.r * 1.3, d.y, d.x, d.y + d.r); g.quadraticCurveTo(d.x - d.r * 1.3, d.y, d.x, d.y - d.r * 2.2); } g.fill(); });
+      g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
       run.items.forEach(it => { it.y += it.v * dt / 16; g.fillText(it.e, it.x, it.y); });
       g.font = '40px system-ui, "Apple Color Emoji", sans-serif'; g.fillText('🧺', run.bx, h - 26);
       run.items = run.items.filter(it => {
-        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === '🥒' ? -2 : 1; run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
+        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === '🥒' ? -2 : 1; if (it.e === '🥒') for (let k = 0; k < 14; k++) run.drops.push({x:it.x, y:h - 40, vx:(Math.random() - .5) * 5, vy:-2 - Math.random() * 3.5, r:1.4 + Math.random(), splash:true}); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
         return it.y < h + 30;
       });
       score.textContent = `Score ${run.score}`; time.textContent = `${Math.ceil(left)}s`;
