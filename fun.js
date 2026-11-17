@@ -312,7 +312,7 @@ function catchKittens(){
   cv.addEventListener('pointermove', move); cv.addEventListener('pointerdown', move); cv.addEventListener('touchmove', e => { e.preventDefault(); move(e); }, {passive:false});
   start.onclick = () => {
     const {w, h} = size(); start.hidden = true;
-    run = {w, h, bx:w / 2, items:[], drops:[], puddles:[], score:0, t0:performance.now(), last:0, spawn:0};
+    run = {w, h, bx:w / 2, items:[], drops:[], score:0, t0:performance.now(), last:0, spawn:0};
     const loop = t => {
       if (!run) return;
       const left = Math.max(0, 30 - (t - run.t0) / 1000);
@@ -320,22 +320,17 @@ function catchKittens(){
       if (t - run.spawn > Math.max(320, 760 - (30 - left) * 15)){ run.spawn = t; const r = Math.random(); run.items.push({x:20 + Math.random() * (w - 40), y:-30, v:1.6 + Math.random() * 1.6 + (30 - left) * .05, e:r < .14 ? '🐶' : r < .3 ? '🥒' : '🐱'}); }
       g.clearRect(0, 0, w, h);
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      // Cucumbers drip juice: drops fall faster than the cucumber, splash on the floor, and leave a fading puddle.
-      run.items.forEach(it => { if (it.e === '🥒' && Math.random() < .22) run.drops.push({x:it.x + (Math.random() * 16 - 8), y:it.y + 12, vx:(Math.random() - .5) * 1.1, vy:it.v * 1.15 + Math.random() * .8, r:1.6 + Math.random() * 1.8}); });
-      run.drops.forEach(d => { d.vy += .12 * dt / 16; d.x += d.vx * dt / 16; d.y += d.vy * dt / 16; });
-      run.drops = run.drops.filter(d => {
-        if (d.y >= h - 6){ if (!d.splash){ for (let k = 0; k < 3; k++) run.drops.push({x:d.x, y:h - 7, vx:(Math.random() - .5) * 2.4, vy:-1.5 - Math.random() * 1.6, r:1.1, splash:true}); if (Math.random() < .25) run.puddles.push({x:d.x, a:.55, w:6 + Math.random() * 10}); } return false; }
-        return d.y > -20;
-      });
-      run.puddles.forEach(pd => { pd.a -= .004 * dt / 16; pd.w += .02 * dt / 16; });
-      run.puddles = run.puddles.filter(pd => pd.a > 0).slice(-40);
-      run.puddles.forEach(pd => { g.fillStyle = `rgba(118,190,84,${pd.a})`; g.beginPath(); g.ellipse(pd.x, h - 3, pd.w, 2.5, 0, 0, Math.PI * 2); g.fill(); });
-      run.drops.forEach(d => { g.fillStyle = 'rgba(126,200,90,.85)'; g.beginPath(); if (d.splash) g.arc(d.x, d.y, d.r, 0, Math.PI * 2); else { g.moveTo(d.x, d.y - d.r * 2.2); g.quadraticCurveTo(d.x + d.r * 1.3, d.y, d.x, d.y + d.r); g.quadraticCurveTo(d.x - d.r * 1.3, d.y, d.x, d.y - d.r * 2.2); } g.fill(); });
+      // Cucumbers: little white drops squirt from the top end and fade out quickly (they never reach the floor).
+      run.items.forEach(it => { if (it.e === '🥒' && Math.random() < .35) run.drops.push({x:it.x + 9, y:it.y - 13, vx:.4 + Math.random() * 1.2, vy:-1.2 - Math.random() * 1.2, r:1.4 + Math.random() * 1.4, life:1}); });
+      run.drops.forEach(d => { d.vy += .09 * dt / 16; d.x += d.vx * dt / 16; d.y += d.vy * dt / 16; d.life -= .035 * dt / 16; });
+      run.drops = run.drops.filter(d => d.life > 0);
+      run.drops.forEach(d => { g.globalAlpha = Math.max(0, d.life); g.fillStyle = '#ffffff'; g.strokeStyle = 'rgba(90,110,90,.45)'; g.lineWidth = .8; g.beginPath(); g.arc(d.x, d.y, d.r, 0, Math.PI * 2); g.fill(); g.stroke(); });
+      g.globalAlpha = 1;
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
       run.items.forEach(it => { it.y += it.v * dt / 16; g.fillText(it.e, it.x, it.y); });
       g.font = '40px system-ui, "Apple Color Emoji", sans-serif'; g.fillText('🧺', run.bx, h - 26);
       run.items = run.items.filter(it => {
-        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === '🥒' ? -2 : 1; if (it.e === '🥒') for (let k = 0; k < 14; k++) run.drops.push({x:it.x, y:h - 40, vx:(Math.random() - .5) * 5, vy:-2 - Math.random() * 3.5, r:1.4 + Math.random(), splash:true}); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
+        if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === '🥒' ? -2 : 1; if (it.e === '🥒') for (let k = 0; k < 10; k++) run.drops.push({x:it.x, y:h - 44, vx:(Math.random() - .5) * 4, vy:-1.5 - Math.random() * 2.5, r:1.4 + Math.random(), life:1}); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
         return it.y < h + 30;
       });
       score.textContent = `Score ${run.score}`; time.textContent = `${Math.ceil(left)}s`;
@@ -444,39 +439,201 @@ async function dateNight(){
   body.append(labels, dice, wild, row); show();
 }
 
-/* ================= H. Croatia memory match ================= */
-async function memoryMatch(){
-  const {body, show} = sheet('funMatch', 'Croatia memory match');
-  body.append(el('p', 'note', 'Shuffling photos…')); show();
+/* ================= H. Croatia photo games ================= */
+const shortDate = m => { const [y, mo, d] = (m.date || '').split('-').map(Number); return y ? new Date(y, mo - 1, d).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : ''; };
+const caption = m => [m.place, shortDate(m)].filter(Boolean).join(' · ');
+const stamp = m => { const [y, mo, d] = (m.date || '').split('-').map(Number); const [hh, mm] = String(m.time || '12:00').split(':').map(Number); return new Date(y, mo - 1, d, hh || 12, mm || 0).getTime(); };
+async function tripPhotos(min){
   const pool = A().loadTrip ? await A().loadTrip() : null;
-  const photos = pool ? pool.filter(m => m.k === 'p' && m.thumb) : [];
-  body.innerHTML = '';
-  if (photos.length < 6){ body.append(el('p', 'note', 'I couldn\'t reach the Croatia photos just now. Try again in a bit.')); return; }
-  const picks = []; const used = new Set();
-  while (picks.length < 6){ const p = rnd(photos); if (!used.has(p.thumb)){ used.add(p.thumb); picks.push(p); } }
-  const cards = [...picks, ...picks].map((p, i) => ({p, i})).sort(() => Math.random() - .5);
-  const best = get('try_matchbest', null);
-  const hud = el('p', 'note', best ? `Find all 6 pairs. Best: ${best} moves.` : 'Find all 6 pairs.');
-  const grid = el('div', 'mm-grid');
-  let first = null, lock = false, moves = 0, found = 0;
-  cards.forEach(c => {
+  const ph = pool ? pool.filter(m => m.k === 'p' && m.thumb && m.full) : [];
+  return ph.length >= min ? ph : null;
+}
+const pickN = (arr, n, key = m => m.thumb) => { const out = [], seen = new Set(); let guard = 0; while (out.length < n && guard++ < 2000){ const p = rnd(arr); if (!seen.has(key(p))){ seen.add(key(p)); out.push(p); } } return out; };
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const noPhotos = body => body.append(el('p', 'note', 'I couldn\'t reach the Croatia photos just now. Try again in a bit.'));
+function lightbox(host, m){
+  const box = el('div', 'lb'); box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', caption(m));
+  const img = el('img'); img.src = m.full; img.alt = caption(m);
+  const cap = el('p', 'lb-cap', caption(m)); const x = el('button', 'btn ghost', 'Close'); x.type = 'button'; x.onclick = () => box.remove();
+  box.append(img, cap, x); box.onclick = e => { if (e.target === box) box.remove(); }; host.append(box);
+}
+const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+// Memory match: Easy/Hard, 3D flips, "where & when" on every match, timer, and a gallery at the end.
+async function memoryMatch(level){
+  const {body, show} = sheet('funMatch', 'Memory match');
+  if (!level){
+    const best = get('try_matchbest2', {});
+    body.append(el('p', 'note', 'Flip two cards. Find the pairs from our trip.'));
+    const row = el('div', 'mm-levels');
+    [['easy', 'Easy', '6 pairs'], ['hard', 'Hard', '10 pairs']].forEach(([k, l, d]) => { const b = el('button', 'tile'); b.type = 'button';
+      b.innerHTML = `<span class="e" aria-hidden="true">${k === 'easy' ? '🙂' : '🔥'}</span><span>${l} · ${d}</span><small>${best[k] ? `Best ${best[k].moves} moves · ${fmtTime(best[k].secs)}` : 'No record yet'}</small>`;
+      b.onclick = () => memoryMatch(k); row.append(b); });
+    body.append(row); show(); return;
+  }
+  const pairs = level === 'hard' ? 10 : 6;
+  body.append(el('p', 'note', 'Shuffling photos…')); show();
+  const photos = await tripPhotos(pairs); body.innerHTML = '';
+  if (!photos){ noPhotos(body); return; }
+  const picks = pickN(photos, pairs);
+  const cards = shuffle([...picks, ...picks]);
+  const hud = el('div', 'mm-hud'); const hm = el('span', '', '0 moves'); const ht = el('span', '', '0:00'); hud.append(hm, ht);
+  const cap = el('p', 'mm-cap', 'Find the pairs.');
+  const grid = el('div', 'mm-grid' + (level === 'hard' ? ' hard' : ''));
+  let first = null, lock = false, moves = 0, found = 0, t0 = 0, timer = 0;
+  const tick = () => { ht.textContent = fmtTime((performance.now() - t0) / 1000); };
+  cards.forEach(p => {
     const b = el('button', 'mm-card'); b.type = 'button'; b.setAttribute('aria-label', 'Hidden photo');
-    b.innerHTML = `<span class="mm-back" aria-hidden="true">✦</span><img alt="" loading="lazy" src="${c.p.thumb}">`;
+    b.innerHTML = `<span class="mm-inner"><span class="mm-face mm-back" aria-hidden="true">✦</span><span class="mm-face mm-front"><img alt="" loading="lazy" src="${p.thumb}"><span class="mm-tag"></span></span></span>`;
+    b.querySelector('.mm-tag').textContent = p.place || '';
     b.onclick = () => {
       if (lock || b.classList.contains('up')) return;
-      b.classList.add('up'); b.setAttribute('aria-label', c.p.place || 'Croatia photo'); blip(600, .05);
-      if (!first){ first = {b, c}; return; }
-      moves++;
-      if (first.c.p.thumb === c.p.thumb){ found++; first.b.classList.add('done'); b.classList.add('done'); first = null; blip(880, .12);
-        if (found === 6){ confetti(); const prev = get('try_matchbest', null); if (!prev || moves < prev) put('try_matchbest', moves);
-          hud.textContent = `All pairs in ${moves} moves! ${!prev || moves < prev ? 'New record. Your memory is elite.' : `Best is ${prev}. Still impressive.`}`; again.hidden = false; }
-        else hud.textContent = `${found} of 6 pairs · ${moves} moves`;
-      } else { lock = true; const a = first.b; first = null; setTimeout(() => { a.classList.remove('up'); b.classList.remove('up'); a.setAttribute('aria-label', 'Hidden photo'); b.setAttribute('aria-label', 'Hidden photo'); lock = false; }, 900); hud.textContent = `${found} of 6 pairs · ${moves} moves`; }
+      if (!t0){ t0 = performance.now(); timer = setInterval(tick, 500); }
+      b.classList.add('up'); b.setAttribute('aria-label', caption(p)); blip(600, .05);
+      if (!first){ first = {b, p}; return; }
+      moves++; hm.textContent = `${moves} moves`;
+      if (first.p.thumb === p.thumb){
+        found++; first.b.classList.add('done'); b.classList.add('done'); first = null; blip(880, .12);
+        cap.textContent = `📍 ${caption(p)}`; cap.classList.remove('pop'); void cap.offsetWidth; cap.classList.add('pop');
+        if (found === pairs) finish();
+      } else { lock = true; const a = first.b; first = null; setTimeout(() => { [a, b].forEach(x => { x.classList.remove('up'); x.setAttribute('aria-label', 'Hidden photo'); }); lock = false; }, 950); }
     };
     grid.append(b);
   });
-  const again = el('button', 'btn ghost', 'Play again'); again.type = 'button'; again.hidden = true; again.onclick = memoryMatch;
-  body.append(hud, grid, again);
+  const finish = () => {
+    clearInterval(timer); const secs = (performance.now() - t0) / 1000; confetti();
+    const all = get('try_matchbest2', {}); const prev = all[level]; const record = !prev || moves < prev.moves || (moves === prev.moves && secs < prev.secs);
+    if (record){ all[level] = {moves, secs}; put('try_matchbest2', all); }
+    setTimeout(() => {
+      body.innerHTML = '';
+      body.append(el('p', 'mm-done', `All ${pairs} pairs in ${moves} moves · ${fmtTime(secs)}`), el('p', 'note', record ? 'New record. Your memory is elite.' : `Best is ${prev.moves} moves · ${fmtTime(prev.secs)}.`));
+      const gal = el('div', 'mm-gallery');
+      picks.forEach(p => { const b = el('button', 'mm-thumb'); b.type = 'button'; b.setAttribute('aria-label', 'Open ' + caption(p)); b.innerHTML = `<img alt="" src="${p.thumb}"><span></span>`; b.lastChild.textContent = caption(p); b.onclick = () => lightbox(body, p); gal.append(b); });
+      const row = el('div', 'us-row'); const again = el('button', 'btn', 'Play again'); again.type = 'button'; again.onclick = () => memoryMatch(level);
+      const lv = el('button', 'btn ghost', level === 'easy' ? 'Try Hard' : 'Try Easy'); lv.type = 'button'; lv.onclick = () => memoryMatch(level === 'easy' ? 'hard' : 'easy');
+      row.append(again, lv); body.append(el('p', 'note', 'Tap a photo to see it big.'), gal, row);
+    }, 900);
+  };
+  stoppers.push(() => clearInterval(timer));
+  body.append(hud, grid, cap);
+}
+
+// E. Photo puzzle: slide the tiles back into place.
+async function photoPuzzle(){
+  const {body, show} = sheet('funPuzzle', 'Photo puzzle');
+  body.append(el('p', 'note', 'Cutting up a photo…')); show();
+  const photos = await tripPhotos(1); body.innerHTML = '';
+  if (!photos){ noPhotos(body); return; }
+  const p = rnd(photos), N = 3;
+  const img = new Image(); img.src = p.full;
+  const board = el('div', 'pz'); const info = el('p', 'note', 'Tap a tile next to the gap to slide it.'); const hud = el('p', 'mm-hud', '0 moves');
+  let tiles = [...Array(N * N).keys()]; // value = home index; N*N-1 is the gap
+  const gapHome = N * N - 1;
+  const neighbors = i => [i - N, i + N, i % N ? i - 1 : -1, (i + 1) % N ? i + 1 : -1].filter(j => j >= 0 && j < N * N);
+  let gap = tiles.indexOf(gapHome); let last = -1;
+  for (let k = 0; k < 160; k++){ const opts = neighbors(gap).filter(j => j !== last); const j = rnd(opts); [tiles[gap], tiles[j]] = [tiles[j], tiles[gap]]; last = gap; gap = j; }
+  let moves = 0;
+  const draw = () => {
+    board.innerHTML = '';
+    tiles.forEach((v, i) => {
+      const t = el('button', 'pz-tile' + (v === gapHome ? ' gap' : '')); t.type = 'button';
+      if (v !== gapHome){ t.style.backgroundImage = `url("${p.full}")`; t.style.backgroundPosition = `${(v % N) / (N - 1) * 100}% ${Math.floor(v / N) / (N - 1) * 100}%`; t.setAttribute('aria-label', `Tile ${v + 1}`); }
+      else t.setAttribute('aria-label', 'Gap');
+      t.onclick = () => { const g = tiles.indexOf(gapHome); if (!neighbors(g).includes(i)) return; [tiles[g], tiles[i]] = [tiles[i], tiles[g]]; moves++; hud.textContent = `${moves} moves`; blip(500 + Math.random() * 200, .04); draw(); if (tiles.every((x, k) => x === k)) win(); };
+      board.append(t);
+    });
+  };
+  const win = () => { confetti(); board.classList.add('solved'); board.innerHTML = ''; const full = el('img', 'pz-full'); full.src = p.full; full.alt = caption(p); board.append(full);
+    info.textContent = `Solved in ${moves} moves! 📍 ${caption(p)}`; const again = el('button', 'btn', 'Another photo'); again.type = 'button'; again.onclick = photoPuzzle; body.append(again); };
+  const peek = el('button', 'btn ghost', 'Peek at the photo'); peek.type = 'button'; peek.onclick = () => lightbox(body, p);
+  body.append(hud, board, info, peek); draw();
+}
+
+// F. Which came first? Tap the photo taken earlier.
+async function whichFirst(){
+  const {body, show} = sheet('funFirst', 'Which came first?');
+  body.append(el('p', 'note', 'Picking photos…')); show();
+  const photos = await tripPhotos(6); body.innerHTML = '';
+  if (!photos){ noPhotos(body); return; }
+  const total = 8; let round = 0, score = 0;
+  const hud = el('p', 'mm-hud'); const pair = el('div', 'wf-pair'); const msg = el('p', 'note'); const next = el('button', 'btn', 'Next'); next.type = 'button'; next.hidden = true;
+  const play = () => {
+    if (round >= total){ pair.innerHTML = ''; msg.textContent = `${score} of ${total}! ${score >= 7 ? 'You have a time machine for a brain.' : score >= 5 ? 'Solid trip memory.' : 'Time is a blur on vacation. As it should be.'}`; next.textContent = 'Play again'; next.hidden = false; next.onclick = () => { round = 0; score = 0; next.textContent = 'Next'; play(); }; if (score >= 6) confetti(); return; }
+    round++; next.hidden = true; msg.textContent = 'Tap the photo that was taken first.'; hud.textContent = `Round ${round} of ${total} · ${score} right`;
+    let a, b, guard = 0; do { [a, b] = pickN(photos, 2); } while (Math.abs(stamp(a) - stamp(b)) < 36e5 && guard++ < 50);
+    pair.innerHTML = '';
+    [a, b].forEach(p => { const c = el('button', 'wf-card'); c.type = 'button'; c.innerHTML = `<img alt="" src="${p.thumb}"><span class="wf-when"></span>`; c.setAttribute('aria-label', 'Choose this photo');
+      c.onclick = () => { if (!next.hidden) return; const earlier = stamp(a) <= stamp(b) ? a : b; const right = p === earlier; if (right) score++;
+        pair.querySelectorAll('.wf-card').forEach((x, i) => { const q = i ? b : a; x.classList.add(q === earlier ? 'right' : 'wrong'); x.querySelector('.wf-when').textContent = `${shortDate(q)}${q.time ? ', ' + q.time : ''} · ${q.place}`; });
+        blip(right ? 880 : 200, .1, right ? 'sine' : 'square', .07); msg.textContent = right ? rnd(['Yes! Good memory.', 'Correct. Very impressive.', 'Nailed it.']) : 'Nope, the other one came first.'; hud.textContent = `Round ${round} of ${total} · ${score} right`; next.hidden = false; next.onclick = play; };
+      pair.append(c); });
+  };
+  body.append(hud, pair, msg, next); play();
+}
+
+// G. Zoom detective: the photo starts zoomed way in and slowly zooms out. Guess sooner, score more.
+async function zoomDetective(){
+  const {body, show} = sheet('funZoom', 'Zoom detective');
+  body.append(el('p', 'note', 'Loading the evidence…')); show();
+  const photos = await tripPhotos(6); body.innerHTML = '';
+  if (!photos){ noPhotos(body); return; }
+  const places = [...new Set(photos.map(p => p.place))];
+  if (places.length < 4){ noPhotos(body); return; }
+  const total = 5, DUR = 12000; let round = 0, score = 0, raf = 0;
+  const hud = el('p', 'mm-hud'); const frame = el('div', 'zd'); const img = el('img'); img.alt = 'A mystery photo'; frame.append(img);
+  const opts = el('div', 'game-opts zd-opts'); const msg = el('p', 'note'); const next = el('button', 'btn', 'Next'); next.type = 'button'; next.hidden = true;
+  const play = () => {
+    cancelAnimationFrame(raf);
+    if (round >= total){ opts.innerHTML = ''; img.style.transform = 'none'; msg.textContent = `Case closed: ${score} points. ${score >= 35 ? 'Detective of the year.' : score >= 20 ? 'Sharp eyes.' : 'The clues were very blurry. Not your fault.'}`; next.textContent = 'Play again'; next.hidden = false; next.onclick = () => { round = 0; score = 0; next.textContent = 'Next'; play(); }; if (score >= 30) confetti(); return; }
+    round++; next.hidden = true; msg.textContent = 'Guess the place before it zooms all the way out.';
+    const p = rnd(photos); const choices = shuffle([p.place, ...shuffle(places.filter(x => x !== p.place)).slice(0, 3)]);
+    const fx = 20 + Math.random() * 60, fy = 20 + Math.random() * 60;
+    img.src = p.full; img.style.transformOrigin = `${fx}% ${fy}%`;
+    let t0 = 0, done = false;
+    const step = t => { if (!t0) t0 = t; const k = Math.min(1, (t - t0) / DUR); img.style.transform = `scale(${(7 - 6 * k).toFixed(3)})`; if (k < 1 && !done) raf = requestAnimationFrame(step); };
+    img.onload = () => { raf = requestAnimationFrame(step); };
+    hud.textContent = `Case ${round} of ${total} · ${score} points`;
+    opts.innerHTML = '';
+    choices.forEach(c => { const b = el('button', 'btn ghost', c); b.type = 'button';
+      b.onclick = () => { if (done) return; done = true; cancelAnimationFrame(raf); const left = t0 ? Math.max(0, DUR - (performance.now() - t0)) : DUR; const pts = c === p.place ? 1 + Math.ceil(left / 1000) : 0; score += pts;
+        img.style.transform = 'none';
+        opts.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === p.place) x.className = 'btn right'; else if (x === b) x.className = 'btn wrong'; });
+        blip(pts ? 880 : 200, .1, pts ? 'sine' : 'square', .07); msg.textContent = pts ? `Yes! ${caption(p)}. +${pts} points` : `It was ${caption(p)}.`; hud.textContent = `Case ${round} of ${total} · ${score} points`; next.hidden = false; next.onclick = play; };
+      opts.append(b); });
+  };
+  stoppers.push(() => cancelAnimationFrame(raf));
+  body.append(hud, frame, opts, msg, next); play();
+}
+
+// H. Trip timeline: tap four photos in the order they happened.
+async function tripTimeline(){
+  const {body, show} = sheet('funTimeline', 'Trip timeline');
+  body.append(el('p', 'note', 'Picking four moments…')); show();
+  const photos = await tripPhotos(8); body.innerHTML = '';
+  if (!photos){ noPhotos(body); return; }
+  const byDay = {}; photos.forEach(p => (byDay[p.date] = byDay[p.date] || []).push(p));
+  const days = Object.keys(byDay); if (days.length < 4){ noPhotos(body); return; }
+  const set = shuffle(days).slice(0, 4).map(d => rnd(byDay[d]));
+  const correct = set.slice().sort((a, b) => stamp(a) - stamp(b));
+  const msg = el('p', 'note', 'Tap the photos in the order they happened: first to last.');
+  const grid = el('div', 'tl-grid'); const order = [];
+  const row = el('div', 'us-row'); const reset = el('button', 'btn ghost', 'Start over'); reset.type = 'button'; const check = el('button', 'btn', 'Check'); check.type = 'button'; check.disabled = true;
+  const draw = () => {
+    grid.innerHTML = '';
+    set.forEach(p => { const n = order.indexOf(p); const c = el('button', 'tl-card' + (n >= 0 ? ' picked' : '')); c.type = 'button'; c.innerHTML = `<img alt="" src="${p.thumb}"><span class="tl-num">${n >= 0 ? n + 1 : ''}</span><span class="tl-when"></span>`;
+      c.setAttribute('aria-label', n >= 0 ? `Photo, number ${n + 1}` : 'Photo, not numbered yet');
+      c.onclick = () => { if (check.dataset.done) return; if (n >= 0) order.splice(n, 1); else order.push(p); blip(500 + order.length * 80, .05); check.disabled = order.length < 4; draw(); };
+      grid.append(c); });
+  };
+  reset.onclick = () => { order.length = 0; check.disabled = true; draw(); };
+  check.onclick = () => {
+    check.dataset.done = '1'; let right = 0;
+    grid.querySelectorAll('.tl-card').forEach((c, i) => { const p = set[i]; const ok = order.indexOf(p) === correct.indexOf(p); if (ok) right++; c.classList.add(ok ? 'right' : 'wrong'); c.querySelector('.tl-num').textContent = correct.indexOf(p) + 1; c.querySelector('.tl-when').textContent = `${shortDate(p)} · ${p.place}`; });
+    msg.textContent = right === 4 ? 'Perfect timeline! You remember everything.' : `${right} of 4 in the right spot. The numbers now show the real order.`;
+    if (right === 4) confetti();
+    check.textContent = 'New photos'; check.disabled = false; check.onclick = tripTimeline; reset.hidden = true;
+  };
+  row.append(reset, check); body.append(msg, grid, row); draw();
 }
 
 /* ================= I. Brag button ================= */
@@ -497,14 +654,17 @@ function bragButton(){
   body.append(f, out, shelf); show();
 }
 
-/* ================= More fun ================= */
-function moreFun(items){
-  const {body, show} = sheet('funMore', 'More fun');
+/* ================= Menus (More fun, Croatia games) ================= */
+function menu(id, title, items, intro){
+  const {body, show} = sheet(id, title);
+  if (intro) body.append(el('p', 'note', intro));
   const grid = el('div', 'tiles');
   items.forEach(([e, label, fn]) => { const b = el('button', 'tile'); b.type = 'button'; b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label; b.onclick = () => { stopAll(); fn(); }; grid.append(b); });
   body.append(grid); show();
 }
+const moreFun = items => menu('funMore', 'More fun', items);
+const croatiaGames = items => menu('funCroatia', 'Croatia games', items, 'Little games made from our trip photos.');
 
-window.iRobFun = {puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, bragButton, moreFun, confetti,
+window.iRobFun = {puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, photoPuzzle, whichFirst, zoomDetective, tripTimeline, bragButton, moreFun, croatiaGames, confetti, stop:stopAll,
   petName:() => (get(PK, null) || {}).name || null};
 })();

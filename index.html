@@ -362,6 +362,8 @@ h1,.status{position:relative;z-index:1}
 .sheet.show{transform:none}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--grab);margin:9px auto 4px}
 .sheet header{display:flex;align-items:center;padding:4px 10px 6px 20px}
+.sheet header .back-btn{margin:0 4px 0 -12px;flex:none}
+.sheet header .back-btn[hidden]{display:none}
 .sheet h2{margin:0;flex:1;font:400 19px/1.2 var(--head);letter-spacing:.05em;text-transform:uppercase;color:var(--title)}
 .sheet .body{overflow-y:auto;padding:4px 20px 14px}
 .menu-item{display:flex;align-items:center;gap:14px;width:100%;padding:14px 4px;border-bottom:1px solid var(--line);text-align:left;font-size:16px}
@@ -452,10 +454,6 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
   </div>
 
   <div class="chips starters" id="chips">
-    <div class="tray-head">
-      <div class="moods" id="weatherRow" role="group" aria-label="How's the weather inside you?"><span class="tray-label">Inside it's</span></div>
-      <div class="modes" id="modeRow" role="group" aria-label="What do you need from Rob right now?"></div>
-    </div>
     <div class="tiles" id="ideaRow" role="group" aria-label="Things to do with Rob"></div>
   </div>
   <form class="composer" id="form" autocomplete="off">
@@ -906,17 +904,10 @@ const MODES = {
   distract:{label:'Distract me', ph:'Say anything…', sys:'Right now she wants a distraction. Do not dwell on her problem. Change the subject to something light and fun: a silly question, a tiny game, a fun idea or a fun fact.'},
   hype:{label:'Hype me up', ph:'Hype you up for what?', sys:'Right now she wants a hype-up. Be enthusiastic, specific and loud about believing in her. Short, punchy, joyful.'}
 };
-let mode = load(K.mode, null); if (!MODES[mode]) mode = null;
-function renderModes(){
-  $('modeRow').querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.mode === mode));
-  input.placeholder = mode ? MODES[mode].ph : 'Talk to me…';
-}
-Object.entries(MODES).forEach(([k, v]) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.dataset.mode = k; c.textContent = v.label;
-  c.onclick = () => { mode = mode === k ? null : k; save(K.mode, mode); renderModes(); toast(mode ? (k === 'listen' ? 'Okay — I\'ll just listen' : k === 'advice' ? 'Okay — practical help it is' : k === 'distract' ? 'Okay — let\'s take your mind off it' : 'Okay — hype mode on') : 'Back to normal'); };
-  $('modeRow').appendChild(c); });
+let mode = null; save(K.mode, null); // modes were retired from the tray; the tiles do these jobs now
+function renderModes(){ input.placeholder = mode ? MODES[mode].ph : 'Talk to me…'; }
 renderModes();
 const WEATHER = [['☀️ Sunny', '☀️ Feeling sunny today — pretty good, actually.'], ['⛅ Cloudy', '⛅ Feeling a bit cloudy — not great, not terrible.'], ['🌧 Rainy', '🌧 Feeling rainy inside — kind of sad today.'], ['⛈ Stormy', '⛈ Feeling stormy — overwhelmed and worn out.']];
-WEATHER.forEach(([l, msg]) => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; const [emoji, ...word] = l.split(' '); c.textContent = emoji; c.setAttribute('aria-label', 'Inside it\'s ' + word.join(' ').toLowerCase()); c.title = word.join(' '); c.onclick = () => { setTray(false); send(msg); }; $('weatherRow').appendChild(c); });
 const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 5; };
 // The fun tray: things to DO with Rob, all on one screen (no sideways scrolling).
 const F = name => () => window.iRobFun ? window.iRobFun[name]() : toast('One moment, still loading');
@@ -926,32 +917,38 @@ const TILES = [
   ['🐣', 'Pocket kitten', F('pocketKitten')],
   ['🧺', 'Catch kittens', F('catchKittens')],
   ['🥠', 'Fortune cookie', F('fortuneCookie')],
-  ['🧠', 'Memory match', F('memoryMatch')],
-  ['🗺️', 'Where was this?', () => startGame()],
+  ['🇭🇷', 'Croatia games', () => window.iRobFun && window.iRobFun.croatiaGames(CROATIA)],
   ['🎉', 'Brag button', F('bragButton')],
   ['😂', 'Make me laugh', () => send('Make me laugh. Something actually funny, short.')],
   ['🤔', 'Would you rather', () => send('Ask me a would-you-rather. Something fun.')],
   ['🎡', 'Spin the wheel', () => open('sheetRoulette')],
+  ['🫙', 'Reasons jar', () => open('sheetReasons')],
   ['✨', 'More fun', () => window.iRobFun && window.iRobFun.moreFun(MORE)],
 ];
+const CROATIA = [
+  ['🧠', 'Memory match', F('memoryMatch')],
+  ['🗺️', 'Where was this?', () => startGame()],
+  ['🧩', 'Photo puzzle', F('photoPuzzle')],
+  ['⏱️', 'Which came first?', F('whichFirst')],
+  ['🔍', 'Zoom detective', F('zoomDetective')],
+  ['📅', 'Trip timeline', F('tripTimeline')],
+  ['🌊', 'Slideshow', () => startSlides()],
+];
 const MORE = [
-  ['🌊', 'Croatia trip', () => startSlides()],
-  ['🫙', 'Reasons jar', () => open('sheetReasons')],
   ['🔧', 'Fix something', () => send('Help me fix something')],
-  ['💬', 'Say it for me', () => open('sheetSay')],
   ['🃏', 'Comfort cards', () => window.iRobCards && window.iRobCards.toolkit()],
   ['🔒', 'Just us', F('dateNight')],
 ];
 function renderIdeas(){
   const row = $('ideaRow'); row.innerHTML = '';
   const list = TILES.slice();
-  if (isNight()) list[10] = ['🌙', 'Help me sleep', helpMeSleep];
+  if (isNight()) list[9] = ['🌙', 'Help me sleep', helpMeSleep];
   const pet = window.iRobFun && window.iRobFun.petName && window.iRobFun.petName();
   if (pet) list[2] = ['🐱', pet.length > 14 ? pet.slice(0, 13) + '…' : pet, list[2][2]];
   list.forEach(([e, label, fn]) => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'tile';
     b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span></span>`; b.lastChild.textContent = label;
-    b.onclick = () => { setTray(false); fn(); };
+    b.onclick = () => { setTray(false); navFrom('tray'); fn(); };
     row.appendChild(b);
   });
 }
@@ -1456,7 +1453,25 @@ let openSheet = null, lastFocus = null, pendingConfirm = null;
 const MAIN = ['.top', '.hero', '.chat', '.chips', '.composer'];
 function setInert(on){ MAIN.forEach(sel => document.querySelectorAll(sel).forEach(el => { el.inert = on; })); }
 function restoreFocus(){ const f = lastFocus; lastFocus = null; if (f && f !== input && document.contains(f) && f.focus) f.focus({preventScroll:true}); }
+/* Back button: every sheet remembers the layer it was opened from (the tray, or another sheet) and can go back to it. */
+let navOrigin = null, navAt = 0, navBacking = false;
+function navFrom(o){ navOrigin = o; navAt = Date.now(); }
+const BACK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+function setBack(sheet){
+  const head = sheet.querySelector('header'); if (!head) return;
+  let b = head.querySelector('.back-btn');
+  if (!b){ b = document.createElement('button'); b.type = 'button'; b.className = 'icon-btn back-btn'; b.setAttribute('aria-label', 'Back'); b.innerHTML = BACK_SVG; head.prepend(b);
+    b.onclick = () => { const to = sheet.dataset.back; if (window.iRobFun && window.iRobFun.stop) window.iRobFun.stop();
+      if (to === 'tray'){ close(); setTray(true); } else if (to && $(to)){ navBacking = true; open(to); navBacking = false; } }; }
+  b.hidden = !sheet.dataset.back;
+}
 function open(id){
+  const target = $(id);
+  if (!navBacking && target){
+    if (openSheet && openSheet.id !== id) target.dataset.back = openSheet.id;
+    else if (!openSheet) target.dataset.back = navOrigin && Date.now() - navAt < 6000 ? navOrigin : '';
+    navOrigin = null; setBack(target);
+  }
   if (!openSheet) lastFocus = document.activeElement;
   close(true); openSheet = $(id);
   if (id === 'sheetPocket') renderPocket();
@@ -1845,11 +1860,12 @@ function mapInto(el, lat, lng, z){
 }
 let game = null;
 async function startGame(){
+  const from = openSheet ? openSheet.id : (navOrigin && Date.now() - navAt < 6000 ? navOrigin : null);
   close(); toast('Picking photos…');
   const pool = await loadTrip(); const photos = pool ? pool.filter(m => m.k === 'p' && typeof m.lat === 'number') : [];
   const places = [...new Set(photos.map(m => m.place))];
   if (places.length < 4){ toast('I couldn\'t reach the Croatia photos just now'); return; }
-  game = {round:0, score:0, total:5}; open('sheetGame'); nextRound();
+  game = {round:0, score:0, total:5}; if (from) navFrom(from); open('sheetGame'); nextRound();
 }
 function nextRound(){
   const pool = tripCache.filter(m => m.k === 'p' && typeof m.lat === 'number'), places = [...new Set(pool.map(m => m.place))];
