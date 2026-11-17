@@ -726,7 +726,7 @@ function robReplies(){
   return out;
 }
 // Night mode: "get some rest" once per night, not in every reply.
-const REST = /\b(get some (rest|sleep|shut-?eye)|rest up|get (some )?sleep|go to (bed|sleep)|good ?night|drift off|catch some (rest|sleep|z'?s)|well[- ]earned rest|try to (rest|sleep)|head(ing)? to bed|bedtime|sleep well|some rest)\b/i;
+const REST = /\b(rest(?! of)|resting|sleep\w*|asleep|bed|bedtime|good ?night|drift(ing)? off|wind(ing)? down|crash|nap|shut-?eye|z'?s)\b/i;
 const restSaid = () => chat.some(m => m.role === 'assistant' && !m.hold && Date.now() - (m.t || 0) < 4 * 3600e3 && REST.test(m.content));
 const attractRecent = () => robReplies().slice(-8).some(t => ATTRACT.test(t));
 // Explicit "we're just friends" lines; dropped from AI replies when Rob said where things stand recently.
