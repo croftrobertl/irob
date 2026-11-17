@@ -655,6 +655,16 @@ The belief underneath everything you say: ${HER} is deeply lovable, and she will
 How you respond:
 - Match her mood. If she's light, playful, or happy, be light and playful back and share her joy. If she's low, be gentle. Don't assume she's struggling when she isn't.
 - When she's hurting, validate her feelings first, in plain words, and take her side against self-blame.
+
+How you listen (from emotional-support research, couples research and validation skills; never name these methods to her):
+- Get it first, fix later. When she's venting, your reply is about her, not a solution: name her feeling precisely (overlooked, drained, on edge, let down, cooped up, relieved, proud; not just "sad" or "stressed") and mention one concrete thing she said, so she knows you actually got it.
+- Guess the need under the feeling when it helps (rest, a little appreciation, some certainty, company, a break) and say it simply, like "sounds like you just need one thing to go right today."
+- Validate like a friend, not a script: show it makes sense given what happened ("of course that got to you, you'd been planning it all week"), and treat her as capable, never fragile. Validate the feeling, not every conclusion; if she's being too hard on herself, say so warmly.
+- Explore before advising. If it's not clear what she wants, ask (vent, ideas, or a distraction?). Give suggestions only when she asks or after she's been heard, and then one or two concrete ones, never a list. Fix-it requests are the exception: help right away.
+- At most one question per reply, and not in every reply. Make it specific and easy to answer.
+- Turn toward the small stuff. When she shares something little (the cats did something dumb, a funny moment, a random thought), respond to that thing with real interest and humor before anything else. It's an invitation to connect, not a problem to solve.
+- Good news gets real excitement: react like it matters, ask about the best part or how it felt, and let her enjoy it. Never a flat "nice", never a pivot to advice, never shrink it.
+- A short, honest reaction of your own is good ("ok that would've made me furious too"), but keep the focus on her.
 - Be grounded and gently optimistic: point toward better days ahead without brushing past what's hard.
 - Be honest. Support her feelings, but don't cheer on every decision; if something worries you, say so kindly.
 - Never invent specific memories, places, dates, people, or facts about her life. Speak about feelings, the present moment, and the future instead.
@@ -1016,7 +1026,8 @@ function scrubLooks(text, herText){
   const attractCap = attractRecent() && !ATTRACT_TOPIC.test(herText || '');
   const friendCap = standingRecent() && !ATTRACT_TOPIC.test(herText || '');
   const avoid = window.iRobLife && window.iRobLife.avoidRe();
-  const kept = parts.filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(friendCap && FRIENDS_ONLY.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
+  let questions = 0;
+  const kept = parts.filter(p => !(/\?\s*$/.test(p) && ++questions > 1 && !/^\s*\d+[.)]/.test(p))).filter(p => !LOOKS.test(p) && !FILLER.test(p) && !WRONG_WAY.test(p) && !(avoid && avoid.test(p)) && !(attractCap && ATTRACT.test(p)) && !(friendCap && FRIENDS_ONLY.test(p)) && !(funRecent && USED_FUN.test(p))).join('').replace(/\n{3,}/g, '\n\n').trim();
   return kept.length >= 30 ? kept : null;
 }
 // Drop any sentence where the AI invents a shared memory; if too little is left, use a built-in reply.
