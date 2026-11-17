@@ -248,7 +248,7 @@
 .pc-card:active{transform:scale(.97)}
 
 /* Hidden playlist (♫ in the header): controls styled like the Croatia site's player */
-.music-btn{opacity:.55;color:var(--title)}
+.music-btn{color:var(--title)}
 .music-btn svg{width:20px;height:20px}
 .music-btn.playing{opacity:1;color:var(--bronze);animation:noteBob 1.6s ease-in-out infinite}
 @keyframes noteBob{50%{transform:translateY(-2px) rotate(-6deg)}}

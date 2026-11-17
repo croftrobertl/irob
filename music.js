@@ -110,5 +110,5 @@ function session(s){
 function init(){ takeKey(); if (get(KEY, null)) build(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 addEventListener('hashchange', takeKey);
-window.iRobMusic = {playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return songs[idx] || null; }};
+window.iRobMusic = {unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return songs[idx] || null; }};
 })();
