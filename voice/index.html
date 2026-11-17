@@ -51,7 +51,7 @@ audio{width:100%}
 
   <section>
     <h2><span class="step">2</span>Record Rob's voice</h2>
-    <p class="note">Somewhere quiet, phone about a foot away. Read this in your normal, relaxed voice (about 10 seconds):</p>
+    <p class="note">Somewhere quiet, phone about a foot away. Read this in the voice you use with Erica, relaxed and warm (about 10 seconds). Tip: a closet or a car is quieter than a kitchen.</p>
     <p class="script">"Hey, it's me. I was just thinking about you today. I hope your afternoon is going okay, and if it isn't, come tell me about it. I love you."</p>
     <div class="row"><button id="rec" disabled>● Record</button><button class="ghost" id="upload" disabled>Or choose a voice memo</button></div>
     <input type="file" id="file" accept="audio/*" hidden>
@@ -97,20 +97,34 @@ $('load').onclick = async () => {
   } catch (e){ $('loadMsg').innerHTML = `<span class="bad">Couldn't load:</span> ${e.message}`; $('load').disabled = false; }
 };
 
+// Give the model the cleanest 10 s possible: proper (filtered) resampling to the model's rate,
+// silence trimmed off both ends so the 10-second window is all voice, and a steady level.
+async function cleanUp(decoded, rate){
+  const len = Math.ceil(decoded.duration * rate), off = new OfflineAudioContext(1, len, rate);
+  const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const win = Math.round(rate * .02); let peak = 0; for (let i = 0; i < pcm.length; i++) peak = Math.max(peak, Math.abs(pcm[i]));
+  const loud = i => { let s = 0; for (let j = i; j < Math.min(pcm.length, i + win); j++) s += pcm[j] * pcm[j]; return Math.sqrt(s / win) > peak * .06; };
+  let a = 0, b = pcm.length; while (a < b && !loud(a)) a += win; while (b > a && !loud(Math.max(0, b - win))) b -= win;
+  const pad = Math.round(rate * .15); a = Math.max(0, a - pad); b = Math.min(pcm.length, b + pad);
+  const out = pcm.slice(a, b); const g = peak > 0 ? Math.min(4, .9 / peak) : 1; for (let i = 0; i < out.length; i++) out[i] *= g;
+  return out;
+}
 async function useAudio(arrayBuf){
   $('recMsg').textContent = 'Learning Rob\'s voice…';
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const decoded = await ctx.decodeAudioData(arrayBuf); const mono = decoded.getChannelData(0).slice();
+  const decoded = await ctx.decodeAudioData(arrayBuf);
+  const mono = await cleanUp(decoded, tts.sampleRate);
   const tc = performance.now();
-  voice = await tts.cloneVoice(mono, { inputSampleRate: decoded.sampleRate });
-  $('recMsg').innerHTML = `<span class="ok">Got it.</span> Learned from ${Math.min(10, decoded.duration).toFixed(1)} s of audio in ${((performance.now() - tc) / 1000).toFixed(1)} s. Now try step 3.`;
+  voice = await tts.cloneVoice(mono, { inputSampleRate: tts.sampleRate });
+  $('recMsg').innerHTML = `<span class="ok">Got it.</span> Learned from ${Math.min(10, mono.length / tts.sampleRate).toFixed(1)} s of speech in ${((performance.now() - tc) / 1000).toFixed(1)} s. Now try step 3 with a full sentence or two.`;
   $('say').disabled = false; ctx.close();
 }
 let rec = null, chunks = [];
 $('rec').onclick = async () => {
   if (rec){ rec.stop(); return; }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
     chunks = []; rec = new MediaRecorder(stream);
     rec.ondataavailable = e => e.data.size && chunks.push(e.data);
     rec.onstop = async () => { stream.getTracks().forEach(t => t.stop()); const blob = new Blob(chunks, { type: rec.mimeType || 'audio/mp4' }); rec = null; $('rec').textContent = '● Record again'; $('rec').classList.remove('rec');
