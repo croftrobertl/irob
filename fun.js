@@ -341,11 +341,11 @@ function pocketKitten(){
     }
     if (t !== C.token){ C.busy = false; return; }
     xp(Math.min(3, 1 + Math.floor(bites / 4))); careDay(); pose('groom');
-    say(p.bowl.amt > 0 ? rnd([`${p.name} is full and saving the rest for later. Very responsible.`, `${p.name} ate, licked their lips, and left exactly three bites. Classic.`]) : rnd([`${p.name} licked the bowl clean. Spotless.`, `All gone. ${p.name} is now staring at the empty bowl like it betrayed them.`]));
+    say(p.bowl.amt > 0 ? rnd([`${p.name} is full and saving the rest for later. Very responsible.`, `${p.name} ate, licked her lips, and left exactly three bites. Classic.`]) : rnd([`${p.name} licked the bowl clean. Spotless.`, `All gone. ${p.name} is now staring at the empty bowl like it betrayed her.`]));
     save(); drawHud(); await sleep(2400); if (t === C.token){ pose('sit'); C.busy = false; }
   }
   function fillBowl(kind){
-    if (p.bowl.amt >= 60 && p.bowl.kind === kind){ say(`The bowl is still pretty full. ${p.name} is not starving, despite what they tell you.`); return; }
+    if (p.bowl.amt >= 60 && p.bowl.kind === kind){ say(`The bowl is still pretty full. ${p.name} is not starving, despite what she tells you.`); return; }
     p.bowl = {kind, amt:100}; blip(520, .08, 'triangle'); setTimeout(() => blip(620, .06, 'triangle'), 90);
     say(kind === 'milk' ? `You poured a bowl of milk. ${p.name}'s ears went straight up.` : `Kibble in the bowl. The rattle summoned ${p.name} from another dimension.`);
     save(); drawRoom(); closePanel();
@@ -481,7 +481,7 @@ function pocketKitten(){
       raf = requestAnimationFrame(tick);
     };
     const finish = () => { endGame(); gain('energy', -5); const c = Math.min(10, hits); earn(c); xp(2 + Math.floor(hits / 3)); careDay();
-      say(hits >= 8 ? `${hits} hits! ${p.name} caught the feather and is now walking away with it. +${c} 🪙` : `${hits} hits. ${p.name} is pretending they weren't trying very hard. +${c} 🪙`); commit(); };
+      say(hits >= 8 ? `${hits} hits! ${p.name} caught the feather and is now walking away with it. +${c} 🪙` : `${hits} hits. ${p.name} is pretending she wasn't trying very hard. +${c} 🪙`); commit(); };
     game = {stop(){ cancelAnimationFrame(raf); layer.remove(); }}; stoppers.push(endGame);
     raf = requestAnimationFrame(tick);
   }
