@@ -162,6 +162,17 @@ const FOODS = [['🐟', 'Fish', {food:35}, 0], ['🥛', 'Milk', {food:20, fun:5}
 const PIC = {'🍽️':'pk-bowl', '🥣':'pk-bowl', '🎾':'pk-mouse', '🌙':'pk-moon', '🌅':'pk-sunrise', '☀️':'40', '🛍️':'pk-gift', '✏️':'46', '🐟':'pk-fish', 'fun':'pk-paw', '⚡':'pk-bolt', '💗':'pk-heart', '🪙':'pk-coin', '🔥':'pk-star', '🔴':'pk-laser', '🌳':'pk-cattree', '🎀':'pk-bow', '👑':'pk-crown', '🕶️':'pk-shades', '🔔':'pk-bell', '🧣':'pk-bandana', '🐭':'pk-mouse', '🩺':'58', '🥛':'60', '🍤':'61', '🫧':'65', '📦':'70', '🛏️':'71', '🪴':'73', '🐠':'74', '🧶':'75', '🎩':'78'};
 const pic = e => PIC[e] ? `<img class="pic" src="icons/${PIC[e]}.webp" alt="" draggable="false">` : e;
 const clamp = v => Math.max(0, Math.min(100, v));
+// Weezy, painted. Each pose uses the closest painting; the drawn SVG cat is only a fallback.
+// Anchors are where her head top / eyes / neck sit in that painting (% of the square), for hats, shades and collars.
+const WZ = {
+  sit:  {img:'pk-cat-sit',   head:[50, 9],  face:[50, 39], neck:[50, 60]},
+  side: {img:'99',           head:[68, 14], face:[70, 34], neck:[58, 56]},
+  sleep:{img:'pk-cat-sleep'},
+  shock:{img:'110', head:[50, 8], face:[50, 40], neck:[50, 64]},
+  grump:{img:'111', head:[50, 8], face:[50, 44], neck:[50, 70]},
+};
+const WZ_POSE = {sleep:'sleep', nap:'sleep', walk:'side', run:'side', stalk:'side', wiggle:'side', pounce:'side', leap:'side', eat:'side', sniff:'side', climb:'side', stretch:'side', swat:'grump', shock:'shock'};
+['pk-cat-sit', '99', 'pk-cat-sleep', '110', '111'].forEach(n => { const im = new Image(); im.src = `icons/${n}.webp`; });
 function petLoad(){
   let p = get(PK, null); if (!p) return null;
   if (!p.v){ const h = ms => (Date.now() - ms) / 36e5; p = {v:3, name:p.name, born:p.born, xp:(p.xp || 0) * 2, coins:10, t:Date.now(), food:clamp(100 - h(p.fedAt) * 6), fun:clamp(100 - h(p.playedAt) * 5), love:clamp(100 - h(p.pettedAt) * 4), energy:80, poops:[], poopClock:Date.now(), asleep:false, owned:[], worn:{}, days:p.days || [], streak:1, lastEvent:0}; }
@@ -251,12 +262,15 @@ function pocketKitten(){
     const [mood] = petMood(p);
     const pose = p.asleep ? 'sleep' : C.pose;
     const faceMood = {eat:'closed', groom:'closed', nap:'closed', purr:'happy', beg:'wide', stalk:'wide', sniff:'open', sit:mood === 'sleep' ? 'closed' : mood}[pose] || mood;
-    const key = pose + '|' + faceMood + '|' + p.coat + '|' + JSON.stringify(p.worn || {});
+    const wz = WZ[WZ_POSE[pose] || 'sit'];
+    const key = wz.img + '|' + JSON.stringify(p.worn || {});
     if (cat.dataset.key !== key){
       cat.dataset.key = key;
-      catBody.innerHTML = (pose === 'sleep' || pose === 'nap') ? window.iRobCat.sleeping(p.coat) : window.iRobCat.sitting(p.coat, faceMood);
-      if (pose !== 'sleep' && pose !== 'nap') Object.entries(p.worn || {}).forEach(([slot, e]) => { const a = el('span', 'acc ' + slot); a.innerHTML = pic(e); a.setAttribute('aria-hidden', 'true'); catBody.append(a); });
+      catBody.innerHTML = `<img class="wz" src="icons/${wz.img}.webp" alt="" draggable="false">`;
+      catBody.dataset.view = WZ_POSE[pose] || 'sit';
+      if (wz.head) Object.entries(p.worn || {}).forEach(([slot, e]) => { const at = wz[slot] || wz.head, a = el('span', 'acc ' + slot); a.innerHTML = pic(e); a.style.left = at[0] + '%'; a.style.top = at[1] + '%'; a.setAttribute('aria-hidden', 'true'); catBody.append(a); });
     }
+    void faceMood;
     cat.className = 'tg-cat pose-' + pose + ((pose === 'sleep' || pose === 'nap') ? ' asleep' : '');
     cat.style.setProperty('--s', STAGES[p.stage][2]); cat.style.setProperty('--face', C.face);
     cat.style.left = C.x + '%';
@@ -296,10 +310,15 @@ function pocketKitten(){
 
   /* ---------- petting: stroke the cat. Three strokes in, the belly becomes a trap. ---------- */
   let last = null, strokes = 0, purr = null;
-  cat.addEventListener('pointerdown', e => { if (game) return; if (p.asleep){ say(`${p.name} is asleep. Gentle pets only. 💤`); return; } interrupt(); C.busy = true; last = e.clientX; cat.setPointerCapture(e.pointerId); purr = window.iRobFunPurr ? window.iRobFunPurr() : null; });
+  let downAt = 0;
+  cat.addEventListener('pointerdown', e => { downAt = Date.now(); if (game) return; if (p.asleep){ say(`${p.name} is asleep. Gentle pets only. 💤`); return; } interrupt(); C.busy = true; last = e.clientX; cat.setPointerCapture(e.pointerId); purr = window.iRobFunPurr ? window.iRobFunPurr() : null; });
   cat.addEventListener('pointermove', e => { if (last == null) return; if (Math.abs(e.clientX - last) > 28){ last = e.clientX; strokes++; gain('love', 2); purr && purr.set(Math.min(.8, .2 + strokes * .06)); hearts(); if (strokes === 3) pose('purr');
       const r = cat.getBoundingClientRect(); if (strokes > 3 && e.clientY > r.top + r.height * .72 && Math.random() < .35){ endPet(); pose('swat'); blip(180, .12, 'square', .08); say(rnd(['BETRAYAL. The belly was a trap.', 'You touched the belly. You knew the rules.', '*swats* We will not be discussing this.'])); setTimeout(() => { if (C.pose === 'swat') pose('sit'); }, 700); gain('love', -6); save(); drawHud(); } } });
   const endPet = () => { if (last == null) return; last = null; purr && purr.stop(); purr = null; C.busy = false; if (C.pose === 'purr') pose('sit');
+    if (!strokes && Date.now() - downAt < 350){
+      if (Math.random() < .2){ pose('shock'); blip(980, .06, 'triangle'); say(rnd([`${p.name} jumped. You startled the loaf.`, 'MEEP. (She did not see you there.)'])); setTimeout(() => { if (C.pose === 'shock') pose('sit'); }, 900); }
+      else { pose('beg'); blip(640, .05, 'triangle'); hearts(); gain('love', 1); say(rnd([`${p.name} booped your finger with her nose.`, 'Mrrp?', `${p.name} chirped at you.`, `${p.name} gave you a slow blink.`, `${p.name} rolled over to show you her side. Not the belly. Never the belly.`])); setTimeout(() => { if (C.pose === 'beg') pose('sit'); }, 900); }
+      save(); drawHud(); return; }
     if (strokes){ if (!p.lastPetCoin || Date.now() - p.lastPetCoin > 60000){ earn(1); p.lastPetCoin = Date.now(); } xp(1); careDay();
       say(strokes > 6 ? rnd([`${p.name} is purring so loud the neighbors called.`, `${p.name} has melted into a puddle of cat.`]) : rnd([`${p.name} headbutted your hand.`, `Slow blink from ${p.name}. You are trusted.`])); strokes = 0; save(); drawHud(); } };
   cat.addEventListener('pointerup', endPet); cat.addEventListener('pointercancel', endPet);
@@ -310,7 +329,7 @@ function pocketKitten(){
   async function eat(){
     if (C.busy || p.asleep || p.bowl.amt <= 0) return;
     C.busy = true;
-    if (!(await walkTo(BOWL_X + 12, 26))){ C.busy = false; return; }
+    if (!(await walkTo(BOWL_X + 8, 26))){ C.busy = false; return; }
     C.face = -1; pose('sniff'); await sleep(700);
     if (p.trait === 'royal' && p.bowl.kind === 'milk' && Math.random() < .3){ say(`${p.name} sniffed the milk and walked away. Her Majesty requested fish.`); C.busy = false; pose('sit'); return; }
     pose('eat'); say(rnd([`${p.name} is eating. Crunch crunch crunch.`, `Nom nom nom. ${p.name} is very focused.`, `${p.name} found the good bits first.`]));
@@ -352,7 +371,7 @@ function pocketKitten(){
     if (p.food < 55 && p.bowl.amt > 0) return eat();
     C.busy = true; const t = C.token;
     try {
-      if (p.food < 30){ await walkTo(BOWL_X + 12); C.face = -1; pose('beg'); say(rnd([`${p.name} is sitting by the empty bowl. Meowing. Loudly.`, `${p.name} would like to report an empty bowl.`, 'MRRROW. (Translation: the bowl.)'])); blip(500, .15, 'sine', .05); await sleep(3500); return; }
+      if (p.food < 30){ await walkTo(BOWL_X + 8); C.face = -1; pose('beg'); say(rnd([`${p.name} is sitting by the empty bowl. Meowing. Loudly.`, `${p.name} would like to report an empty bowl.`, 'MRRROW. (Translation: the bowl.)'])); blip(500, .15, 'sine', .05); await sleep(3500); return; }
       if (p.energy < 22){ const bed = (p.furniture || []).includes('bed'); if (bed) await walkTo(SPOTS.bed); if (t !== C.token) return; pose('nap'); say(bed ? `${p.name} curled up in the fluffy bed for a catnap.` : `${p.name} flopped over right there for a catnap.`); await sleep(9000); if (t === C.token){ gain('energy', 10); save(); drawHud(); } return; }
       if (p.fun < 28 && Math.random() < .6){ say(rnd([`${p.name} has the zoomies.`, `${p.name} is sprinting laps for no reason at all.`])); for (let i = 0; i < 3 && t === C.token; i++){ await walkTo(i % 2 ? 85 : 12, 75); } gain('energy', -3); return; }
       const furn = p.furniture || [];
@@ -991,7 +1010,7 @@ const FX = {
     ['#ff5a5a', '#ffa54a', '#ffe14a', '#5ad06a', '#4aa8ff', '#8a6bff'].forEach((c, i) => { g.strokeStyle = c; g.globalAlpha = .55 * a; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.arc(W / 2, H * .72, Math.min(W, H) * .62 - i * 14, Math.PI, Math.PI + Math.PI * reveal); g.stroke(); });
     g.globalAlpha = 1; }),
   dim:(ms = 3000, a0 = .5) => scene(ms, (g, W, H, k) => { g.fillStyle = `rgba(10,8,24,${a0 * Math.min(ease(k / .2), ease((1 - k) / .3))})`; g.fillRect(0, 0, W, H); }),
-  zoomies:() => { if (reduced() || !window.iRobCat) return; const o = el('div', 'fx-zoomies'); o.innerHTML = window.iRobCat.sitting('weezy', 'wide'); document.body.appendChild(o); setTimeout(() => o.remove(), 2700); },
+  zoomies:() => { if (reduced() || !window.iRobCat) return; const o = el('div', 'fx-zoomies'); o.innerHTML = '<img class="wz" src="icons/99.webp" alt="">'; document.body.appendChild(o); setTimeout(() => o.remove(), 2700); },
 };
 
 // 1A. Secret words she can type. [match, name, description, effect]
@@ -1073,19 +1092,20 @@ function roam(force){
   const spots = NAP_SPOTS.filter(([id]) => { const b = document.getElementById(id); if (!b || !b.offsetParent) return false; if (id === 'send' && input && input.value.trim()) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.top >= 30 && r.bottom <= innerHeight; });
   if (!spots.length) return;
   const [id, where] = rnd(spots), btn = document.getElementById(id), r = btn.getBoundingClientRect();
-  const k = el('button', 'roam-cat'); k.type = 'button'; k.setAttribute('aria-label', `${p.name} is asleep ${where}. Tap to wake them.`);
-  k.innerHTML = window.iRobCat.sleeping('weezy') + '<span class="rc-z" aria-hidden="true">z</span><span class="rc-z z2" aria-hidden="true">z</span>';
-  const w = 86, h = w * 132 / 220;
+  const k = el('button', 'roam-cat'); k.type = 'button'; k.setAttribute('aria-label', `${p.name} is asleep ${where}. Tap to wake her.`);
+  k.innerHTML = '<img class="wz" src="icons/pk-cat-sleep.webp" alt="" draggable="false"><span class="rc-z" aria-hidden="true">z</span><span class="rc-z z2" aria-hidden="true">z</span>';
+  const w = 74, h = w * .78;
   // Lie across the top of the button, slightly hanging over it, the way a real cat claims a warm spot
   const left = Math.max(4, Math.min(innerWidth - w - 4, r.left + r.width / 2 - w / 2));
   Object.assign(k.style, {left:left + 'px', top:(r.top + r.height * .55 - h) + 'px', width:w + 'px', height:h + 'px'});
   document.body.appendChild(k); roamer = {k, id};
   const leave = msg => {
     if (k.classList.contains('waking')) return;
-    k.classList.add('waking'); k.innerHTML = window.iRobCat.sitting('weezy', 'wide'); k.style.width = (w * .55) + 'px'; k.style.height = (w * .55 * 222 / 200) + 'px'; k.style.top = (r.top + r.height * .55 - w * .55 * 222 / 200) + 'px'; k.style.left = (left + w * .22) + 'px';
+    k.classList.add('waking'); k.innerHTML = '<img class="wz" src="icons/110.webp" alt="" draggable="false">'; const ws = w * .82; k.style.width = ws + 'px'; k.style.height = ws + 'px'; k.style.top = (r.top + r.height * .55 - ws) + 'px'; k.style.left = (left + (w - ws) / 2) + 'px';
     blip(760, .07, 'triangle'); setTimeout(() => blip(980, .06, 'triangle'), 80);
     const b2 = el('span', 'rc-say', msg || rnd(['meep!', 'mrrp?', 'prrt', '*offended meow*', 'fine.'])); b2.style.left = (left + w * .1) + 'px'; b2.style.top = (r.top - 70) + 'px'; document.body.appendChild(b2);
-    setTimeout(() => k.classList.add('hop'), 450); setTimeout(() => { k.remove(); b2.remove(); roamer = null; }, 1100);
+    const dir = left + w / 2 > innerWidth / 2 ? -1 : 1; k.style.setProperty('--dir', dir);
+    setTimeout(() => { k.innerHTML = '<img class="wz" src="icons/99.webp" alt="" draggable="false">'; k.classList.add('hop'); }, 650); setTimeout(() => { k.remove(); b2.remove(); roamer = null; }, 1350);
     const s2 = get(PK, null); if (s2){ s2.love = Math.min(100, (s2.love || 0) + 4); put(PK, s2); }
   };
   k.onclick = e => { e.preventDefault(); e.stopPropagation(); leave(); };
@@ -1093,6 +1113,8 @@ function roam(force){
   setTimeout(() => { if (roamer && roamer.k === k) leave(''); }, 90000 + Math.random() * 60000);
 }
 setTimeout(() => roam(true), 4000);
+// The keyboard or a rotation moves the buttons out from under her; she quietly leaves instead of floating in midair.
+addEventListener('resize', () => { if (roamer && !roamer.k.classList.contains('waking')){ roamer.k.remove(); roamer = null; } });
 setInterval(() => { if (document.visibilityState === 'visible') roam(); }, 4 * 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => roam(), 2500); });
 
