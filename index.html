@@ -2342,7 +2342,7 @@ function backupReminder(){
   const last = load('try_lastbackup', 0), nagged = load('try_backupnag', 0);
   if (chat.filter(m => m.role === 'user').length < 10 && !load('try_pocketkitten', null)) return;
   if (Date.now() - last < 30 * 864e5 || Date.now() - nagged < 7 * 864e5) return;
-  showBanner('backup', '<b>Quick favor:</b> save a backup so nothing gets lost if your phone does.', {icon:'💾', kind:'soft', action:['Back up', () => { open('sheetSettings'); }], onDismiss:() => save('try_backupnag', Date.now())});
+  showBanner('backup', '<b>Quick favor:</b> save a backup so nothing gets lost if your phone does.', {icon:'<img src="icons/196.webp" alt="" style="width:26px;height:26px;display:block">', kind:'soft', action:['Back up', () => { open('sheetSettings'); }], onDismiss:() => save('try_backupnag', Date.now())});
 }
 
 /* ---------- Today card (welcome screen) ---------- */

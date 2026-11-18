@@ -564,3 +564,21 @@ img.sq-arm{height:auto}
 .fc-cookie.open img.fc-paper{width:44%;top:58%}
 .pose-eat .acc.neck,.pose-pounce .acc.neck,.pose-stretch .acc.neck{opacity:0}
 .tg-poop{width:34px;height:34px;padding:2px}
+
+/* ================= Final pieces: room backgrounds, camera, heart, music ================= */
+.tg-room{background:url(icons/room-day.webp) 80% 100%/cover no-repeat,#f2dcc0}
+.tg-room.night,.tg-room.lights-off{background:url(icons/room-night.webp) 80% 100%/cover no-repeat,#3b3f5c}
+.tg-room.lights-off{filter:brightness(.62) saturate(.85)}
+.tg-room .tg-wall,.tg-room .tg-floor,.tg-room .tg-window{display:none}
+/* camera + save-memory heart */
+#camBtn svg>*{display:none}
+#camBtn svg{background:url(icons/170.webp) center/contain no-repeat}
+#vHeart svg>*{display:none}
+#vHeart svg{width:26px;height:26px;background:url(icons/171.webp) center/contain no-repeat;filter:grayscale(1) brightness(1.6);opacity:.85;transition:filter .2s,opacity .2s}
+#vHeart[aria-pressed="true"] svg{filter:none;opacity:1}
+/* music player: painted gold buttons; the play button becomes a cream disc so the gold glyph reads */
+.mb-btn img{display:block;width:22px;height:22px;object-fit:contain;position:relative;z-index:1}
+.mb-skip img{width:22px;height:22px}
+.mb-play{background:radial-gradient(circle at 35% 30%,#fffaf0,#efe4d2)}
+.mb-play img{width:24px;height:24px}
+.mb-play:not(.on) img{margin-left:3px}

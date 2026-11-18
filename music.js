@@ -41,10 +41,10 @@ const NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 // Rounded glyphs (fill + same-colour round-joined stroke softens every corner), matching the Croatia site's player.
 const G = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 const I = {
-  prev:G('M6.5 6v12M18 6.6v10.8a.6.6 0 0 1-.9.5L9.4 12.5a.6.6 0 0 1 0-1l7.7-5.4a.6.6 0 0 1 .9.5z'),
-  next:G('M17.5 6v12M6 6.6v10.8a.6.6 0 0 0 .9.5l7.7-5.4a.6.6 0 0 0 0-1L6.9 6.1a.6.6 0 0 0-.9.5z'),
-  play:G('M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.6-6.2a.8.8 0 0 0 0-1.4L9.2 5.1a.8.8 0 0 0-1.2.7z'),
-  pause:G('M7.5 5.5h2.6v13H7.5zM13.9 5.5h2.6v13h-2.6z'),
+  prev:'<img src="icons/172.webp" alt="" aria-hidden="true">' || G('M6.5 6v12M18 6.6v10.8a.6.6 0 0 1-.9.5L9.4 12.5a.6.6 0 0 1 0-1l7.7-5.4a.6.6 0 0 1 .9.5z'),
+  next:'<img src="icons/175.webp" alt="" aria-hidden="true">' || G('M17.5 6v12M6 6.6v10.8a.6.6 0 0 0 .9.5l7.7-5.4a.6.6 0 0 0 0-1L6.9 6.1a.6.6 0 0 0-.9.5z'),
+  play:'<img src="icons/173.webp" alt="" aria-hidden="true">' || G('M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.6-6.2a.8.8 0 0 0 0-1.4L9.2 5.1a.8.8 0 0 0-1.2.7z'),
+  pause:'<img src="icons/174.webp" alt="" aria-hidden="true">' || G('M7.5 5.5h2.6v13H7.5zM13.9 5.5h2.6v13h-2.6z'),
 };
 let btn, bar, title, playBtn, hideT;
 function build(){
@@ -70,7 +70,7 @@ function paintTitle(){
   title.querySelector('small').textContent = s ? (s.artist || '') : 'Your playlist';
   title.classList.toggle('loading', loading);
   const on = audio && !audio.paused;
-  const glyph = playBtn.querySelector('svg:not(.mb-ring)'); if (glyph) glyph.remove();
+  const glyph = playBtn.querySelector('svg:not(.mb-ring), img'); if (glyph) glyph.remove();
   playBtn.insertAdjacentHTML('beforeend', on ? I.pause : I.play); playBtn.classList.toggle('on', !!on); playBtn.setAttribute('aria-label', on ? 'Pause' : 'Play');
   btn.classList.toggle('playing', !!on);
 }

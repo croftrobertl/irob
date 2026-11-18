@@ -181,7 +181,7 @@ const WZ = {
   stalk:  {img:'201', dir:1,  head:[65, 53], face:[66, 70], neck:[62, 84]},
   meow:   {img:'203', head:[46, 14], face:[46, 32], neck:[46, 52]},
   shock:  {img:'161', head:[47, 16], face:[46, 37], neck:[46, 61]},
-  grump:  {img:'111', head:[50, 26], face:[51, 47], neck:[51, 80]},
+  grump:  {img:'177', dir:-1, head:[45, 14], face:[42, 32], neck:[44, 50]},
 };
 const WZ_POSE = {sleep:'sleep', nap:'sleep', walk:'walk', run:'trot', stalk:'stalk', wiggle:'stalk', pounce:'pounce', leap:'leap', climb:'leap', eat:'eat', sniff:'stalk', stretch:'stretch', groom:'groom', loaf:'loaf', purr:'purr', beg:'meow', swat:'grump', shock:'shock', watch:'content'};
 setTimeout(() => Object.values(WZ).forEach(w => { const im = new Image(); im.src = `icons/${w.img}.webp`; }), 1500);
@@ -742,7 +742,7 @@ async function memoryMatch(level){
       moves++; hm.textContent = `${moves} moves`;
       if (first.p.thumb === p.thumb){
         found++; first.b.classList.add('done'); b.classList.add('done'); first = null; blip(880, .12);
-        cap.textContent = `📍 ${caption(p)}`; cap.classList.remove('pop'); void cap.offsetWidth; cap.classList.add('pop');
+        cap.innerHTML = '<img class="pic" src="icons/193.webp" alt=""> '; cap.append(caption(p)); cap.classList.remove('pop'); void cap.offsetWidth; cap.classList.add('pop');
         if (found === pairs) finish();
       } else { lock = true; const a = first.b; first = null; setTimeout(() => { [a, b].forEach(x => { x.classList.remove('up'); x.setAttribute('aria-label', 'Hidden photo'); }); lock = false; }, 950); }
     };
@@ -792,7 +792,7 @@ async function photoPuzzle(){
     });
   };
   const win = () => { confetti(); board.classList.add('solved'); board.innerHTML = ''; const full = el('img', 'pz-full'); full.src = p.full; full.alt = caption(p); board.append(full);
-    info.textContent = `Solved in ${moves} moves! 📍 ${caption(p)}`; const again = el('button', 'btn', 'Another photo'); again.type = 'button'; again.onclick = photoPuzzle; body.append(again); };
+    info.innerHTML = `Solved in ${moves} moves! <img class="pic" src="icons/193.webp" alt=""> `; info.append(caption(p)); const again = el('button', 'btn', 'Another photo'); again.type = 'button'; again.onclick = photoPuzzle; body.append(again); };
   const peek = el('button', 'btn ghost', 'Peek at the photo'); peek.type = 'button'; peek.onclick = () => lightbox(body, p);
   body.append(hud, board, info, peek); draw();
 }
@@ -932,7 +932,7 @@ const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
 const sprites = new Map();
 // Painted sprites (icons/N.webp, numbered like the icon sheet). An emoji with no painting, or one still loading, draws as emoji.
 const ART_FX = (() => { const m = {}, list = ['🐱','😺','😸','🐈','🐕','💗','💕','💖','❤','🎈','🎉','🎂','🍕','🥒','🙀','😾','☕','⚡','👻','🎃','🦇','🪩','💃','💸','💵','🤑','❄','⛄','','🌙','🥂','🍾','✨','⛈','🌤','🦈','🍫','🍬','🦄','🌈','🌴','☀','🐚','🏖','🐾','🫧','🌮','👑','🏆','🤗','💛','💥','✋','💪','😂','💔','😭','😢'];
-  list.forEach((e, i) => { if (e) m[e] = 96 + i; }); Object.assign(m, {'🐶':85, '🧺':86, '🔥':93, '🎀':95}); return m; })();
+  list.forEach((e, i) => { if (e) m[e] = 96 + i; }); Object.assign(m, {'🐶':85, '🧺':86, '🔥':93, '🎀':95, '🟫':182, '🟧':182}); return m; })();
 const artImgs = new Map();
 function artImg(e){
   const n = ART_FX[e.replace(/\ufe0f/g, '')]; if (!n) return null;
