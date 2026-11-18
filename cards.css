@@ -176,3 +176,6 @@
 /* 44-point tap targets inside cards */
 .kc-alt{min-height:44px}
 .kc-dot{width:30px;height:30px}
+/* painted icons inside card buttons and labels */
+.kc-ic{width:1.35em;height:1.35em;object-fit:contain;vertical-align:-.32em;display:inline-block}
+.chip .kc-ic{width:1.5em;height:1.5em}

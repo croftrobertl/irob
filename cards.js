@@ -159,6 +159,9 @@ const CARDS = {};
 const def = (id, mood, title, blurb, render) => { CARDS[id] = {id, mood, title, blurb, render}; };
 const btn = (label, cls = 'btn') => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = label; return b; };
 const row = (...els) => { const r = document.createElement('div'); r.className = 'kc-btns'; r.append(...els); return r; };
+// A painted icon in front of a button/label's text (icons/N.webp)
+const withIcon = (el, n) => { const i = document.createElement('img'); i.className = 'kc-ic'; i.src = `icons/${n}.webp`; i.alt = ''; el.prepend(i, ' '); return el; };
+const MOOD_IC = {'😊 okay':189, '😐 meh':190, '😔 low':191, '😣 overwhelmed':192};
 const p = (text, cls) => { const e = document.createElement('p'); if (cls) e.className = cls; e.textContent = text; return e; };
 const speakBtn = getText => { const b = btn('', 'kc-speak'); b.setAttribute('aria-label', 'Read aloud'); b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>'; b.onclick = () => A.speak(getText()); return b; };
 
@@ -242,7 +245,7 @@ def('translate', 'connect', 'Translate my mood for Rob', 'Three taps, one gentle
   const sel = {}; const preview = p('', 'kc-quote');
   const update = () => { preview.textContent = `${HER}'s status: ${sel.Mood || '…'} · battery ${sel.Battery || '…'} · could use ${sel['I could use'] || '…'}. Nothing to fix — just so you know. 💛`; send.disabled = !(sel.Mood && sel.Battery && sel['I could use']); };
   pickers.forEach(([name, opts]) => { const lab = p(name, 'kc-label'); const c = document.createElement('div'); c.className = 'kc-chips';
-    opts.forEach(o => { const b = btn(o, 'chip'); b.onclick = () => { sel[name] = o; c.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b)); update(); }; c.append(b); }); body.append(lab, c); });
+    opts.forEach(o => { const b = MOOD_IC[o] ? withIcon(btn(o.replace(/^\S+\s/, ''), 'chip'), MOOD_IC[o]) : btn(o, 'chip'); b.onclick = () => { sel[name] = o; c.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x === b)); update(); }; c.append(b); }); body.append(lab, c); });
   const send = btn('Send to Rob'); send.onclick = () => shareToRob(preview.textContent);
   body.append(preview, row(send)); update();
 });
@@ -316,11 +319,11 @@ def('future', 'perspective', 'Postcard to future you', 'Write to yourself. Seal 
   const tmr = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
   when.innerHTML = `<label><input type="radio" name="fw${uid()}" value="date" checked> Open on <input type="date" min="${tmr}" value="${new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10)}"></label><label><input type="radio" name="fw" value="hard"> Open on my next hard day</label>`;
   const radios = when.querySelectorAll('input[type=radio]'); radios[1].name = radios[0].name;
-  const go = btn('Seal postcard ✉️');
+  const go = withIcon(btn('Seal postcard'), 195);
   go.onclick = async () => { const v = ta.value.trim(); if (!v){ toast('Write a few words first'); return; }
     const byDate = radios[0].checked, date = when.querySelector('input[type=date]').value;
     const list = await DB.get('futures', []); list.push({id:uid(), text:v, t:Date.now(), openOn:byDate ? date : null, onHardDay:!byDate, memory:m || null, opened:false}); await DB.set('futures', list);
-    body.innerHTML = ''; body.append(p(byDate ? `✉️ Sealed until ${fmtDate(date + 'T12:00:00')}. I'll deliver it myself.` : '✉️ Sealed for your next hard day. I\'ll make sure it finds you.', 'kc-done')); };
+    body.innerHTML = ''; body.append(withIcon(p(byDate ? `Sealed until ${fmtDate(date + 'T12:00:00')}. I'll deliver it myself.` : 'Sealed for your next hard day. I\'ll make sure it finds you.', 'kc-done'), 195)); };
   body.append(photo, ta, when, row(go));
 });
 def('futureOpen', 'perspective', 'A postcard from past you', 'Delivered right on time.', async (body, ctx) => {
@@ -437,7 +440,7 @@ def('ps', 'connect', 'P.S. from Real Rob', 'A sealed note that arrived by link.'
   if (!item){ body.append(p('This P.S. couldn\'t be found.')); return; }
   const draw = () => { body.innerHTML = '';
     if (item.payload){ const pl = item.payload;
-      body.append(p(pl.title ? '🎟️ ' + pl.title : '💌 A note from Rob', 'kc-label'), p(pl.text, 'kc-quote'));
+      body.append(pl.title ? p('🎟️ ' + pl.title, 'kc-label') : withIcon(p('A note from Rob', 'kc-label'), 195), p(pl.text, 'kc-quote'));
       if (pl.type === 'voucher'){ const c = btn('Redeem'); c.onclick = () => shareToRob(`🎟️ Redeeming your P.S. voucher: ${pl.title || pl.text}`); body.append(row(c, speakBtn(() => pl.text))); }
       else body.append(row(speakBtn(() => pl.text)));
       return; }
