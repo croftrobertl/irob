@@ -1,6 +1,7 @@
 // Encrypt songs for Erica's playlist (AES-GCM, 256-bit key). The public repo only ever holds scrambled data.
 // Usage: node tools/seal-music.mjs <playlist.json> <key base64url | "new">
 // playlist.json: [{"title":"…","artist":"…","src":"/path/to/song.mp3"}, …]  (order = play order)
+// Optional "tag" (e.g. "mad") keeps a song out of the normal playlist; the app plays it only on that cue.
 // Writes music/<n>.bin per song and music/playlist.bin (the encrypted list). Erica's phone gets the key once via …/irob/#music=<key>.
 import fs from 'node:fs';
 import { webcrypto as crypto, createHash } from 'node:crypto';
@@ -16,7 +17,7 @@ for (const s of list){
   const data = fs.readFileSync(s.src);
   const id = createHash('sha256').update(data).digest('hex').slice(0, 16);   // stable, reveals nothing about the song
   if (!fs.existsSync(`music/${id}.bin`)) fs.writeFileSync(`music/${id}.bin`, await seal(data));   // already sealed songs stay untouched
-  songs.push({title: s.title, artist: s.artist, file: `${id}.bin`});
+  songs.push({title: s.title, artist: s.artist, file: `${id}.bin`, ...(s.tag ? {tag: s.tag} : {})});   // tag: plays only on its cue (e.g. "mad")
 }
 fs.writeFileSync('music/playlist.bin', await seal(new TextEncoder().encode(JSON.stringify({v: 1, songs}))));
 console.log(keyArg === 'new' ? 'KEY=' + Buffer.from(keyBytes).toString('base64url') : 'sealed with existing key');

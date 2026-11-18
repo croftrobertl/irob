@@ -376,9 +376,10 @@ h1,.status{position:relative;z-index:1}
 /* Tray: a frosted panel floating above the composer. Closed until ✦ is tapped; drag the handle down (or tap the chat) to close. */
 .app .chips.starters{display:none}
 .app.chips-open .chips.starters{display:flex}
-.chips{position:absolute;left:0;right:0;bottom:var(--composer-h,72px);z-index:14;max-height:calc(100% - var(--composer-h,72px) - 50px);overflow-y:auto;overscroll-behavior:contain;border-top:0;border-radius:22px 22px 0 0;padding:0 12px 12px;gap:0;
+.chips{position:absolute;left:0;right:0;bottom:0;z-index:16;max-height:calc(100% - var(--safe-t) - 50px);overflow-y:auto;overscroll-behavior:contain;border-top:0;border-radius:22px 22px 0 0;padding:0 12px calc(var(--safe-b) + 14px);gap:0;
   background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);box-shadow:0 -14px 36px rgba(60,40,10,.18);animation:trayUp .28s cubic-bezier(.2,.8,.2,1)}
 @supports not (backdrop-filter:blur(1px)){.chips{background:var(--surface)}}
+.app.chips-open .composer{visibility:hidden}
 @keyframes trayUp{from{transform:translateY(40px);opacity:0}}
 .chips.dragging{animation:none;transition:none}
 .chips.snap{transition:transform .2s ease-out}
@@ -432,6 +433,7 @@ h1,.status{position:relative;z-index:1}
   display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
   padding-bottom:calc(var(--safe-b) + 8px);box-shadow:0 -10px 40px rgba(0,0,0,.15)}
 .sheet.show{transform:none}
+.sheet:not(.show){box-shadow:none;visibility:hidden;transition:transform .3s ease,visibility 0s .3s}
 /* Games fill the whole screen, like Take Me Back */
 .sheet.full{top:0;max-height:none;height:100%;border-radius:0;padding-top:var(--safe-t)}
 .sheet.full .grab{display:none}
@@ -490,7 +492,7 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
 .card-preview{display:block;margin:0 auto;max-height:min(52vh,460px);max-width:100%;width:auto;height:auto;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.12)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .btns .btn{flex:1}
-.toast{position:absolute;left:50%;bottom:calc(var(--safe-b) + 92px);transform:translate(-50%,20px);background:var(--toast-bg);color:var(--toast-ink);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast{position:absolute;left:50%;bottom:calc(var(--safe-b) + 92px);transform:translate(-50%,20px);background:var(--toast-bg);color:var(--toast-ink);padding:10px 16px;border-radius:999px;font-size:14px;line-height:1.35;text-align:center;width:max-content;max-width:calc(100% - 32px);opacity:0;transition:.25s;z-index:30;pointer-events:none;white-space:normal}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
 @media (prefers-reduced-motion:reduce){
@@ -558,9 +560,6 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
     <div class="grab"></div>
     <header><h2>Menu</h2></header>
     <div class="body">
-      <div class="menu-head">For your heart</div>
-      <div class="menu-head">Croatia</div>
-      <div class="menu-head">Fun &amp; home</div>
       <div class="menu-head">Keep</div>
       <button class="menu-item" data-open="sheetSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search<small>Find anything Rob said or you saved</small></span></button>
       <button class="menu-item" data-open="sheetLedger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18M8 15h3"/></svg><span>Good Things Ledger<small>Proof that things go right</small></span></button>
@@ -1037,7 +1036,7 @@ const IC = {
 const ART = {cat:1, puppy:2, cuddle:3, basket:4, boat:5, note:6, cookie:7, wheel:8, ticket:9, trophy:10, laugh:11, fork:12, jar:13, cards:14, hush:15, wrench:16, lock:17, moon:18};
 const icon = k => ART[k] ? `<span class="ic art" aria-hidden="true"><img src="icons/${ART[k]}.webp" alt="" decoding="async"></span>` : `<span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24">${IC[k] || IC.sparkle}</svg></span>`;
 const art = n => `<img class="art-e" src="icons/${n}.webp" alt="" decoding="async">`;
-const music = () => { if (window.iRobMusic && window.iRobMusic.unlocked()) window.iRobMusic.open(); else toast('Open your playlist link on this phone once to unlock the music 🎶'); };
+const music = () => { if (window.iRobMusic && window.iRobMusic.unlocked()) window.iRobMusic.open(); else if (window.iRobMusic) window.iRobMusic.unlockPrompt(); else toast('One moment, still loading'); };
 const TILES = [
   ['cat', 'Pocket Kitten', F('pocketKitten')],
   ['puppy', 'Puppy Power', F('puppyPower')],
@@ -2231,7 +2230,7 @@ function updateSky(){
 /* ================= Helpers ================= */
 function fmtDate(t){ return new Date(t).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}); }
 function fmtDay(t){ const d = new Date(t), now = new Date(); const diff = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : d.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'}); }
-let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+let toastT; function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), Math.max(2200, String(m).length * 65)); }
 
 /* 10D: long-press (or right-click) a reply → ❤️ Save · Copy · Read aloud */
 let reactBar = null;

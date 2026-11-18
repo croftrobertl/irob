@@ -19,7 +19,7 @@ function takeKey(){
   setTimeout(() => window.iRob && window.iRob.toast('🎶 Your playlist is unlocked. Tap ♫ at the top.'), 1500);
 }
 
-let cryptoKey = null, songs = [], idx = get(POS, 0), audio = null, url = null, loading = false;
+let cryptoKey = null, songs = [], allSongs = [], idx = get(POS, 0), audio = null, url = null, loading = false;
 async function key(){
   if (cryptoKey) return cryptoKey;
   const k = get(KEY, null); if (!k) return null;
@@ -30,7 +30,8 @@ async function loadList(){
   if (songs.length) return songs;
   const r = await fetch('music/playlist.bin', {cache:'no-cache'}); if (!r.ok) throw new Error('list');
   const j = JSON.parse(new TextDecoder().decode(await open(new Uint8Array(await r.arrayBuffer()))));
-  songs = (j.songs || []).filter(s => s.file);           // songs still waiting for their file are skipped
+  allSongs = (j.songs || []).filter(s => s.file);        // songs still waiting for their file are skipped
+  songs = allSongs.filter(s => !s.tag);                  // tagged songs (e.g. 'mad') only play on their cue, never in the playlist
   if (idx >= songs.length) idx = 0;
   return songs;
 }
@@ -64,7 +65,7 @@ function build(){
 }
 function poke(){ clearTimeout(hideT); hideT = setTimeout(() => { if (bar) bar.hidden = true; }, 7000); }
 function paintTitle(){
-  const s = songs[idx];
+  const s = cue || songs[idx];
   title.querySelector('b').textContent = s ? s.title : (loading ? 'Loading…' : 'Tap play');
   title.querySelector('small').textContent = s ? (s.artist || '') : 'Your playlist';
   title.classList.toggle('loading', loading);
@@ -75,6 +76,28 @@ function paintTitle(){
 }
 
 // ---------- playback ----------
+// iPhones only let a page start sound inside a tap. Decrypting takes a moment, so the audio element is "unlocked"
+// right away with a blip of silence, and the real song is swapped in when it's ready.
+function ensureAudio(){
+  if (audio) return audio;
+  audio = new Audio(); audio.preload = 'auto'; audio.onended = () => { if (cue){ cue = null; paintTitle(); return; } playAt(idx + 1); }; audio.onplay = audio.onpause = paintTitle;
+  audio.ontimeupdate = () => { const c = document.querySelector('.mb-ring .pr'); if (c && audio.duration) c.style.strokeDashoffset = String(150.8 * (1 - audio.currentTime / audio.duration)); };
+  return audio;
+}
+const SILENCE = 'data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+let cue = null;
+async function playTag(tag){
+  if (!get(KEY, null)) return;
+  const a = ensureAudio(); if (a.paused){ a.src = SILENCE; a.play().catch(() => {}); }
+  try {
+    await loadList(); const s = allSongs.find(x => x.tag === tag); if (!s) return;
+    const r = await fetch('music/' + s.file); if (!r.ok) return;
+    const plain = await open(new Uint8Array(await r.arrayBuffer()));
+    if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
+    if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
+    cue = s; a.src = url; await a.play(); session(s); build(); if (title) paintTitle();
+  } catch {}
+}
 async function playAt(i){
   if (loading) return; loading = true; paintTitle();
   try {
@@ -85,8 +108,7 @@ async function playAt(i){
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
     if (url) URL.revokeObjectURL(url);
     url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
-    if (!audio){ audio = new Audio(); audio.preload = 'auto'; audio.onended = () => playAt(idx + 1); audio.onplay = audio.onpause = paintTitle;
-      audio.ontimeupdate = () => { const c = document.querySelector('.mb-ring .pr'); if (c && audio.duration) c.style.strokeDashoffset = String(150.8 * (1 - audio.currentTime / audio.duration)); }; }
+    ensureAudio(); cue = null;
     if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
     audio.src = url; await audio.play();
     session(s);
@@ -107,8 +129,30 @@ function session(s){
   } catch {}
 }
 
+// Unlock from inside the app. Needed because an iPhone home-screen app keeps its own storage, separate from Safari,
+// so opening the link in Safari doesn't unlock the installed app. Copy the link, then tap Paste here.
+function unlockPrompt(){
+  if (document.getElementById('mUnlock')) return;
+  const o = document.createElement('div'); o.id = 'mUnlock'; o.className = 'm-unlock'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Unlock the music');
+  o.innerHTML = `<div class="m-card"><b>🎶 Unlock your playlist</b><p>Copy the music link Rob sent you, then tap <b>Paste</b>.</p>
+    <input type="text" id="mKey" placeholder="Music link" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="m-row"><button type="button" class="btn ghost" id="mPaste">Paste</button><button type="button" class="btn" id="mGo">Unlock</button></div>
+    <p class="m-msg" id="mMsg"></p><button type="button" class="m-x" id="mX">Not now</button></div>`;
+  (document.getElementById('app') || document.body).appendChild(o);
+  const inp = o.querySelector('#mKey'), msg = o.querySelector('#mMsg'), close = () => o.remove();
+  o.querySelector('#mX').onclick = close; o.onclick = e => { if (e.target === o) close(); };
+  o.querySelector('#mPaste').onclick = async () => { try { inp.value = (await navigator.clipboard.readText()).trim(); go(); } catch { msg.textContent = 'Couldn\'t read the clipboard. Long-press the box and choose Paste.'; inp.focus(); } };
+  const go = async () => {
+    const v = inp.value.trim(), m = v.match(/music=([A-Za-z0-9_-]{40,})/) || v.match(/^([A-Za-z0-9_-]{40,})$/);
+    if (!m){ msg.textContent = 'That doesn\'t look like the music link. Copy the whole link and try again.'; return; }
+    const old = get(KEY, null); put(KEY, m[1]); cryptoKey = null; songs = [];
+    try { await loadList(); } catch { if (old) put(KEY, old); else try { localStorage.removeItem(KEY); } catch {} cryptoKey = null; msg.textContent = 'That link didn\'t unlock the music. Make sure it\'s the newest one.'; return; }
+    close(); build(); if (window.iRob) window.iRob.toast('🎶 Unlocked! Tap ♫ at the top any time.'); window.iRobMusic.open();
+  };
+  o.querySelector('#mGo').onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') go(); };
+}
 function init(){ takeKey(); if (get(KEY, null)) build(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 addEventListener('hashchange', takeKey);
-window.iRobMusic = {unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return songs[idx] || null; }};
+window.iRobMusic = {unlockPrompt, playTag, unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return cue || songs[idx] || null; }};
 })();

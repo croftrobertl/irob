@@ -841,7 +841,11 @@ const SECRETS = [
   [/\b(rainbow)\b/i, 'rainbow', 'A rainbow. Free of charge. Pot of gold sold separately.', () => FX.rainbow()],
   [/\b(goodnight|good night|night night)\b/i, 'good night', 'The lights go down and the stars come out.', () => FX.stars()],
 ];
+// "She's mad at me" → Separate Ways + raining broken hearts. Not listed on the Secret Words page.
+const MAD = /\b((mad|angry|pissed( off)?|upset|annoyed|furious|irritated|ticked( off)?) (at|with) (you|u|rob)|i hate you|you'?re in (so much |big )?trouble|not (talking|speaking) to (you|u)|you (made|make) me (so )?(mad|angry))\b/i;
+function madAtRob(){ FX.dim(5200, .35); FX.rain(['💔', '💔', '😭', '😢'], 46); if (window.iRobMusic && window.iRobMusic.playTag) window.iRobMusic.playTag('mad'); }
 function secretWord(text){
+  if (MAD.test(text)){ madAtRob(); return true; }
   const hit = SECRETS.find(s => s[0].test(text)); if (!hit) return false;
   hit[3](); const found = get('try_secrets_found', []); if (!found.includes(hit[1])){ found.push(hit[1]); put('try_secrets_found', found); if (found.length === 1 && A()) A().toast('🤫 You found a secret word! See them all in More fun.'); }
   return true;
