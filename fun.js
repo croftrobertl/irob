@@ -114,7 +114,7 @@ function kittenCuddles(){
     <path d="M84 14 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 12 q10 6 0 10" fill="#fff" stroke="#f06292" stroke-width="2"/>
     <path d="M94 32 h40 a14 14 0 0 1 0 28 h-40z" fill="#f2c6a5"/><path d="M134 30 c14 -2 26 4 28 14 c2 10 -6 18 -18 20 c-10 2 -14 -4 -10 -10" fill="#f2c6a5" stroke="#d9a080" stroke-width="2"/>
     <path d="M148 38 q6 4 4 10 M152 48 q4 4 0 9" stroke="#d9a080" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
-  const squeezer = el('div', 'squeezer'); squeezer.innerHTML = ARM('l') + ARM('r') + '<span class="sq-bow" aria-hidden="true">🎀</span>'; pad.append(squeezer);
+  const squeezer = el('div', 'squeezer'); squeezer.innerHTML = ARM('l') + ARM('r') + '<span class="sq-bow" aria-hidden="true"><img src="icons/95.webp" alt=""></span>'; pad.append(squeezer);
   let snd = null, t0 = 0, raf = 0, heartT = 0;
   critter('cat').then(item => { pic.innerHTML = ''; pic.append(media(item, 'A cute kitten')); });
   const tick = () => {
@@ -159,7 +159,7 @@ const FURNITURE = [
 const ACCESSORIES = [['🎀', 'Bow', 'head', 10], ['👑', 'Crown', 'head', 60], ['🎩', 'Top Hat', 'head', 25], ['🕶️', 'Shades', 'face', 20], ['🔔', 'Bell Collar', 'neck', 8], ['🧣', 'Bandana', 'neck', 15]];
 const FOODS = [['🐟', 'Fish', {food:35}, 0], ['🥛', 'Milk', {food:20, fun:5}, 0], ['🍤', 'Shrimp Treat', {food:10, fun:18, love:6}, 2]];
 // Painted icons for Pocket Kitten (icons/pk-*.webp). Emoji stay as the saved IDs; anything without a painting shows as emoji.
-const PIC = {'🍽️':'pk-bowl', '🥣':'pk-bowl', '🎾':'pk-mouse', '🌙':'pk-moon', '🌅':'pk-sunrise', '☀️':'40', '🛍️':'pk-gift', '✏️':'46', '🐟':'pk-fish', 'fun':'pk-paw', '⚡':'pk-bolt', '💗':'pk-heart', '🪙':'pk-coin', '🔥':'pk-star', '🔴':'pk-laser', '🌳':'pk-cattree', '🎀':'pk-bow', '👑':'pk-crown', '🕶️':'pk-shades', '🔔':'pk-bell', '🧣':'pk-bandana', '🐭':'pk-mouse'};
+const PIC = {'🍽️':'pk-bowl', '🥣':'pk-bowl', '🎾':'pk-mouse', '🌙':'pk-moon', '🌅':'pk-sunrise', '☀️':'40', '🛍️':'pk-gift', '✏️':'46', '🐟':'pk-fish', 'fun':'pk-paw', '⚡':'pk-bolt', '💗':'pk-heart', '🪙':'pk-coin', '🔥':'pk-star', '🔴':'pk-laser', '🌳':'pk-cattree', '🎀':'pk-bow', '👑':'pk-crown', '🕶️':'pk-shades', '🔔':'pk-bell', '🧣':'pk-bandana', '🐭':'pk-mouse', '🩺':'58', '🥛':'60', '🍤':'61', '🫧':'65', '📦':'70', '🛏️':'71', '🪴':'73', '🐠':'74', '🧶':'75', '🎩':'78'};
 const pic = e => PIC[e] ? `<img class="pic" src="icons/${PIC[e]}.webp" alt="" draggable="false">` : e;
 const clamp = v => Math.max(0, Math.min(100, v));
 function petLoad(){
@@ -220,8 +220,8 @@ function pocketKitten(){
   const xp = v => { const before = p.stage; p.xp += v; p.stage = STAGES.filter(s => p.xp >= s[1]).length - 1; if (p.stage > before){ confetti(); A().toast(`${p.name} grew into a ${STAGES[p.stage][0]}!`); } };
   const save = () => { p.clean = clamp(100 - p.poops.length * 30); petSave(p); };
   const commit = () => { save(); drawHud(); drawRoom(); };
-  const SPOTS = {box:15, bed:58, tree:5, plant:91, fish:76, rug:66};
-  const BOWL_X = 30;
+  const SPOTS = {box:19, bed:52, tree:6, plant:92, fish:79, rug:68};
+  const BOWL_X = 33;
   const trait = () => PERSONALITIES[p.trait] || {lines:['Mrrp.']};
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -235,7 +235,7 @@ function pocketKitten(){
     const furns = room.querySelector('.tg-furns'); furns.innerHTML = '';
     (p.furniture || []).forEach(k => { const f = FURNITURE.find(x => x[0] === k); if (!f) return; const it = el('div', 'tg-furn f-' + k); it.innerHTML = pic(f[1]); it.style.left = SPOTS[k] + '%'; it.setAttribute('aria-hidden', 'true'); furns.append(it); });
     const bowl = room.querySelector('.tg-bowl'); bowl.style.left = BOWL_X + '%';
-    bowl.className = 'tg-bowl' + (p.bowl.amt > 0 ? '' : ' empty') + (p.bowl.kind === 'milk' ? ' milk' : '');
+    bowl.className = 'tg-bowl' + (p.bowl.amt > 0 ? '' : ' is-empty') + (p.bowl.kind === 'milk' ? ' is-milk' : '');
     bowl.style.setProperty('--amt', p.bowl.amt / 100);
     bowl.innerHTML = `<img class="pic" src="icons/${p.bowl.kind === 'milk' && p.bowl.amt > 0 ? 'pk-water' : 'pk-bowl'}.webp" alt="" draggable="false">`;
     const poops = room.querySelector('.tg-poops'); poops.innerHTML = '';
@@ -512,7 +512,9 @@ function drawSpray(g, x, y){
   g.fillStyle = 'rgba(80,160,255,.55)'; for (let i = 0; i < 5; i++){ g.beginPath(); g.arc(19 + i * 3, -10 + (i % 2 ? -2 : 2), 1.4, 0, 7); g.fill(); }
   g.fillStyle = '#9fc8f5'; g.beginPath(); g.rect(-7, 6, 14, 12); g.fill(); g.restore();
 }
+const CATCH_ART = {};
 function catchKittens(){
+  if (!CATCH_ART.basket) Object.entries({'🐱':84, '🐶':85, basket:86, cuke:87, spray:88}).forEach(([k, n]) => { const im = new Image(); im.src = `icons/${n}.webp`; CATCH_ART[k] = im; });
   const {body, show} = sheet('funCatch', 'Catch the kittens');
   const best = get('try_catchbest', 0);
   const wrap = el('div', 'catch'); const cv = el('canvas'); wrap.append(cv);
@@ -536,8 +538,10 @@ function catchKittens(){
       g.clearRect(0, 0, w, h);
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.font = '30px system-ui, "Apple Color Emoji", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      run.items.forEach(it => { it.y += it.v * dt / 16; if (it.e === 'cuke') drawCuke(g, it.x, it.y, it.rot); else if (it.e === 'spray') drawSpray(g, it.x, it.y); else g.fillText(it.e, it.x, it.y); });
-      g.font = '40px system-ui, "Apple Color Emoji", sans-serif'; g.fillText('🧺', run.bx, h - 26);
+      run.items.forEach(it => { it.y += it.v * dt / 16; const im = CATCH_ART[it.e] && CATCH_ART[it.e].complete && CATCH_ART[it.e].naturalWidth ? CATCH_ART[it.e] : null;
+        if (im){ const sz = it.e === 'cuke' ? 46 : it.e === 'spray' ? 42 : it.e === '🐶' ? 44 : 40; g.save(); g.translate(it.x, it.y); if (it.e === 'cuke') g.rotate(it.rot); g.drawImage(im, -sz / 2, -sz / 2, sz, sz); g.restore(); }
+        else if (it.e === 'cuke') drawCuke(g, it.x, it.y, it.rot); else if (it.e === 'spray') drawSpray(g, it.x, it.y); else g.fillText(it.e, it.x, it.y); });
+      if (CATCH_ART.basket.complete && CATCH_ART.basket.naturalWidth) g.drawImage(CATCH_ART.basket, run.bx - 32, h - 58, 64, 64); else { g.font = '40px system-ui, "Apple Color Emoji", sans-serif'; g.fillText('🧺', run.bx, h - 26); }
       run.items = run.items.filter(it => {
         if (it.y > h - 46 && it.y < h - 6 && Math.abs(it.x - run.bx) < 34){ const pts = it.e === '🐶' ? 3 : it.e === 'cuke' ? -2 : it.e === 'spray' ? -3 : 1; if (it.e === 'spray'){ FX.bigText('💦'); } else if (it.e === 'cuke') FX.shake(); run.score = Math.max(0, run.score + pts); blip(pts > 0 ? 640 + pts * 60 : 180, .08, pts > 0 ? 'sine' : 'square', .08); return false; }
         return it.y < h + 30;
@@ -628,7 +632,7 @@ async function dateNight(){
   if (!usData && saved){ try { usData = await openUs(saved); } catch { put(US_PASS, null); } }
   if (!usData){
     const f = el('form', 'us-lock');
-    f.innerHTML = '<div class="us-icon" aria-hidden="true">🔒</div><p>Grown-ups only. Enter the password.</p><label class="sr" for="usPass">Password</label><input id="usPass" type="password" autocomplete="off" autocapitalize="none" spellcheck="false"><label class="us-remember"><input type="checkbox" id="usRemember"> Remember on this phone</label><button class="btn">Unlock</button>';
+    f.innerHTML = '<div class="us-icon" aria-hidden="true"><img src="icons/94.webp" alt="" style="width:64px;height:64px"></div><p>Grown-ups only. Enter the password.</p><label class="sr" for="usPass">Password</label><input id="usPass" type="password" autocomplete="off" autocapitalize="none" spellcheck="false"><label class="us-remember"><input type="checkbox" id="usRemember"> Remember on this phone</label><button class="btn">Unlock</button>';
     f.onsubmit = async e => { e.preventDefault(); const pw = f.querySelector('#usPass').value; if (!pw) return;
       try { usData = await openUs(pw); if (f.querySelector('#usRemember').checked) put(US_PASS, pw); dateNight(); }
       catch { A().toast('That\'s not it'); f.querySelector('#usPass').select(); } };
@@ -897,15 +901,30 @@ async function croatiaGames(items){
 const R = (a, b) => a + Math.random() * (b - a);
 const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
 const sprites = new Map();
+// Painted sprites (icons/N.webp, numbered like the icon sheet). An emoji with no painting, or one still loading, draws as emoji.
+const ART_FX = (() => { const m = {}, list = ['🐱','😺','😸','🐈','🐕','💗','💕','💖','❤','🎈','🎉','🎂','🍕','🥒','🙀','😾','☕','⚡','👻','🎃','🦇','🪩','💃','💸','💵','🤑','❄','⛄','','🌙','🥂','🍾','✨','⛈','🌤','🦈','🍫','🍬','🦄','🌈','🌴','☀','🐚','🏖','🐾','🫧','🌮','👑','🏆','🤗','💛','💥','✋','💪','😂','💔','😭','😢'];
+  list.forEach((e, i) => { if (e) m[e] = 96 + i; }); Object.assign(m, {'🐶':85, '🧺':86, '🔥':93, '🎀':95}); return m; })();
+const artImgs = new Map();
+function artImg(e){
+  const n = ART_FX[e.replace(/\ufe0f/g, '')]; if (!n) return null;
+  let im = artImgs.get(n); if (!im){ im = new Image(); im.decoding = 'async'; im.src = `icons/${n}.webp`; artImgs.set(n, im); }
+  return im.complete && im.naturalWidth ? im : null;
+}
+function preloadArt(list){ list.forEach(e => artImg(e)); }
+setTimeout(() => preloadArt(Object.keys(ART_FX)), 2500);
 function sprite(e, size){
   const key = e + size; if (sprites.has(key)) return sprites.get(key);
   const d = Math.min(3, devicePixelRatio || 1), c = document.createElement('canvas'); c.width = c.height = Math.ceil(size * 1.3 * d);
+  const art = artImg(e);
+  if (art){ const g = c.getContext('2d'); g.scale(d, d); g.drawImage(art, size * .65 - size * .6, size * .7 - size * .6, size * 1.2, size * 1.2); const s = {c, w:size * 1.3}; sprites.set(key, s); return s; }
+  if (ART_FX[e.replace(/\ufe0f/g, '')]){ const g = c.getContext('2d'); g.scale(d, d); g.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, size * .65, size * .7); const s = {c, w:size * 1.3}; sprites.set(key, s); setTimeout(() => { if (sprites.get(key) === s) sprites.delete(key); }, 400); return s; }   // short-lived: the painting replaces it once loaded
   const g = c.getContext('2d'); g.scale(d, d); g.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, size * .65, size * .7);
   const s = {c, w:size * 1.3}; sprites.set(key, s); return s;
 }
 const stage = {c:null, g:null, W:0, H:0, items:[], scenes:[], raf:0};
 function ensureStage(){
   if (stage.c) return;
+  preloadArt(Object.keys(ART_FX));
   const c = el('canvas', 'fx-stage'); document.body.appendChild(c); stage.c = c; stage.g = c.getContext('2d');
   const fit = () => { const d = Math.min(2, devicePixelRatio || 1); stage.W = innerWidth; stage.H = innerHeight; c.width = stage.W * d; c.height = stage.H * d; stage.g.setTransform(d, 0, 0, d, 0, 0); };
   fit(); addEventListener('resize', fit);
@@ -1124,7 +1143,7 @@ async function loveCoupons(){
       const pool = sp && sp.length && Math.random() < .35 ? sp.map(t => ({t, spicy:true})) : COUPONS.map(t => ({t}));
       const used = new Set(st.wallet.map(w => w.t)); const fresh = pool.filter(x => !used.has(x.t)); const pick = rnd(fresh.length ? fresh : pool);
       body.append(el('p', 'note', 'Today\'s coupon is under the foil. Scratch it with your finger.'));
-      const card = el('div', 'cp-card' + (pick.spicy ? ' spicy' : '')); const txt = el('p', 'cp-text', pick.t); const tag = el('span', 'cp-tag', pick.spicy ? '🔥 Just us' : '💛 Love coupon');
+      const card = el('div', 'cp-card' + (pick.spicy ? ' spicy' : '')); const txt = el('p', 'cp-text', pick.t); const tag = el('span', 'cp-tag'); tag.innerHTML = `<img class="pic" src="icons/${pick.spicy ? 93 : 92}.webp" alt=""> ${pick.spicy ? 'Just us' : 'Love coupon'}`;
       const cv = el('canvas', 'cp-foil'); card.append(tag, txt, el('span', 'cp-from', 'Redeemable with Rob · no expiration'), cv); body.append(card);
       requestAnimationFrame(() => {
         const w = card.clientWidth, h = card.clientHeight, d = devicePixelRatio || 1; cv.width = w * d; cv.height = h * d; const g = cv.getContext('2d'); g.scale(d, d);

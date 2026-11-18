@@ -470,7 +470,7 @@
 .tg-cat .acc{z-index:1}
 /* bowl: the kibble pile shrinks as she eats */
 .tg-bowl{bottom:7%;width:44px;height:44px;transform:translateX(-50%);z-index:1}
-.tg-bowl .pic{width:100%;height:100%;clip-path:inset(calc((1 - var(--amt,1)) * 34%) 0 0 0);transition:clip-path .5s}
+.tg-bowl .pic{width:100%;height:100%;clip-path:inset(calc(14% + (1 - var(--amt,1)) * 34%) 0 0 0);transition:clip-path .5s}
 .tg-floor-treat{position:absolute;bottom:7%;font-size:26px;transform:translateX(-50%);z-index:1;animation:treatDrop .45s cubic-bezier(.3,1.4,.5,1)}
 @keyframes treatDrop{from{transform:translate(-50%,-160%);opacity:0}}
 /* play */
@@ -491,3 +491,5 @@
 .vn-fill{clip-path:inset(0 calc((1 - var(--p)) * 100%) 0 0);transition:clip-path .2s linear}
 .vn-fill i{background:var(--bronze)}
 .vn-time{flex:none;font:600 12px/1 var(--body);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.sq-bow img{width:1.2em;height:1.2em;vertical-align:middle}
+.cp-tag .pic{width:1.15em;height:1.15em;vertical-align:-.2em}
