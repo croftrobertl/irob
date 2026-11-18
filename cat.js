@@ -15,11 +15,11 @@ let n = 0;
 function sitting(coat = 'grey', mood = 'open'){
   const c = COATS[coat] || COATS.grey, id = 'c' + (++n);
   const eyes = {
-    open:`<g class="eye"><ellipse cx="82" cy="80" rx="9.5" ry="10.5" fill="#a9c96b"/><ellipse cx="82" cy="80" rx="3.3" ry="8.4" fill="#1d1d1f"/><circle cx="85" cy="76" r="2.4" fill="#fff"/></g><g class="eye"><ellipse cx="118" cy="80" rx="9.5" ry="10.5" fill="#a9c96b"/><ellipse cx="118" cy="80" rx="3.3" ry="8.4" fill="#1d1d1f"/><circle cx="121" cy="76" r="2.4" fill="#fff"/></g>`,
-    wide:`<ellipse cx="82" cy="80" rx="11" ry="12" fill="#a9c96b"/><circle cx="82" cy="81" r="8" fill="#1d1d1f"/><circle cx="86" cy="76" r="3" fill="#fff"/><ellipse cx="118" cy="80" rx="11" ry="12" fill="#a9c96b"/><circle cx="118" cy="81" r="8" fill="#1d1d1f"/><circle cx="122" cy="76" r="3" fill="#fff"/>`,
+    open:`<g class="eye"><ellipse cx="82" cy="80" rx="9.5" ry="10.5" fill="#5f9e45"/><circle cx="82" cy="81" r="5" fill="#1d1d1f"/><circle cx="85" cy="76" r="2.4" fill="#fff"/></g><g class="eye"><ellipse cx="118" cy="80" rx="9.5" ry="10.5" fill="#5f9e45"/><circle cx="118" cy="81" r="5" fill="#1d1d1f"/><circle cx="121" cy="76" r="2.4" fill="#fff"/></g>`,
+    wide:`<ellipse cx="82" cy="80" rx="11" ry="12" fill="#5f9e45"/><circle cx="82" cy="81" r="8" fill="#1d1d1f"/><circle cx="86" cy="76" r="3" fill="#fff"/><ellipse cx="118" cy="80" rx="11" ry="12" fill="#5f9e45"/><circle cx="118" cy="81" r="8" fill="#1d1d1f"/><circle cx="122" cy="76" r="3" fill="#fff"/>`,
     closed:`<path d="M72 81 Q82 87 92 81M108 81 Q118 87 128 81" fill="none" stroke="${c.stripe}" stroke-width="3" stroke-linecap="round"/>`,
     happy:`<path d="M72 84 Q82 72 92 84M108 84 Q118 72 128 84" fill="none" stroke="${c.stripe}" stroke-width="3" stroke-linecap="round"/>`,
-    sad:`<ellipse cx="82" cy="82" rx="8.5" ry="9" fill="#a9c96b"/><circle cx="82" cy="83" r="5.5" fill="#1d1d1f"/><circle cx="84" cy="79" r="2.2" fill="#fff"/><ellipse cx="118" cy="82" rx="8.5" ry="9" fill="#a9c96b"/><circle cx="118" cy="83" r="5.5" fill="#1d1d1f"/><circle cx="120" cy="79" r="2.2" fill="#fff"/><path d="M71 70 L90 74M129 70 L110 74" stroke="${c.stripe}" stroke-width="2.6" stroke-linecap="round"/>`,
+    sad:`<ellipse cx="82" cy="82" rx="8.5" ry="9" fill="#5f9e45"/><circle cx="82" cy="83" r="5.5" fill="#1d1d1f"/><circle cx="84" cy="79" r="2.2" fill="#fff"/><ellipse cx="118" cy="82" rx="8.5" ry="9" fill="#5f9e45"/><circle cx="118" cy="83" r="5.5" fill="#1d1d1f"/><circle cx="120" cy="79" r="2.2" fill="#fff"/><path d="M71 70 L90 74M129 70 L110 74" stroke="${c.stripe}" stroke-width="2.6" stroke-linecap="round"/>`,
   }[mood] || '';
   return `<svg class="cat-svg sit" viewBox="0 0 200 222" aria-hidden="true">
   <defs><radialGradient id="${id}f" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="${c.light}"/><stop offset=".55" stop-color="${c.fur}"/><stop offset="1" stop-color="${c.dark}"/></radialGradient></defs>
