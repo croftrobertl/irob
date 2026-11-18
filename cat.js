@@ -4,7 +4,7 @@
 'use strict';
 const COATS = {
   // Weezy: long white fur, grey cap and ear tips, green eyes (matches the painted icon kitten)
-  weezy:  {fur:'#f5f2ee', dark:'#a59e95', light:'#ffffff', cream:'#fffdf9', stripe:'#8c867f', cap:'#9c968f'},
+  weezy:  {fur:'#fbfcfd', dark:'#b4b7bc', light:'#ffffff', cream:'#ffffff', stripe:'#9a9590', cap:'#9c968f'},
   grey:   {fur:'#9aa1ab', dark:'#6c727c', light:'#c9ced5', cream:'#eceae6', stripe:'#5d636c'},
   orange: {fur:'#e3a25a', dark:'#b8722f', light:'#f3c98f', cream:'#fbf1e3', stripe:'#a9612a'},
   tabby:  {fur:'#a58a6a', dark:'#76604a', light:'#cdb393', cream:'#f1e9dd', stripe:'#5e4a37'},
