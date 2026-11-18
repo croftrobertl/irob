@@ -151,8 +151,34 @@ function unlockPrompt(){
   };
   o.querySelector('#mGo').onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') go(); };
 }
+// ---------- Rob's voice notes (sealed with the same key as the music) ----------
+let notesList = null, vnAudio = null, vnTick = null; const vnUrls = new Map();
+async function notes(){
+  if (notesList) return notesList; if (!get(KEY, null)) return [];
+  try { const r = await fetch('music/notes.bin', {cache:'no-cache'}); if (!r.ok) return []; notesList = (JSON.parse(new TextDecoder().decode(await open(new Uint8Array(await r.arrayBuffer())))).notes || []); }
+  catch { return []; }
+  return notesList;
+}
+function stopNote(){ if (vnAudio && !vnAudio.paused) vnAudio.pause(); if (vnTick){ const t = vnTick; vnTick = null; t(0, false); } }
+// Called from a tap: the element is unlocked with silence right away (iPhone rule), then the clip is swapped in.
+function playNote(id, onTick){
+  stopNote();
+  const a = vnAudio || (vnAudio = new Audio()); a.src = SILENCE; a.play().catch(() => {});
+  if (audio && !audio.paused) audio.pause();
+  if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
+  vnTick = onTick || null;
+  return (async () => {
+    const n = (await notes()).find(x => x.id === id); if (!n) throw new Error('missing');
+    let u = vnUrls.get(id);
+    if (!u){ const r = await fetch('music/' + n.file); if (!r.ok) throw new Error('fetch'); u = URL.createObjectURL(new Blob([await open(new Uint8Array(await r.arrayBuffer()))], {type:'audio/mp4'})); vnUrls.set(id, u); }
+    if (vnTick !== (onTick || null)) return;          // another note was tapped meanwhile
+    a.ontimeupdate = () => { if (vnTick && a.duration) vnTick(a.currentTime / a.duration, true); };
+    a.onended = () => { const t = vnTick; vnTick = null; t && t(1, false); };
+    a.src = u; await a.play(); vnTick && vnTick(0, true);
+  })().catch(e => { const t = vnTick; vnTick = null; t && t(0, false); throw e; });
+}
 function init(){ takeKey(); if (get(KEY, null)) build(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 addEventListener('hashchange', takeKey);
-window.iRobMusic = {unlockPrompt, playTag, unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return cue || songs[idx] || null; }};
+window.iRobMusic = {unlockPrompt, playTag, notes, playNote, stopNote, unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return cue || songs[idx] || null; }};
 })();

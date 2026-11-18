@@ -864,6 +864,7 @@ function bragButton(){
     const n = get('try_brags', 0) + 1; put('try_brags', n);
     if (A().addLedger) A().addLedger(t);
     confetti(140); blip(523, .12, 'triangle'); setTimeout(() => blip(659, .12, 'triangle'), 120); setTimeout(() => blip(784, .25, 'triangle'), 240);
+    if (A().voiceNote) A().voiceNote('proud', 1500);
     out.innerHTML = ''; const tr = el('div', 'brag-trophy', '🏆'); const said = el('p', 'brag-said'); said.textContent = `"${t}"`; out.append(tr, said, el('p', 'brag-line', rnd(TROPHY_LINES)));
     shelf.textContent = `🏆 × ${n} on your shelf · saved to your Good Things Ledger`; f.querySelector('textarea').value = ''; };
   body.append(f, out, shelf); show();

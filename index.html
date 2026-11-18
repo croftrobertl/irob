@@ -961,6 +961,7 @@ function msgNode(m){
   wrap.className = 'msg ' + (m.role === 'user' ? 'me' : 'rob'); wrap.dataset.id = m.id;
   if (m.role === 'assistant' && !m.hold && pocket.some(p => p.src === m.id)) wrap.classList.add('hearted');
   const b = document.createElement('div'); b.className = 'bubble'; b.textContent = m.content;
+  if (m.voice) voiceBubble(b, m);
   wrap.appendChild(b);
   if (m.tap) addTap(wrap, m.tap);
   if (m.hold) wrap.classList.add('hold');
@@ -971,7 +972,7 @@ function msgNode(m){
     const star = document.createElement('button'); star.className = 'act'; star.innerHTML = ICON.star;
     const sync = () => { const on = pocket.some(p => p.src === m.id); star.classList.toggle('on', on); star.setAttribute('aria-label', on ? 'Remove from Pocket' : 'Save to Pocket'); star.setAttribute('aria-pressed', on); };
     star.onclick = () => { togglePocket(m); sync(); };
-    acts.append(play); // Pocket was retired, so no ☆ save button
+    if (!m.voice) acts.append(play); // Pocket was retired, so no ☆ save button
     if (m.memory) wrap.appendChild(memoryCard(m.memory, () => { delete m.memory; save(K.chat, chat); }));
     attachReact(b, m, wrap);
     b.addEventListener('click', () => { const on = !wrap.classList.contains('acts-on'); document.querySelectorAll('.msg.acts-on').forEach(x => x.classList.remove('acts-on')); wrap.classList.toggle('acts-on', on); });
@@ -1081,6 +1082,8 @@ async function renderIdeas(){
   });
 }
 setTimeout(renderIdeas, 0);
+// Good-morning voice note: the first open between 5 and 11 a.m. (once a day)
+setTimeout(() => { const h = new Date().getHours(); if (h >= 5 && h < 11) voiceNote('morning'); }, 2500);
 function trayEdges(){ document.querySelectorAll('.tray-row').forEach(r => { const end = r.scrollLeft + r.clientWidth >= r.scrollWidth - 4; r.classList.toggle('at-end', end); r.parentElement.classList.toggle('at-end', end); }); }
 document.querySelectorAll('.tray-row').forEach(r => r.addEventListener('scroll', trayEdges, {passive:true}));
 document.querySelectorAll('.tray-more').forEach(b => b.onclick = () => $(b.dataset.row).scrollBy({left:200, behavior:'smooth'}));
@@ -1199,6 +1202,8 @@ async function send(text){
   if (window.iRobCards) window.iRobCards.hardDayExtras(text);
   if (window.iRobLife) window.iRobLife.learn(text);
   if (!secretFx && window.iRobFun && window.iRobFun.replyEffect) window.iRobFun.replyEffect(reply);
+  if (/\b(love you|luv you|ily)\b/i.test(text) && Math.random() < .4) voiceNote('love', 1800);
+  else if (/^make me laugh/i.test(text) && Math.random() < .5) voiceNote('silly', 1800);
 }
 // When she brings up her own looks, Rob says he won't comment (unless the reply already covers it).
 function withStanding(reply, text){
@@ -2366,6 +2371,40 @@ async function renderToday(){
   card.appendChild(txt); box.appendChild(card); box.hidden = false;
 }
 
+/* Rob's real voice notes: a few short clips he recorded, sealed with the music key.
+   They arrive as voice-message bubbles at the right moments, at most two a day and one of each kind a day. */
+const VN_LABEL = {morning:'good morning', night:'goodnight', comfort:'a hug when she needed it', love:'I love you', proud:"I'm proud of you", silly:'something silly'};
+async function voiceNote(cat, delay = 0){
+  if (!window.iRobMusic || !window.iRobMusic.unlocked()) return false;
+  const st = load('try_vn', {}), today = new Date().toDateString();
+  if (st.day !== today){ st.day = today; st.n = 0; st.cats = []; }
+  if (st.n >= 2 || st.cats.includes(cat)) return false;
+  const list = (await window.iRobMusic.notes()).filter(n => n.cat === cat); if (!list.length) return false;
+  const recent = st.recent || [], fresh = list.filter(n => !recent.includes(n.id)), pool = fresh.length ? fresh : list, pick = pool[Math.floor(Math.random() * pool.length)];
+  st.n++; st.cats.push(cat); st.recent = [pick.id, ...recent].slice(0, 3); save('try_vn', st);
+  setTimeout(() => { pushRob({content:`(Rob sent ${HER} a voice note: ${VN_LABEL[cat] || 'hi'})`, voice:pick.id, vdur:pick.dur}); scrollDown(); }, delay);
+  return true;
+}
+const VN_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.6-6.2a.8.8 0 0 0 0-1.4L9.2 5.1a.8.8 0 0 0-1.2.7z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+const VN_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5.5h2.8v13H7.5zM13.7 5.5h2.8v13h-2.8z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+function voiceBubble(b, m){
+  b.textContent = ''; b.classList.add('vn');
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'vn-play'; btn.innerHTML = VN_PLAY; btn.setAttribute('aria-label', "Play Rob's voice note");
+  let seed = [...m.voice].reduce((a, c) => a * 31 + c.charCodeAt(0) >>> 0, 7); const rnd = () => (seed = seed * 1664525 + 1013904223 >>> 0) / 4294967296;
+  const bars = Array.from({length:26}, (_, i) => `<i style="height:${Math.round(22 + 70 * Math.abs(Math.sin(i * .7 + rnd() * 2)) * (0.55 + rnd() * .45))}%"></i>`).join('');
+  const wave = document.createElement('span'); wave.className = 'vn-wave'; wave.innerHTML = `<span class="vn-bars">${bars}</span><span class="vn-bars vn-fill">${bars}</span>`;
+  const time = document.createElement('span'); time.className = 'vn-time'; time.textContent = '0:' + String(Math.max(1, Math.round(m.vdur || 3))).padStart(2, '0');
+  const lab = document.createElement('span'); lab.className = 'sr'; lab.textContent = 'Voice note from Rob';
+  b.append(btn, wave, time, lab);
+  const reset = () => { btn.classList.remove('on'); btn.innerHTML = VN_PLAY; btn.setAttribute('aria-label', "Play Rob's voice note"); wave.style.setProperty('--p', 0); };
+  btn.onclick = e => {
+    e.stopPropagation();
+    if (!window.iRobMusic || !window.iRobMusic.unlocked()){ window.iRobMusic && window.iRobMusic.unlockPrompt(); return; }
+    if (btn.classList.contains('on')){ window.iRobMusic.stopNote(); return; }
+    btn.classList.add('on'); btn.innerHTML = VN_PAUSE; btn.setAttribute('aria-label', 'Pause');
+    window.iRobMusic.playNote(m.voice, (pr, playing) => { wave.style.setProperty('--p', pr); if (!playing) reset(); }).catch(() => { reset(); toast("Couldn't play that voice note. Check your connection."); });
+  };
+}
 function pushRob(extra){
   const m = {role:'assistant', t:Date.now(), id:uid(), auto:true, ...extra};
   chat.push(m); save(K.chat, chat); renderChat(); return m;
@@ -2373,7 +2412,7 @@ function pushRob(extra){
 window.iRob = {
   HER, $, uid, toast, speak, stopSpeaking, open, close, setInert, save, load, K,
   closeAll(){ close(); closeViewer(); endSlides(); }, showBanner, hideBanner,
-  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, relay:callRelay, isBusy:() => busy, loadTrip, addLedger,
+  getLedger:() => ledger, randomMemory, startSlides, renderChat, pushRob, voiceNote, relay:callRelay, isBusy:() => busy, loadTrip, addLedger,
   saveChat:() => save(K.chat, chat),
   setMode(m){ mode = MODES[m] ? m : null; save(K.mode, mode); renderModes(); },
   addToPocket(text){ if (!pocket.some(p => p.text === text)){ pocket.unshift({id:uid(), src:null, text, t:Date.now(), tags:tagsFor(text)}); save(K.pocket, pocket); } toast('Saved to your Pocket'); }
