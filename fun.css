@@ -521,3 +521,46 @@
 .fx-zoomies img.wz{width:100%;height:100%;object-fit:contain;animation:zFlip 2.6s steps(1) forwards}
 @keyframes zFlip{0%{transform:none}50%,100%{transform:scaleX(-1)}}
 @media (prefers-reduced-motion:reduce){.roam-cat img.wz,.tg-cat.asleep .tg-body{animation:none}}
+
+/* ================= Last painted set (F–I) ================= */
+/* Weezy's poses are real paintings now: no more squashing/stretching her */
+.pose-stretch .tg-body,.pose-loaf .tg-body,.pose-stalk .tg-body,.pose-sniff .tg-body,.pose-watch .tg-body{transform:scaleX(var(--face,1));transition:none}
+.pose-eat .tg-body{animation:eatBob2 .65s ease-in-out infinite}
+@keyframes eatBob2{0%,100%{transform:scaleX(var(--face,1))}50%{transform:scaleX(var(--face,1)) translateY(2px)}}
+.pose-groom .tg-body{animation:none;transform:scaleX(var(--face,1))}
+.pose-wiggle .tg-body{animation:wiggle2 .12s linear infinite}
+@keyframes wiggle2{0%,100%{transform:scaleX(var(--face,1)) translateX(-2px)}50%{transform:scaleX(var(--face,1)) translateX(2px)}}
+.tg-room:has(.tg-cat.pose-eat) .tg-bowl{opacity:0;transition:opacity .2s}
+/* bowl: painted empty bowl, with the kibble/milk layer shrinking as she eats */
+.tg-bowl .pic{position:absolute;inset:0}
+.tg-bowl .pic.base{clip-path:none}
+.tg-bowl .pic.fill{clip-path:inset(calc(14% + (1 - var(--amt,1)) * 34%) 0 0 0)}
+/* fortune cookie: whole cookie, then two painted halves fly apart and the paper slides out */
+.fc-cookie .fc-whole{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .15s}
+.fc-cookie img.fc-half{position:absolute;top:0;width:58%;height:100%;object-fit:contain;opacity:0;transition:transform .55s cubic-bezier(.3,1.4,.5,1),opacity .1s}
+.fc-cookie img.fc-half.l{left:-2%}.fc-cookie img.fc-half.r{right:-2%;left:auto}
+.fc-cookie.open .fc-whole{opacity:0}
+.fc-cookie.open img.fc-half{opacity:1}
+.fc-cookie img.fc-paper{position:absolute;left:50%;top:55%;width:10%;height:auto;background:none;border:0;transform:translate(-50%,-50%) rotate(-4deg);opacity:0;transition:width .45s .2s,opacity .2s .15s}
+.fc-cookie.open img.fc-paper{opacity:1;width:62%;top:62%}
+/* squeezer arms: painted; the right one is the left one mirrored */
+img.sq-arm{height:auto}
+/* litter oops */
+.tg-poop img{width:100%;height:100%;object-fit:contain;display:block}
+/* roulette pointer */
+.wheel-wrap .pointer{background:url(icons/187.webp) center/contain no-repeat;clip-path:none;width:40px;height:40px;top:-20px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
+/* memory match card back */
+.mm-back{background:url(icons/185.webp) center/cover no-repeat,#2d6a7c}
+/* menu icons */
+.menu-item[data-open="sheetSearch"]>svg,.menu-item[data-open="sheetLedger"]>svg,.menu-item[data-open="sheetSettings"]>svg{width:28px;height:28px;background:center/contain no-repeat}
+.menu-item[data-open="sheetSearch"]>svg>*,.menu-item[data-open="sheetLedger"]>svg>*,.menu-item[data-open="sheetSettings"]>svg>*{display:none}
+.menu-item[data-open="sheetSearch"]>svg{background-image:url(icons/167.webp)}
+.menu-item[data-open="sheetLedger"]>svg{background-image:url(icons/168.webp)}
+.menu-item[data-open="sheetSettings"]>svg{background-image:url(icons/169.webp)}
+.fc-cookie img.fc-half{width:52%}
+.fc-cookie img.fc-half.l{left:0}.fc-cookie img.fc-half.r{right:0}
+.fc-cookie.open img.fc-half.l{transform:translate(-14px,8px) rotate(-10deg)}
+.fc-cookie.open img.fc-half.r{transform:translate(14px,8px) rotate(10deg)}
+.fc-cookie.open img.fc-paper{width:44%;top:58%}
+.pose-eat .acc.neck,.pose-pounce .acc.neck,.pose-stretch .acc.neck{opacity:0}
+.tg-poop{width:34px;height:34px;padding:2px}

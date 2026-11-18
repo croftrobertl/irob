@@ -2094,7 +2094,7 @@ const SEG = 360 / DARES.length, WHEEL_COLS = ['#b68235', '#f4e6cf', '#2d6a7c', '
     svg += `<path d="M100 100 L${x0.toFixed(2)} ${y0.toFixed(2)} A${R0} ${R0} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z" fill="${col}" stroke="rgba(255,255,255,.55)" stroke-width=".8"/>`;
     svg += `<g transform="rotate(${mid} 100 100) translate(100 ${100 - R0 * .7})"><image href="icons/${36 + i}.webp" x="-12" y="-12" width="24" height="24"/></g>`; });
   for (let i = 0; i < DARES.length; i++){ const a = (i * SEG - 90) * Math.PI / 180; svg += `<circle cx="${(100 + 96.5 * Math.cos(a)).toFixed(2)}" cy="${(100 + 96.5 * Math.sin(a)).toFixed(2)}" r="1.9" fill="#fff6dc" stroke="#b68235" stroke-width=".6"/>`; }
-  svg += `<circle cx="100" cy="100" r="17" fill="url(#hub)" stroke="#fff" stroke-width="2.5"/><defs><radialGradient id="hub" cx="40%" cy="35%"><stop offset="0" stop-color="#f3c98f"/><stop offset="1" stop-color="#7d5411"/></radialGradient></defs><path d="M100 90l2.4 7.2 7.6.4-6 4.6 2.2 7.3-6.2-4.3-6.2 4.3 2.2-7.3-6-4.6 7.6-.4z" fill="#fff"/></svg>`;
+  svg += `<image href="icons/188.webp" x="78" y="78" width="44" height="44"/></svg>`;
   w.innerHTML = svg;
 })();
 let wheelTurn = 0, currentDare = null, spinning = false;
