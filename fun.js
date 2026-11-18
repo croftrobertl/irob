@@ -176,6 +176,7 @@ function petLoad(){
   }
   p.clean = clamp(100 - p.poops.length * 30);
   p.sick = p.sick || (p.food < 8 && (p.clean < 40 || p.fun < 8));
+  p.coat = 'weezy';
   p.stage = STAGES.filter(s => p.xp >= s[1]).length - 1;
   return p;
 }
@@ -196,10 +197,9 @@ function pocketKitten(){
   const {body, show} = sheet('funPet', 'Pocket Kitten');
   if (!petLoad()){
     const f = el('form', 'pet-new');
-    let coat = 'grey';
-    f.innerHTML = `<div class="pet-adopt-cat"></div><p>A kitten showed up in a basket. Pick a coat and a name.</p><div class="coat-row" role="radiogroup" aria-label="Coat"></div><label class="sr" for="petName">Kitten name</label><input id="petName" maxlength="20" placeholder="Name your kitten" autocomplete="off"><button class="btn">Adopt</button>`;
+    let coat = 'weezy';
+    f.innerHTML = `<div class="pet-adopt-cat"></div><p>Weezy's little twin showed up in a basket. Give her a name.</p><label class="sr" for="petName">Kitten name</label><input id="petName" maxlength="20" placeholder="Name your kitten" value="Weezy" autocomplete="off"><button class="btn">Adopt</button>`;
     const preview = () => { f.querySelector('.pet-adopt-cat').innerHTML = window.iRobCat ? window.iRobCat.sitting(coat, 'happy') : '🐱'; };
-    window.iRobCat && window.iRobCat.COATS.forEach(c => { const b = el('button', 'coat' + (c === coat ? ' on' : '')); b.type = 'button'; b.dataset.c = c; b.setAttribute('aria-label', c); b.onclick = () => { coat = c; f.querySelectorAll('.coat').forEach(x => x.classList.toggle('on', x.dataset.c === c)); preview(); }; f.querySelector('.coat-row').append(b); });
     preview();
     f.onsubmit = e => { e.preventDefault(); const n = f.querySelector('input').value.trim(); if (!n) return;
       const now = Date.now(); const trait = rnd(Object.keys(PERSONALITIES));
@@ -991,7 +991,7 @@ const FX = {
     ['#ff5a5a', '#ffa54a', '#ffe14a', '#5ad06a', '#4aa8ff', '#8a6bff'].forEach((c, i) => { g.strokeStyle = c; g.globalAlpha = .55 * a; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.arc(W / 2, H * .72, Math.min(W, H) * .62 - i * 14, Math.PI, Math.PI + Math.PI * reveal); g.stroke(); });
     g.globalAlpha = 1; }),
   dim:(ms = 3000, a0 = .5) => scene(ms, (g, W, H, k) => { g.fillStyle = `rgba(10,8,24,${a0 * Math.min(ease(k / .2), ease((1 - k) / .3))})`; g.fillRect(0, 0, W, H); }),
-  zoomies:() => { if (reduced() || !window.iRobCat) return; const o = el('div', 'fx-zoomies'); o.innerHTML = window.iRobCat.sitting(((get(PK, null) || {}).coat) || 'orange', 'wide'); document.body.appendChild(o); setTimeout(() => o.remove(), 2700); },
+  zoomies:() => { if (reduced() || !window.iRobCat) return; const o = el('div', 'fx-zoomies'); o.innerHTML = window.iRobCat.sitting('weezy', 'wide'); document.body.appendChild(o); setTimeout(() => o.remove(), 2700); },
 };
 
 // 1A. Secret words she can type. [match, name, description, effect]
@@ -1074,7 +1074,7 @@ function roam(force){
   if (!spots.length) return;
   const [id, where] = rnd(spots), btn = document.getElementById(id), r = btn.getBoundingClientRect();
   const k = el('button', 'roam-cat'); k.type = 'button'; k.setAttribute('aria-label', `${p.name} is asleep ${where}. Tap to wake them.`);
-  k.innerHTML = window.iRobCat.sleeping(p.coat || 'grey') + '<span class="rc-z" aria-hidden="true">z</span><span class="rc-z z2" aria-hidden="true">z</span>';
+  k.innerHTML = window.iRobCat.sleeping('weezy') + '<span class="rc-z" aria-hidden="true">z</span><span class="rc-z z2" aria-hidden="true">z</span>';
   const w = 86, h = w * 132 / 220;
   // Lie across the top of the button, slightly hanging over it, the way a real cat claims a warm spot
   const left = Math.max(4, Math.min(innerWidth - w - 4, r.left + r.width / 2 - w / 2));
@@ -1082,7 +1082,7 @@ function roam(force){
   document.body.appendChild(k); roamer = {k, id};
   const leave = msg => {
     if (k.classList.contains('waking')) return;
-    k.classList.add('waking'); k.innerHTML = window.iRobCat.sitting(p.coat || 'grey', 'wide'); k.style.width = (w * .55) + 'px'; k.style.height = (w * .55 * 222 / 200) + 'px'; k.style.top = (r.top + r.height * .55 - w * .55 * 222 / 200) + 'px'; k.style.left = (left + w * .22) + 'px';
+    k.classList.add('waking'); k.innerHTML = window.iRobCat.sitting('weezy', 'wide'); k.style.width = (w * .55) + 'px'; k.style.height = (w * .55 * 222 / 200) + 'px'; k.style.top = (r.top + r.height * .55 - w * .55 * 222 / 200) + 'px'; k.style.left = (left + w * .22) + 'px';
     blip(760, .07, 'triangle'); setTimeout(() => blip(980, .06, 'triangle'), 80);
     const b2 = el('span', 'rc-say', msg || rnd(['meep!', 'mrrp?', 'prrt', '*offended meow*', 'fine.'])); b2.style.left = (left + w * .1) + 'px'; b2.style.top = (r.top - 70) + 'px'; document.body.appendChild(b2);
     setTimeout(() => k.classList.add('hop'), 450); setTimeout(() => { k.remove(); b2.remove(); roamer = null; }, 1100);

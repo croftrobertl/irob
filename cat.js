@@ -3,6 +3,8 @@
 (() => {
 'use strict';
 const COATS = {
+  // Weezy: long white fur, grey cap and ear tips, green eyes (matches the painted icon kitten)
+  weezy:  {fur:'#f5f2ee', dark:'#a59e95', light:'#ffffff', cream:'#fffdf9', stripe:'#8c867f', cap:'#9c968f'},
   grey:   {fur:'#9aa1ab', dark:'#6c727c', light:'#c9ced5', cream:'#eceae6', stripe:'#5d636c'},
   orange: {fur:'#e3a25a', dark:'#b8722f', light:'#f3c98f', cream:'#fbf1e3', stripe:'#a9612a'},
   tabby:  {fur:'#a58a6a', dark:'#76604a', light:'#cdb393', cream:'#f1e9dd', stripe:'#5e4a37'},
@@ -33,6 +35,7 @@ function sitting(coat = 'grey', mood = 'open'){
     <path class="ear l" d="M60 66 L56 20 L92 44Z" fill="${c.fur}" stroke="${c.dark}" stroke-width="1.5" stroke-linejoin="round"/><path d="M64 58 L62 31 L83 45Z" fill="#e9a6ad"/>
     <path class="ear r" d="M140 66 L144 20 L108 44Z" fill="${c.fur}" stroke="${c.dark}" stroke-width="1.5" stroke-linejoin="round"/><path d="M136 58 L138 31 L117 45Z" fill="#e9a6ad"/>
     <path d="M52 82 C52 50 74 38 100 38 C126 38 148 50 148 82 C148 108 126 122 100 122 C74 122 52 108 52 82Z" fill="url(#${id}f)" stroke="${c.dark}" stroke-width="1.2"/>
+    ${c.cap ? `<path d="M62 60 C70 40 86 36 100 37 C114 36 130 40 138 60 C126 56 116 62 108 72 C104 64 96 64 92 72 C84 62 74 56 62 60Z" fill="${c.cap}" opacity=".85"/><path d="M52 92 l-8 4 8 2 -6 6 9 -1 M148 92 l8 4 -8 2 6 6 -9 -1" fill="${c.fur}" stroke="${c.dark}" stroke-width="1" stroke-linejoin="round"/>` : ''}
     <path d="M100 42 v14 M90 44 l3 11 M110 44 l-3 11" stroke="${c.stripe}" stroke-width="3.2" stroke-linecap="round" opacity=".6"/>
     <ellipse cx="100" cy="102" rx="22" ry="15" fill="${c.cream}" opacity=".9"/>
     <ellipse cx="70" cy="96" rx="9" ry="5" fill="#f2a7ae" opacity=".35"/><ellipse cx="130" cy="96" rx="9" ry="5" fill="#f2a7ae" opacity=".35"/>
@@ -59,6 +62,7 @@ function sleeping(coat = 'grey'){
     <path d="M38 58 L32 30 L58 46Z" fill="${c.fur}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/><path d="M41 52 L38 38 L52 47Z" fill="#e9a6ad"/>
     <path d="M86 50 L98 26 L102 56Z" fill="${c.fur}" stroke="${c.dark}" stroke-width="1.3" stroke-linejoin="round"/>
     <path d="M24 82 C22 58 44 44 68 45 C92 46 108 60 106 82 C104 102 86 112 64 111 C40 110 26 100 24 82Z" fill="url(#${id}s)" stroke="${c.dark}" stroke-width="1.2"/>
+    ${c.cap ? `<path d="M30 66 C38 50 52 45 68 46 C84 46 96 54 102 66 C90 62 80 66 72 74 C66 68 56 68 48 74 C42 68 36 66 30 66Z" fill="${c.cap}" opacity=".85"/>` : ''}
     <path d="M60 50 v10 M70 49 v10" stroke="${c.stripe}" stroke-width="3" stroke-linecap="round" opacity=".5"/>
     <ellipse cx="64" cy="96" rx="20" ry="12" fill="${c.cream}" opacity=".85"/>
     <path d="M42 80 Q50 86 58 80 M72 80 Q80 86 88 80" fill="none" stroke="${c.stripe}" stroke-width="2.8" stroke-linecap="round"/>
