@@ -208,6 +208,7 @@ function pocketKitten(){
     body.append(f); show(); setTimeout(() => f.querySelector('input').focus(), 350); return;
   }
   let p = petLoad(), panel = null, game = null;
+  p.bowl = p.bowl || {kind:'fish', amt:0};
   const top = el('div', 'tg-top'); const room = el('div', 'tg-room'); const bubble = el('p', 'tg-say');
   const bars = el('div', 'tg-bars'); const acts = el('div', 'tg-acts'); const tray = el('div', 'tg-panel'); tray.hidden = true;
   body.append(top, room, bubble, bars, acts, tray);
@@ -217,28 +218,69 @@ function pocketKitten(){
   const earn = v => { p.coins += v; };
   const careDay = () => { const today = new Date().toDateString(); if ((p.days || []).includes(today)) return; const y = new Date(Date.now() - 864e5).toDateString(); p.streak = (p.days || []).includes(y) ? (p.streak || 0) + 1 : 1; p.days = (p.days || []).concat(today).slice(-120); earn(5); A().toast(`Day ${p.streak} streak! +5 🪙`); };
   const xp = v => { const before = p.stage; p.xp += v; p.stage = STAGES.filter(s => p.xp >= s[1]).length - 1; if (p.stage > before){ confetti(); A().toast(`${p.name} grew into a ${STAGES[p.stage][0]}!`); } };
-  const commit = () => { p.clean = clamp(100 - p.poops.length * 30); petSave(p); draw(); };
-  const SPOTS = {box:18, bed:40, tree:8, plant:88, fish:72, rug:56};
+  const save = () => { p.clean = clamp(100 - p.poops.length * 30); petSave(p); };
+  const commit = () => { save(); drawHud(); drawRoom(); };
+  const SPOTS = {box:15, bed:58, tree:5, plant:91, fish:76, rug:66};
+  const BOWL_X = 30;
+  const trait = () => PERSONALITIES[p.trait] || {lines:['Mrrp.']};
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  function catHTML(){ const [mood] = petMood(p); return p.asleep || mood === 'sleep' ? window.iRobCat.sleeping(p.coat) : window.iRobCat.sitting(p.coat, mood); }
-  function draw(){
+  /* ---------- the room (built once; parts update in place so the kitten can move smoothly) ---------- */
+  room.innerHTML = '<div class="tg-wall"></div><div class="tg-window" aria-hidden="true"><span></span></div><div class="tg-floor"></div><div class="tg-furns"></div><div class="tg-bowl" aria-hidden="true"></div><div class="tg-poops"></div>';
+  const cat = el('div', 'tg-cat'); cat.setAttribute('role', 'img'); const catBody = el('div', 'tg-body'); cat.append(catBody); room.append(cat);
+  function drawRoom(){
+    const h = new Date().getHours(), night = h >= 19 || h < 7;
+    room.className = 'tg-room' + (p.asleep ? ' lights-off' : night ? ' night' : '');
+    room.querySelector('.tg-window span').innerHTML = pic(night || p.asleep ? '🌙' : '☀️');
+    const furns = room.querySelector('.tg-furns'); furns.innerHTML = '';
+    (p.furniture || []).forEach(k => { const f = FURNITURE.find(x => x[0] === k); if (!f) return; const it = el('div', 'tg-furn f-' + k); it.innerHTML = pic(f[1]); it.style.left = SPOTS[k] + '%'; it.setAttribute('aria-hidden', 'true'); furns.append(it); });
+    const bowl = room.querySelector('.tg-bowl'); bowl.style.left = BOWL_X + '%';
+    bowl.className = 'tg-bowl' + (p.bowl.amt > 0 ? '' : ' empty') + (p.bowl.kind === 'milk' ? ' milk' : '');
+    bowl.style.setProperty('--amt', p.bowl.amt / 100);
+    bowl.innerHTML = `<img class="pic" src="icons/${p.bowl.kind === 'milk' && p.bowl.amt > 0 ? 'pk-water' : 'pk-bowl'}.webp" alt="" draggable="false">`;
+    const poops = room.querySelector('.tg-poops'); poops.innerHTML = '';
+    p.poops.forEach(pp => { const b = el('button', 'tg-poop'); b.type = 'button'; b.style.left = pp.x + '%'; b.setAttribute('aria-label', 'Scoop this'); b.innerHTML = '<svg viewBox="0 0 24 20"><path d="M4 18c-2-3 1-5 3-5-1-3 2-5 5-4 0-3 4-4 5-1 3 0 4 3 2 5 2 1 2 4-1 5z" fill="#7a5233" stroke="#5a3a20" stroke-width="1"/></svg>';
+      b.onclick = e => { e.stopPropagation(); p.poops = p.poops.filter(z => z.id !== pp.id); earn(2); xp(1); careDay(); blip(900, .06); say(rnd(['Scooped. +2 🪙', `${p.name} watched you do it. No thanks given.`, 'Fresh litter. Very luxurious.'])); commit(); };
+      poops.append(b); });
+    drawCat();
+  }
+
+  /* ---------- the kitten: position, facing and pose ---------- */
+  const C = {x:p.x || 45, pose:'sit', face:1, busy:false, token:0};
+  function drawCat(){
+    const [mood] = petMood(p);
+    const pose = p.asleep ? 'sleep' : C.pose;
+    const faceMood = {eat:'closed', groom:'closed', nap:'closed', purr:'happy', beg:'wide', stalk:'wide', sniff:'open', sit:mood === 'sleep' ? 'closed' : mood}[pose] || mood;
+    const key = pose + '|' + faceMood + '|' + p.coat + '|' + JSON.stringify(p.worn || {});
+    if (cat.dataset.key !== key){
+      cat.dataset.key = key;
+      catBody.innerHTML = (pose === 'sleep' || pose === 'nap') ? window.iRobCat.sleeping(p.coat) : window.iRobCat.sitting(p.coat, faceMood);
+      if (pose !== 'sleep' && pose !== 'nap') Object.entries(p.worn || {}).forEach(([slot, e]) => { const a = el('span', 'acc ' + slot); a.innerHTML = pic(e); a.setAttribute('aria-hidden', 'true'); catBody.append(a); });
+    }
+    cat.className = 'tg-cat pose-' + pose + ((pose === 'sleep' || pose === 'nap') ? ' asleep' : '');
+    cat.style.setProperty('--s', STAGES[p.stage][2]); cat.style.setProperty('--face', C.face);
+    cat.style.left = C.x + '%';
+    cat.setAttribute('aria-label', `${p.name}. Stroke to pet.`);
+  }
+  function pose(name){ C.pose = name; drawCat(); }
+  // Walk (or trot) to a spot. Speed is in % of the room per second; returns false if something else took over.
+  async function walkTo(x, speed = 22){
+    const t = ++C.token; x = Math.max(8, Math.min(90, x));
+    const dist = Math.abs(x - C.x); if (dist < 1) return true;
+    C.face = x < C.x ? -1 : 1; const dur = dist / speed;
+    cat.style.transition = `left ${dur}s linear`; C.pose = speed > 40 ? 'run' : 'walk'; C.x = x; drawCat();
+    await sleep(dur * 1000);
+    if (t !== C.token) return false;
+    cat.style.transition = ''; C.pose = 'sit'; drawCat(); p.x = C.x; return true;
+  }
+  const interrupt = () => { C.token++; C.busy = false; cat.style.transition = ''; const r = cat.getBoundingClientRect(), rr = room.getBoundingClientRect(); if (rr.width) C.x = ((r.left + r.width / 2 - rr.left) / rr.width) * 100; C.pose = 'sit'; drawCat(); };
+
+  function drawHud(){
     const [, line] = petMood(p);
     top.innerHTML = '';
     const nm = el('div', 'tg-name'); nm.append(el('b', '', p.name), el('span', '', `${PERSONALITIES[p.trait] ? PERSONALITIES[p.trait].label : ''} · ${STAGES[p.stage][0]} · ${(d => d === 1 ? '1 day' : d + ' days')(Math.max(1, Math.ceil((Date.now() - p.born) / 864e5)))} old`));
     const meta = el('div', 'tg-meta'); const m1 = el('span'), m2 = el('span'); m1.innerHTML = `${pic('🪙')} ${p.coins}`; m2.innerHTML = `${pic('🔥')} ${p.streak || 0}`; m1.title = 'Coins'; m2.title = 'Day streak'; meta.append(m1, m2); top.append(nm, meta);
-    const h = new Date().getHours(), night = h >= 19 || h < 7;
-    room.className = 'tg-room' + (p.asleep ? ' lights-off' : night ? ' night' : '');
-    room.innerHTML = `<div class="tg-wall"></div><div class="tg-window" aria-hidden="true"><span>${pic(night || p.asleep ? '🌙' : '☀️')}</span></div><div class="tg-floor"></div><div class="tg-bowl" aria-hidden="true">${pic('🥣')}</div>`;
-    (p.furniture || []).forEach(k => { const f = FURNITURE.find(x => x[0] === k); if (!f) return; const it = el('div', 'tg-furn f-' + k); it.innerHTML = pic(f[1]); it.style.left = SPOTS[k] + '%'; it.setAttribute('aria-hidden', 'true'); room.append(it); });
-    p.poops.forEach(pp => { const b = el('button', 'tg-poop'); b.type = 'button'; b.style.left = pp.x + '%'; b.setAttribute('aria-label', 'Scoop this'); b.innerHTML = '<svg viewBox="0 0 24 20"><path d="M4 18c-2-3 1-5 3-5-1-3 2-5 5-4 0-3 4-4 5-1 3 0 4 3 2 5 2 1 2 4-1 5z" fill="#7a5233" stroke="#5a3a20" stroke-width="1"/></svg>';
-      b.onclick = e => { e.stopPropagation(); p.poops = p.poops.filter(z => z.id !== pp.id); earn(2); xp(1); careDay(); blip(900, .06); say(rnd(['Scooped. +2 🪙', `${p.name} watched you do it. No thanks given.`, 'Fresh litter. Very luxurious.'])); commit(); };
-      room.append(b); });
-    const cat = el('div', 'tg-cat' + (p.asleep ? ' asleep' : '')); cat.style.left = (p.x || 45) + '%'; cat.style.setProperty('--s', STAGES[p.stage][2]);
-    cat.innerHTML = catHTML(); cat.setAttribute('role', 'img'); cat.setAttribute('aria-label', `${p.name}. Stroke to pet.`);
-    Object.entries(p.worn || {}).forEach(([slot, e]) => { if (p.asleep) return; const a = el('span', 'acc ' + slot); a.innerHTML = pic(e); a.setAttribute('aria-hidden', 'true'); cat.append(a); });
-    petting(cat); room.append(cat);
-    if (game) room.append(game.layer);
-    if (Date.now() - saidAt > 5000) bubble.textContent = line;
+    if (Date.now() - saidAt > 6000) bubble.textContent = line;
     bars.innerHTML = '';
     [['🐟', 'Food', p.food], ['fun', 'Fun', p.fun], ['⚡', 'Energy', p.energy], ['🫧', 'Clean', p.clean], ['💗', 'Love', p.love]].forEach(([e, l, v]) => {
       const b = el('div', 'tg-bar' + (v < 25 ? ' low' : '')); b.innerHTML = `<span aria-hidden="true">${pic(e)}</span><b role="meter" aria-label="${l}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(v)}"><i style="width:${Math.round(v)}%"></i></b>`; bars.append(b); });
@@ -251,36 +293,110 @@ function pocketKitten(){
     act('🛍️', 'Shop', () => openPanel('shop'), panel === 'shop');
     act('✏️', 'Rename', rename);
   }
-  // Stroke the cat to pet it. Three strokes in, the belly becomes a trap.
-  function petting(cat){
-    let last = null, strokes = 0, purr = null, quiet = 0;
-    cat.addEventListener('pointerdown', e => { if (p.asleep){ say(`${p.name} is asleep. Gentle pets only. 💤`); return; } last = e.clientX; cat.setPointerCapture(e.pointerId); purr = window.iRobFunPurr ? window.iRobFunPurr() : null; });
-    cat.addEventListener('pointermove', e => { if (last == null) return; if (Math.abs(e.clientX - last) > 28){ last = e.clientX; strokes++; gain('love', 2); purr && purr.set(Math.min(.8, .2 + strokes * .06)); hearts(cat);
-        const r = cat.getBoundingClientRect(); if (strokes > 3 && e.clientY > r.top + r.height * .72 && Math.random() < .35){ end(); cat.classList.add('swat'); blip(180, .12, 'square', .08); say(rnd(['BETRAYAL. The belly was a trap.', 'You touched the belly. You knew the rules.', '*swats* We will not be discussing this.'])); setTimeout(() => cat.classList.remove('swat'), 600); gain('love', -6); commit(); } } });
-    const end = () => { if (last == null) return; last = null; purr && purr.stop(); purr = null; if (strokes){ if (!p.lastPetCoin || Date.now() - p.lastPetCoin > 60000){ earn(1); p.lastPetCoin = Date.now(); } xp(1); careDay();
-        say(strokes > 6 ? rnd([`${p.name} is purring so loud the neighbors called.`, `${p.name} has melted into a puddle of cat.`]) : rnd([`${p.name} headbutted your hand.`, `Slow blink from ${p.name}. You are trusted.`])); strokes = 0; commit(); } };
-    cat.addEventListener('pointerup', end); cat.addEventListener('pointercancel', end);
+
+  /* ---------- petting: stroke the cat. Three strokes in, the belly becomes a trap. ---------- */
+  let last = null, strokes = 0, purr = null;
+  cat.addEventListener('pointerdown', e => { if (game) return; if (p.asleep){ say(`${p.name} is asleep. Gentle pets only. 💤`); return; } interrupt(); C.busy = true; last = e.clientX; cat.setPointerCapture(e.pointerId); purr = window.iRobFunPurr ? window.iRobFunPurr() : null; });
+  cat.addEventListener('pointermove', e => { if (last == null) return; if (Math.abs(e.clientX - last) > 28){ last = e.clientX; strokes++; gain('love', 2); purr && purr.set(Math.min(.8, .2 + strokes * .06)); hearts(); if (strokes === 3) pose('purr');
+      const r = cat.getBoundingClientRect(); if (strokes > 3 && e.clientY > r.top + r.height * .72 && Math.random() < .35){ endPet(); pose('swat'); blip(180, .12, 'square', .08); say(rnd(['BETRAYAL. The belly was a trap.', 'You touched the belly. You knew the rules.', '*swats* We will not be discussing this.'])); setTimeout(() => { if (C.pose === 'swat') pose('sit'); }, 700); gain('love', -6); save(); drawHud(); } } });
+  const endPet = () => { if (last == null) return; last = null; purr && purr.stop(); purr = null; C.busy = false; if (C.pose === 'purr') pose('sit');
+    if (strokes){ if (!p.lastPetCoin || Date.now() - p.lastPetCoin > 60000){ earn(1); p.lastPetCoin = Date.now(); } xp(1); careDay();
+      say(strokes > 6 ? rnd([`${p.name} is purring so loud the neighbors called.`, `${p.name} has melted into a puddle of cat.`]) : rnd([`${p.name} headbutted your hand.`, `Slow blink from ${p.name}. You are trusted.`])); strokes = 0; save(); drawHud(); } };
+  cat.addEventListener('pointerup', endPet); cat.addEventListener('pointercancel', endPet);
+  function hearts(){ if (reduced()) return; const h = el('span', 'tg-heart', rnd(['💗', '💕', '🤍'])); h.style.left = (C.x + (Math.random() * 14 - 7)) + '%'; room.append(h); setTimeout(() => h.remove(), 1500); }
+
+  /* ---------- eating: walks to the bowl, eats a bite at a time, and the bowl actually empties ---------- */
+  const NOM = {fish:{food:7, fun:0}, milk:{food:5, fun:1.5}};
+  async function eat(){
+    if (C.busy || p.asleep || p.bowl.amt <= 0) return;
+    C.busy = true;
+    if (!(await walkTo(BOWL_X + 12, 26))){ C.busy = false; return; }
+    C.face = -1; pose('sniff'); await sleep(700);
+    if (p.trait === 'royal' && p.bowl.kind === 'milk' && Math.random() < .3){ say(`${p.name} sniffed the milk and walked away. Her Majesty requested fish.`); C.busy = false; pose('sit'); return; }
+    pose('eat'); say(rnd([`${p.name} is eating. Crunch crunch crunch.`, `Nom nom nom. ${p.name} is very focused.`, `${p.name} found the good bits first.`]));
+    let bites = 0; const t = C.token;
+    while (p.bowl.amt > 0 && p.food < 97 && t === C.token && !game){
+      await sleep(650); if (t !== C.token) break;
+      const n = NOM[p.bowl.kind] || NOM.fish; p.bowl.amt = Math.max(0, p.bowl.amt - 9); gain('food', n.food); gain('fun', n.fun); bites++;
+      blip(240 + Math.random() * 90, .04, 'triangle', .05); drawRoom(); drawHud();
+    }
+    if (t !== C.token){ C.busy = false; return; }
+    xp(Math.min(3, 1 + Math.floor(bites / 4))); careDay(); pose('groom');
+    say(p.bowl.amt > 0 ? rnd([`${p.name} is full and saving the rest for later. Very responsible.`, `${p.name} ate, licked their lips, and left exactly three bites. Classic.`]) : rnd([`${p.name} licked the bowl clean. Spotless.`, `All gone. ${p.name} is now staring at the empty bowl like it betrayed them.`]));
+    save(); drawHud(); await sleep(2400); if (t === C.token){ pose('sit'); C.busy = false; }
   }
-  function hearts(anchor){ if (reduced()) return; const h = el('span', 'tg-heart', rnd(['💗', '💕', '🤍'])); h.style.left = (parseFloat(anchor.style.left) + (Math.random() * 14 - 7)) + '%'; room.append(h); setTimeout(() => h.remove(), 1500); }
+  function fillBowl(kind){
+    if (p.bowl.amt >= 60 && p.bowl.kind === kind){ say(`The bowl is still pretty full. ${p.name} is not starving, despite what they tell you.`); return; }
+    p.bowl = {kind, amt:100}; blip(520, .08, 'triangle'); setTimeout(() => blip(620, .06, 'triangle'), 90);
+    say(kind === 'milk' ? `You poured a bowl of milk. ${p.name}'s ears went straight up.` : `Kibble in the bowl. The rattle summoned ${p.name} from another dimension.`);
+    save(); drawRoom(); closePanel();
+    if (!p.asleep && p.food < 92){ interrupt(); setTimeout(eat, 500); }
+    else if (!p.asleep) say(`${p.name} sniffed it, but isn't hungry yet. It'll be there later.`);
+  }
+  // Treat: drop it on the floor and the kitten trots over and snaps it up
+  async function dropTreat(){
+    if (p.coins < 2){ say('A treat costs 2 🪙. Pet or play to earn more.'); return; }
+    if (p.asleep){ say(`${p.name} is asleep. Treats work better when cats are awake.`); return; }
+    p.coins -= 2; closePanel(); interrupt();
+    const tx = 25 + Math.random() * 55, tr = el('span', 'tg-floor-treat'); tr.innerHTML = pic('🍤'); tr.style.left = tx + '%'; room.append(tr);
+    C.busy = true; say(`${p.name} heard the treat bag.`); pose('beg'); await sleep(450);
+    if (await walkTo(tx, 55)){ pose('pounce'); await sleep(350); tr.remove(); pose('eat'); blip(880, .08); gain('food', 8); gain('fun', 12); gain('love', 8); xp(2); careDay();
+      say(rnd(['CHOMP. Gone in one bite.', `${p.name} ate the shrimp and is now checking your pockets for more.`, `${p.name} would do crimes for another one.`])); hearts(); save(); drawHud(); await sleep(1200); }
+    else tr.remove();
+    C.busy = false; pose('sit');
+  }
+
+  /* ---------- a life of its own: needs first, then cat things ---------- */
+  async function idle(){
+    if (C.busy || game || p.asleep || last != null || Date.now() - saidAt < 5500) return;
+    if (p.food < 55 && p.bowl.amt > 0) return eat();
+    C.busy = true; const t = C.token;
+    try {
+      if (p.food < 30){ await walkTo(BOWL_X + 12); C.face = -1; pose('beg'); say(rnd([`${p.name} is sitting by the empty bowl. Meowing. Loudly.`, `${p.name} would like to report an empty bowl.`, 'MRRROW. (Translation: the bowl.)'])); blip(500, .15, 'sine', .05); await sleep(3500); return; }
+      if (p.energy < 22){ const bed = (p.furniture || []).includes('bed'); if (bed) await walkTo(SPOTS.bed); if (t !== C.token) return; pose('nap'); say(bed ? `${p.name} curled up in the fluffy bed for a catnap.` : `${p.name} flopped over right there for a catnap.`); await sleep(9000); if (t === C.token){ gain('energy', 10); save(); drawHud(); } return; }
+      if (p.fun < 28 && Math.random() < .6){ say(rnd([`${p.name} has the zoomies.`, `${p.name} is sprinting laps for no reason at all.`])); for (let i = 0; i < 3 && t === C.token; i++){ await walkTo(i % 2 ? 85 : 12, 75); } gain('energy', -3); return; }
+      const furn = p.furniture || [];
+      const options = [
+        [3, async () => { await walkTo(10 + Math.random() * 78); }],
+        [2, async () => { pose('groom'); say(rnd([`${p.name} is grooming. Very thorough. Very serious.`, `${p.name} is licking one paw like it owes them money.`])); await sleep(3200); }],
+        [1.5, async () => { pose('stretch'); say(`${p.name} did a big stretch. Front paws, then back paws.`); await sleep(1800); }],
+        [1.5, async () => { await walkTo(78); pose('watch'); say(new Date().getHours() >= 19 || new Date().getHours() < 7 ? `${p.name} is watching the night through the window.` : rnd([`${p.name} is chattering at a bird outside.`, `${p.name} is guarding the window. Nothing gets past.`])); await sleep(4200); }],
+        [1, async () => { pose('loaf'); say(rnd([`${p.name} turned into a loaf.`, `${p.name} is sitting very still, judging the room.`])); await sleep(4500); }],
+      ];
+      if (furn.includes('box')) options.push([2, async () => { await walkTo(SPOTS.box); pose('loaf'); say('If it fits, I sits.'); await sleep(4200); }]);
+      if (furn.includes('tree')) options.push([2, async () => { await walkTo(SPOTS.tree + 2); pose('climb'); say(`${p.name} climbed the cat tree to survey the kingdom.`); await sleep(4500); }]);
+      if (furn.includes('plant')) options.push([1, async () => { await walkTo(SPOTS.plant - 4); pose('sniff'); say(`${p.name} is "not" eating the plant.`); await sleep(2500); }]);
+      if (furn.includes('fish')) options.push([1.5, async () => { await walkTo(SPOTS.fish - 3); pose('stalk'); say(`${p.name} is staring into the fish bowl. Unblinking.`); await sleep(3500); }]);
+      if (furn.includes('rug')) options.push([1.5, async () => { await walkTo(SPOTS.rug); pose('swat'); say(`${p.name} is batting the yarn around.`); await sleep(1200); gain('fun', 4); }]);
+      if (furn.includes('bed') && p.energy < 60) options.push([1.5, async () => { await walkTo(SPOTS.bed); pose('nap'); say(`${p.name} is napping in the fluffy bed.`); await sleep(8000); gain('energy', 6); }]);
+      if (Math.random() < .3) say(rnd(trait().lines));
+      let total = options.reduce((s, o) => s + o[0], 0), r = Math.random() * total; const pick = options.find(o => (r -= o[0]) < 0) || options[0];
+      await pick[1]();
+    } finally { if (t === C.token){ C.busy = false; if (!p.asleep && !game && C.pose !== 'walk') pose('sit'); } }
+  }
+
+  /* ---------- panels ---------- */
+  function closePanel(){ panel = null; tray.hidden = true; tray.innerHTML = ''; drawHud(); }
   function openPanel(which){
-    panel = panel === which ? null : which; tray.innerHTML = ''; tray.hidden = !panel; draw(); if (!panel) return;
+    panel = panel === which ? null : which; tray.innerHTML = ''; tray.hidden = !panel; drawHud(); if (!panel) return;
     const item = (e, label, fn, cls) => { const b = el('button', 'tg-item' + (cls ? ' ' + cls : '')); b.type = 'button'; b.innerHTML = `<span aria-hidden="true">${pic(e)}</span><span></span>`; b.lastChild.textContent = label; b.onclick = fn; tray.append(b); };
     if (which === 'feed'){
-      if (p.asleep){ tray.append(el('p', 'note', `${p.name} is asleep. Feed them when they wake up.`)); return; }
-      FOODS.forEach(([e, label, fx, cost]) => item(e, label + (cost ? ` · ${cost}🪙` : ''), () => { if (cost > p.coins){ say(`Not enough coins for a ${label.toLowerCase()} yet.`); return; } if (p.food >= 98){ say(`${p.name} is stuffed. The belly is round.`); return; }
-        p.coins -= cost; Object.entries(fx).forEach(([k, v]) => gain(k, v)); xp(2); careDay(); blip(520, .1, 'triangle'); say(rnd([`${p.name} inhaled it. Zero chewing.`, `${p.name} ate, then looked at you like you forgot dessert.`, `Nom. ${p.name} approves.`])); commit(); }));
+      item('🥣', 'Fill Bowl: Kibble', () => fillBowl('fish'));
+      item('🥛', 'Pour Milk', () => fillBowl('milk'));
+      item('🍤', 'Shrimp Treat · 2🪙', dropTreat);
     }
     if (which === 'play'){
       if (p.asleep){ tray.append(el('p', 'note', `${p.name} is asleep. Play later.`)); return; }
-      item('🔴', 'Laser Pointer', () => { panel = null; tray.hidden = true; laser(); });
-      item('🍤', 'Treat Toss', () => { panel = null; tray.hidden = true; treatToss(); });
+      item('🔴', 'Laser Pointer', () => { closePanel(); laser(); });
+      item('🪶', 'Feather Wand', () => { closePanel(); wand(); });
+      item('🍤', 'Treat Toss', () => { closePanel(); treatToss(); });
     }
     if (which === 'shop'){
       tray.append(el('p', 'tg-h', 'For the room'));
       FURNITURE.forEach(([k, e, label, price, line]) => { const owned = (p.furniture || []).includes(k); item(e, label + (owned ? ' · owned' : ` · ${price}🪙`), () => {
-        if (owned){ p.x = SPOTS[k]; say(line); commit(); return; }
+        if (owned){ interrupt(); walkTo(SPOTS[k]); say(line); return; }
         if (p.coins < price){ say(`${label} costs ${price} 🪙. Keep caring for ${p.name} to earn more.`); return; }
-        p.coins -= price; p.furniture = (p.furniture || []).concat(k); p.x = SPOTS[k]; confetti(40); say(line); commit(); openPanel('shop'); openPanel('shop'); }, owned ? 'worn' : ''); });
+        p.coins -= price; p.furniture = (p.furniture || []).concat(k); confetti(40); say(line); commit(); interrupt(); walkTo(SPOTS[k]); openPanel('shop'); openPanel('shop'); }, owned ? 'worn' : ''); });
       tray.append(el('p', 'tg-h', 'To wear'));
       ACCESSORIES.forEach(([e, label, slot, price]) => { const owned = (p.owned || []).includes(e), worn = (p.worn || {})[slot] === e; item(e, label + (owned ? (worn ? ' · wearing' : '') : ` · ${price}🪙`), () => {
         if (!owned){ if (p.coins < price){ say(`${label} costs ${price} 🪙.`); return; } p.coins -= price; p.owned = (p.owned || []).concat(e); confetti(40); }
@@ -288,45 +404,95 @@ function pocketKitten(){
         say(p.worn[slot] === e ? rnd([`${p.name} looks incredible. Fashion icon.`, `${p.name} refuses to take it off now.`]) : `${label} off.`); commit(); openPanel('shop'); openPanel('shop'); }, worn ? 'worn' : ''); });
     }
   }
+
+  /* ---------- play ---------- */
+  // Shared: a full-room layer that follows your finger, and a chase loop that moves the kitten with a little lag.
+  function playLayer(cls){ const layer = el('div', 'tg-game ' + cls); room.append(layer); return layer; }
+  const roomPt = e => { const r = room.getBoundingClientRect(); return {x:Math.max(3, Math.min(97, (e.clientX - r.left) / r.width * 100)), y:Math.max(3, Math.min(97, (e.clientY - r.top) / r.height * 100))}; };
+  function endGame(){ if (!game) return; game.stop(); game = null; cat.style.transition = ''; C.busy = false; pose('sit'); }
+  // Laser: drag your finger and the dot follows. The kitten chases it, and only catches it if it's moving.
   function laser(){
     if (p.energy < 10){ say(`${p.name} is too tired to play. Nap first.`); return; }
-    const layer = el('div', 'tg-game'); const dot = el('button', 'tg-laser'); dot.type = 'button'; dot.setAttribute('aria-label', 'Tap the laser dot'); layer.append(dot);
-    let hits = 0; game = {layer};
-    const jump = () => { dot.style.left = 8 + Math.random() * 84 + '%'; dot.style.top = 15 + Math.random() * 60 + '%'; p.x = Math.max(10, Math.min(88, parseFloat(dot.style.left))); const c = room.querySelector('.tg-cat'); if (c){ c.style.left = p.x + '%'; c.classList.add('pounce'); setTimeout(() => c.classList.remove('pounce'), 350); } };
-    dot.onclick = e => { e.stopPropagation(); hits++; blip(700 + hits * 20, .05); jump(); };
-    say(`Laser time! Tap the red dot. ${p.name} is locked in.`); draw(); jump();
-    const iv = setInterval(jump, 900); const end = () => { clearInterval(iv); game = null; layer.remove(); }; stoppers.push(end);
-    setTimeout(() => { if (!game) return; end(); gain('fun', 10 + hits * 4); gain('energy', -12); earn(Math.min(10, hits)); xp(2 + Math.floor(hits / 3)); careDay();
-      say(hits >= 8 ? `${hits} catches! ${p.name} is a professional hunter. +${Math.min(10, hits)} 🪙` : `${hits} catches. ${p.name} is pleased and slightly out of breath. +${Math.min(10, hits)} 🪙`); commit(); }, 12000);
+    interrupt(); C.busy = true; cat.style.transition = 'none';
+    const layer = playLayer('laser'), dot = el('span', 'tg-laser'); layer.append(dot);
+    let pt = {x:60, y:80}, moved = 0, catches = 0, cool = 0, raf = 0, t0 = performance.now(), lastT = t0;
+    const put2 = () => { dot.style.left = pt.x + '%'; dot.style.top = pt.y + '%'; };
+    layer.addEventListener('pointerdown', e => { layer.setPointerCapture(e.pointerId); pt = roomPt(e); moved = performance.now(); put2(); });
+    layer.addEventListener('pointermove', e => { if (e.buttons === 0 && e.pointerType === 'mouse') return; const q = roomPt(e); if (Math.hypot(q.x - pt.x, q.y - pt.y) > .6) moved = performance.now(); pt = q; put2(); });
+    put2(); say(`Drag your finger around the room. ${p.name} is locked on.`);
+    const tick = now => {
+      const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+      const tired = p.energy < 15, speed = (tired ? 18 : 48) * (now < cool ? .2 : 1);
+      const dx = pt.x - C.x; if (Math.abs(dx) > 1.5){ C.face = dx < 0 ? -1 : 1; C.x += Math.sign(dx) * Math.min(Math.abs(dx), speed * dt); if (C.pose !== 'run' && now > cool) { C.pose = 'run'; } }
+      else if (now > cool && C.pose === 'run') C.pose = 'stalk';
+      const high = pt.y < 55, near = Math.abs(dx) < 6, fresh = now - moved < 1100;
+      if (near && fresh && now > cool){ cool = now + 900; C.pose = high ? 'leap' : 'pounce'; catches++; gain('fun', 3); gain('energy', -1.5); blip(700 + catches * 15, .05); }
+      drawCat();
+      if (now - t0 > 16000 || p.energy < 6){ finish(); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    const finish = () => { endGame(); gain('fun', 6); gain('energy', -6); const c = Math.min(10, catches); earn(c); xp(2 + Math.floor(catches / 3)); careDay();
+      say(p.energy < 8 ? `${p.name} flopped over, completely out of breath. Laser retired for today.` : catches >= 10 ? `${catches} catches! ${p.name} is a professional hunter. +${c} 🪙` : `${catches} catches. ${p.name} is pleased and slightly out of breath. +${c} 🪙`); commit(); };
+    game = {stop(){ cancelAnimationFrame(raf); layer.remove(); }}; stoppers.push(endGame);
+    raf = requestAnimationFrame(tick);
+  }
+  // Feather wand: dangle a feather on a string. Low = she bats it; high = she wiggles, then leaps for it.
+  function wand(){
+    if (p.energy < 10){ say(`${p.name} is too tired to play. Nap first.`); return; }
+    interrupt(); C.busy = true; cat.style.transition = 'none';
+    const layer = playLayer('wand'); layer.innerHTML = '<svg class="tg-string" preserveAspectRatio="none" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="50" vector-effect="non-scaling-stroke"/></svg><span class="tg-feather">🪶</span>';
+    const line = layer.querySelector('line'), fe = layer.querySelector('.tg-feather');
+    let pt = {x:50, y:55}, hits = 0, cool = 0, wiggleAt = 0, raf = 0, t0 = performance.now(), lastT = t0, moved = t0;
+    const put2 = () => { fe.style.left = pt.x + '%'; fe.style.top = pt.y + '%'; line.setAttribute('x1', Math.max(0, Math.min(100, pt.x - 8))); line.setAttribute('x2', pt.x); line.setAttribute('y2', pt.y); };
+    layer.addEventListener('pointerdown', e => { layer.setPointerCapture(e.pointerId); pt = roomPt(e); moved = performance.now(); put2(); });
+    layer.addEventListener('pointermove', e => { if (e.buttons === 0 && e.pointerType === 'mouse') return; const q = roomPt(e); if (Math.hypot(q.x - pt.x, q.y - pt.y) > .6) moved = performance.now(); pt = q; put2(); });
+    put2(); say(`Dangle the feather. Low for swats, high for big leaps.`);
+    const tick = now => {
+      const dt = Math.min(.05, (now - lastT) / 1000); lastT = now; const dx = pt.x - C.x;
+      if (now > cool){
+        if (Math.abs(dx) > 7){ C.face = dx < 0 ? -1 : 1; C.x += Math.sign(dx) * Math.min(Math.abs(dx) - 6, 20 * dt); C.pose = 'stalk'; wiggleAt = 0; }
+        else if (now - moved < 1500){
+          if (pt.y > 62){ cool = now + 650; C.pose = 'swat'; hits++; gain('fun', 2.5); blip(820, .04); }
+          else if (!wiggleAt){ wiggleAt = now; C.pose = 'wiggle'; }
+          else if (now - wiggleAt > 700){ cool = now + 900; wiggleAt = 0; C.pose = 'leap'; hits++; gain('fun', 4); gain('energy', -1.5); blip(980, .06); }
+        } else C.pose = 'sit';
+      }
+      drawCat();
+      if (now - t0 > 18000 || p.energy < 6){ finish(); return; }
+      raf = requestAnimationFrame(tick);
+    };
+    const finish = () => { endGame(); gain('energy', -5); const c = Math.min(10, hits); earn(c); xp(2 + Math.floor(hits / 3)); careDay();
+      say(hits >= 8 ? `${hits} hits! ${p.name} caught the feather and is now walking away with it. +${c} 🪙` : `${hits} hits. ${p.name} is pretending they weren't trying very hard. +${c} 🪙`); commit(); };
+    game = {stop(){ cancelAnimationFrame(raf); layer.remove(); }}; stoppers.push(endGame);
+    raf = requestAnimationFrame(tick);
   }
   // Treat Toss: the cat paces; tap to toss a shrimp and land it in their mouth.
   function treatToss(){
     if (p.energy < 10){ say(`${p.name} is too tired. Nap first.`); return; }
-    const layer = el('div', 'tg-game toss'); game = {layer}; let caught = 0, thrown = 0, dir = 1, x = 30;
-    say(`Tap anywhere to toss a shrimp. Time it so ${p.name} catches it!`); draw();
-    const cat = () => room.querySelector('.tg-cat');
-    const pace = setInterval(() => { x += dir * 2.2; if (x > 85 || x < 10) dir *= -1; const c = cat(); if (c){ c.style.transition = 'left .1s linear'; c.style.left = x + '%'; } }, 50);
-    layer.onclick = e => { thrown++; const t = el('span', 'tg-treat', '🍤'); layer.append(t); blip(500, .05, 'triangle');
-      setTimeout(() => { const hit = Math.abs(x - 50) < 9; t.classList.add(hit ? 'in' : 'miss'); if (hit){ caught++; blip(880, .1); hearts(cat() || layer); say(rnd(['CHOMP.', 'Caught it mid-air! Elite.', `${p.name} did a backflip. (Not really. But spiritually.)`])); } else say(rnd(['Missed. The floor gets a snack.', `${p.name} watched it fly by with total disdain.`])); setTimeout(() => t.remove(), 500); }, 650); };
-    const end = () => { clearInterval(pace); game = null; layer.remove(); const c = cat(); if (c) c.style.transition = ''; }; stoppers.push(end);
-    setTimeout(() => { if (!game) return; end(); p.x = x; gain('food', caught * 4); gain('fun', 8 + caught * 3); gain('energy', -8); earn(Math.min(10, caught * 2)); xp(2 + caught); careDay();
+    interrupt(); C.busy = true; cat.style.transition = 'none';
+    const layer = playLayer('toss'); let caught = 0, thrown = 0, dir = 1;
+    say(`Tap anywhere to toss a shrimp. Time it so ${p.name} catches it!`);
+    const pace = setInterval(() => { C.x += dir * 2.2; if (C.x > 85 || C.x < 10) dir *= -1; C.face = dir; C.pose = 'walk'; drawCat(); }, 50);
+    layer.onclick = () => { thrown++; const t = el('span', 'tg-treat'); t.innerHTML = pic('🍤'); layer.append(t); blip(500, .05, 'triangle');
+      setTimeout(() => { const hit = Math.abs(C.x - 50) < 9; t.classList.add(hit ? 'in' : 'miss'); if (hit){ caught++; blip(880, .1); hearts(); say(rnd(['CHOMP.', 'Caught it mid-air! Elite.', `${p.name} did a backflip. (Not really. But spiritually.)`])); } else say(rnd(['Missed. The floor gets a snack.', `${p.name} watched it sail past with mild disappointment.`])); setTimeout(() => t.remove(), 600); }, 650); };
+    game = {stop(){ clearInterval(pace); layer.remove(); }}; stoppers.push(endGame);
+    setTimeout(() => { if (!game) return; endGame(); gain('food', caught * 4); gain('fun', 8 + caught * 3); gain('energy', -8); earn(Math.min(10, caught * 2)); xp(2 + caught); careDay();
       say(`${caught} of ${thrown} shrimp caught. ${caught >= 5 ? `${p.name} is a shrimp-catching legend.` : 'Practice makes perfect. And full cats.'} +${Math.min(10, caught * 2)} 🪙`); commit(); }, 15000);
   }
-  function toggleSleep(){ p.asleep = !p.asleep; if (p.asleep) p.sleptAt = Date.now(); careDay(); say(p.asleep ? `Lights out. ${p.name} curled into a perfect loaf. 💤` : (p.energy > 70 ? `${p.name} woke up and stretched for a full minute.` : `${p.name} woke up grumpy. More sleep next time.`)); commit(); }
+  function toggleSleep(){ interrupt(); p.asleep = !p.asleep; if (p.asleep) p.sleptAt = Date.now(); careDay(); say(p.asleep ? `Lights out. ${p.name} curled into a perfect loaf. 💤` : (p.energy > 70 ? `${p.name} woke up and stretched for a full minute.` : `${p.name} woke up grumpy. More sleep next time.`)); if (!p.asleep) C.pose = 'stretch'; commit(); if (!p.asleep) setTimeout(() => { if (C.pose === 'stretch') pose('sit'); }, 1800); }
   function vet(){ p.sick = false; gain('food', 40); gain('fun', 20); gain('love', 20); p.poops = []; careDay(); say(`The vet says ${p.name} will be fine. Extra cuddles prescribed.`); commit(); }
   function rename(){ tray.innerHTML = ''; panel = 'rename'; tray.hidden = false; const f = el('form', 'tg-rename'); f.innerHTML = `<label class="sr" for="petRename">New name</label><input id="petRename" maxlength="20" value="${p.name.replace(/"/g, '&quot;')}"><button class="btn">Save</button>`;
-    f.onsubmit = e => { e.preventDefault(); const v = f.querySelector('input').value.trim(); if (!v) return; p.name = v; panel = null; tray.hidden = true; commit(); }; tray.append(f); }
+    f.onsubmit = e => { e.preventDefault(); const v = f.querySelector('input').value.trim(); if (!v) return; p.name = v; closePanel(); commit(); }; tray.append(f); }
   if (!p.asleep && Date.now() - (p.lastEvent || 0) > 4 * 36e5 && Math.random() < .6){
     p.lastEvent = Date.now();
-    const ev = rnd([() => { earn(3); return `${p.name} left a gift by your shoe: a toy mouse 🐭. Very proud. +3 🪙`; }, () => { gain('fun', 10); return `${p.name} knocked a pen off the table, then looked right at you.`; }, () => { xp(3); return `${p.name} learned a new trick: sitting on whatever you're using.`; }, () => { gain('love', 10); return `${p.name} was waiting by the door for you.`; }, () => { earn(2); return `${p.name} found a coin under the couch. Finders keepers. +2 🪙`; }])();
+    const ev = rnd([() => { earn(3); return `${p.name} left a gift by your shoe: a toy mouse 🐭. Very proud. +3 🪙`; }, () => { gain('fun', 10); return `${p.name} knocked a pen off the table, then looked right at you.`; }, () => { xp(3); return `${p.name} learned a new trick: sitting on whatever you're using.`; }, () => { gain('love', 10); return `${p.name} brought you a sock. It is now your sock. You're welcome.`; }])();
     petSave(p); setTimeout(() => say(ev), 500);
   }
-  // wander between furniture; sometimes say something in character
-  const wander = setInterval(() => { if (game || p.asleep) return; const spots = (p.furniture || []).map(k => SPOTS[k]); p.x = spots.length && Math.random() < .6 ? rnd(spots) : 12 + Math.random() * 74; const c = room.querySelector('.tg-cat'); if (c) c.style.left = p.x + '%';
-    if (Math.random() < .35){ const t = PERSONALITIES[p.trait]; say(t ? rnd(t.lines) : 'Mrrp.'); } }, 4500);
-  const refresh = setInterval(() => { const q = petLoad(); Object.assign(p, {food:q.food, fun:q.fun, love:q.love, energy:q.energy, poops:q.poops, sick:q.sick}); petSave(p); draw(); }, 60000);
-  stoppers.push(() => { clearInterval(wander); clearInterval(refresh); });
-  draw(); show();
+  const life = setInterval(idle, 3200);
+  const refresh = setInterval(() => { const q = petLoad(); Object.assign(p, {food:q.food, fun:q.fun, love:q.love, energy:q.energy, poops:q.poops, sick:q.sick}); save(); drawHud(); drawRoom(); }, 60000);
+  stoppers.push(() => { clearInterval(life); clearInterval(refresh); C.token++; p.x = C.x; save(); });
+  drawRoom(); drawHud(); show();
+  if (!p.asleep && p.food < 55 && p.bowl.amt > 0) setTimeout(eat, 1200);
 }
 
 /* ================= D. Catch the kittens ================= */

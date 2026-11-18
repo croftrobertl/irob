@@ -436,3 +436,48 @@
 .m-row{display:flex;gap:8px}.m-row .btn{flex:1}
 .m-msg{color:#b3412e;min-height:0}.m-msg:empty{display:none}
 .m-x{background:none;border:0;color:var(--ink-soft);font:14px var(--body,inherit);padding:6px;align-self:center}
+
+/* ================= Pocket Kitten v4: a kitten that walks, eats and plays on its own ================= */
+.tg-cat{transition:left .3s linear}
+.tg-body{position:relative;width:100%;height:100%;transform-origin:50% 100%;transform:scaleX(var(--face,1))}
+.tg-body .cat-svg{width:100%;height:100%;display:block;overflow:visible}
+.tg-body .cat-svg .head{transform-box:fill-box;transform-origin:50% 90%;transition:transform .25s}
+.pose-walk .tg-body{animation:catWalk .38s ease-in-out infinite}
+.pose-run .tg-body{animation:catWalk .2s ease-in-out infinite}
+@keyframes catWalk{50%{transform:scaleX(var(--face,1)) translateY(-5px) rotate(calc(var(--face,1) * 3deg))}}
+.pose-eat .cat-svg .head{animation:nom .65s ease-in-out infinite}
+@keyframes nom{0%,100%{transform:translate(12px,40px) rotate(14deg)}50%{transform:translate(10px,31px) rotate(9deg)}}
+.pose-sniff .cat-svg .head{transform:translate(9px,24px) rotate(10deg)}
+.pose-groom .cat-svg .head{animation:groom .7s ease-in-out infinite}
+@keyframes groom{0%,100%{transform:rotate(-7deg) translateY(4px)}50%{transform:rotate(6deg) translateY(8px)}}
+.pose-watch .cat-svg .head{transform:rotate(-5deg) translateY(-3px)}
+.pose-stretch .tg-body{transform:scaleX(calc(var(--face,1) * 1.2)) scaleY(.8);transition:transform .5s}
+.pose-loaf .tg-body{transform:scaleX(calc(var(--face,1) * 1.06)) scaleY(.86);transition:transform .4s}
+.pose-stalk .tg-body{transform:scaleX(var(--face,1)) scaleY(.86) translateY(3px)}
+.pose-wiggle .tg-body{animation:wiggle .12s linear infinite}
+@keyframes wiggle{0%,100%{transform:scaleX(var(--face,1)) scaleY(.84) translateX(-2px)}50%{transform:scaleX(var(--face,1)) scaleY(.84) translateX(2px)}}
+.pose-pounce .tg-body{animation:pounce2 .4s ease-out}
+@keyframes pounce2{40%{transform:scaleX(var(--face,1)) translateY(-16px) scaleY(1.06)}}
+.pose-leap .tg-body{animation:leap .6s cubic-bezier(.2,.8,.3,1)}
+@keyframes leap{45%{transform:scaleX(var(--face,1)) translateY(-70%) rotate(calc(var(--face,1) * -8deg))}}
+.pose-swat .tg-body{animation:swat2 .45s}
+@keyframes swat2{25%{transform:scaleX(var(--face,1)) rotate(calc(var(--face,1) * -10deg)) scale(1.06)}60%{transform:scaleX(var(--face,1)) rotate(calc(var(--face,1) * 7deg))}}
+.pose-purr .tg-body{animation:purrBuzz .18s linear infinite}
+@keyframes purrBuzz{50%{transform:scaleX(var(--face,1)) translateY(-1px) scale(1.01)}}
+.pose-beg .tg-body{animation:beg .9s ease-in-out infinite}
+@keyframes beg{50%{transform:scaleX(var(--face,1)) translateY(-6px) scaleY(1.04)}}
+.tg-cat.pose-climb{bottom:30%;transition:left .3s linear,bottom .6s ease-out}
+.tg-cat .acc{z-index:1}
+/* bowl: the kibble pile shrinks as she eats */
+.tg-bowl{bottom:7%;width:44px;height:44px;transform:translateX(-50%);z-index:1}
+.tg-bowl .pic{width:100%;height:100%;clip-path:inset(calc((1 - var(--amt,1)) * 34%) 0 0 0);transition:clip-path .5s}
+.tg-floor-treat{position:absolute;bottom:7%;font-size:26px;transform:translateX(-50%);z-index:1;animation:treatDrop .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes treatDrop{from{transform:translate(-50%,-160%);opacity:0}}
+/* play */
+.tg-game.laser,.tg-game.wand{touch-action:none;cursor:crosshair}
+.tg-game .tg-laser{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:radial-gradient(circle,#fff 0 3px,#ff2a2a 4px 7px,rgba(255,42,42,.35) 8px,transparent 62%);transition:none;pointer-events:none}
+.tg-string{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tg-string line{stroke:rgba(90,60,30,.7);stroke-width:1.5}
+.tg-feather{position:absolute;font-size:34px;line-height:1;transform:translate(-50%,-15%) rotate(-25deg);pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+@media (prefers-reduced-motion:reduce){.tg-body,.tg-body *{animation:none!important}}
+.pose-eat .acc.head,.pose-eat .acc.face,.pose-sniff .acc.head,.pose-sniff .acc.face,.pose-groom .acc.face{opacity:0;transition:opacity .2s}
