@@ -44,19 +44,23 @@ async function usFile(request, env, origin){
   const obj = await env.FILES.get('us.enc.json');
   return obj ? new Response(obj.body, { headers: { ...fileHeaders(origin), 'Content-Type': 'application/json' } }) : json({ error: 'not_found' }, 404, origin);
 }
-// One-time move: copies the encrypted files from the public site into R2. Safe to open more than once.
+// One-time move: copies the encrypted files from the public site into R2, a few per visit
+// (free Workers allow ~50 sub-requests per visit, and R2 needs each file's size up front, so files are read fully first).
+// Safe to open again and again: it reports how many are left.
 async function migrate(env, origin){
   if (!env.FILES) return json({ error: 'no_storage: add the R2 binding named FILES first' }, 503, origin);
-  const done = [], skipped = [], failed = [];
-  const put = async (path, key) => {
-    if (await env.FILES.head(key)) { skipped.push(key); return; }
-    const r = await fetch(SITE + path, { cf: { cacheTtl: 0 } });
-    if (!r.ok) { failed.push(key + ' (' + r.status + ')'); return; }
-    await env.FILES.put(key, r.body); done.push(key);
-  };
-  await put('us.enc.json', 'us.enc.json');
-  for (const n of FILE_LIST) await put('music/' + n, 'music/' + n);
-  return json({ ok: !failed.length, copied: done.length, alreadyThere: skipped.length, failed }, failed.length ? 500 : 200, origin);
+  try {
+    const have = new Set((await env.FILES.list({ limit: 1000 })).objects.map(o => o.key));
+    const want = ['us.enc.json', ...FILE_LIST.map(n => 'music/' + n)].filter(k => !have.has(k));
+    const done = [], failed = [];
+    for (const key of want.slice(0, 6)){
+      const r = await fetch(SITE + key, { cf: { cacheTtl: 0 } });
+      if (!r.ok) { failed.push(key + ' (' + r.status + ')'); continue; }
+      await env.FILES.put(key, await r.arrayBuffer()); done.push(key);
+    }
+    const remaining = want.length - done.length;
+    return json({ ok: !failed.length, copied: done.length, alreadyThere: have.size, remaining, failed, next: remaining && !failed.length ? 'open this link again' : 'done' }, 200, origin);
+  } catch (e) { return json({ error: 'migrate_failed', detail: String(e && e.message || e) }, 500, origin); }
 }
 const FILE_LIST = ["2c18c354f36ed01f.bin", "3bac6021f470d474.bin", "45f9adc8fa149b16.bin", "4fe78bb26c77f0b7.bin", "5116af470e75ef3b.bin", "936db31c85b39a9e.bin", "a564197ac4bd2fd6.bin", "aa5903f37449d80b.bin", "be2271f18c46d886.bin", "bfe426d57a75e374.bin", "f073be2077c9d775.bin", "notes.bin", "playlist.bin", "v-4dc7f7e61680d9e6.bin", "v-61a69b8851ffc5ff.bin", "v-69991ad143834c65.bin", "v-6b11ddc79d4963c1.bin", "v-affc75c402c4099d.bin"];
 
