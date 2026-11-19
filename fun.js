@@ -646,8 +646,20 @@ function fortuneCookie(){
 /* ================= G. Date night for two (password-locked) ================= */
 const US_PASS = 'try_us_pass';
 let usData = null;
+// The encrypted file lives in private storage behind the relay, which checks a slow hash of the password first
+// and limits wrong guesses. (Falls back to the old public copy only while that still exists.)
+const RELAY_URL = 'https://irob-ai.croftrobertl.workers.dev';
+async function usCheck(pass){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass.normalize('NFKC').trim().toLowerCase()), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt:new TextEncoder().encode('irob-us-check-v1'), iterations:200000, hash:'SHA-256'}, base, 256);
+  return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
 async function openUs(pass){
-  const r = await fetch('us.enc.json', {cache:'no-cache'}); if (!r.ok) throw 0;
+  let r = null;
+  try { r = await fetch(RELAY_URL + '/us', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({check:await usCheck(pass)})}); } catch {}
+  if (r && r.status === 403) throw new Error('wrong');
+  if (r && r.status === 429) throw new Error('too_many');
+  if (!r || !r.ok){ r = await fetch('us.enc.json', {cache:'no-cache'}); if (!r.ok) throw new Error('offline'); }
   const e = await r.json();
   const b64 = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4)), c => c.charCodeAt(0));
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass.normalize('NFKC').trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']);
@@ -664,7 +676,7 @@ async function dateNight(){
     f.innerHTML = '<div class="us-icon" aria-hidden="true"><img src="icons/94.webp" alt="" style="width:64px;height:64px"></div><p>Grown-ups only. Enter the password.</p><label class="sr" for="usPass">Password</label><input id="usPass" type="password" autocomplete="off" autocapitalize="none" spellcheck="false"><label class="us-remember"><input type="checkbox" id="usRemember"> Remember on this phone</label><button class="btn">Unlock</button>';
     f.onsubmit = async e => { e.preventDefault(); const pw = f.querySelector('#usPass').value; if (!pw) return;
       try { usData = await openUs(pw); if (f.querySelector('#usRemember').checked) put(US_PASS, pw); dateNight(); }
-      catch { A().toast('That\'s not it'); f.querySelector('#usPass').select(); } };
+      catch (err){ A().toast(err && err.message === 'too_many' ? 'Too many tries. Wait an hour and try again.' : err && err.message === 'offline' ? 'Can\'t reach it right now. Check your connection.' : 'That\'s not it'); f.querySelector('#usPass').select(); } };
     body.append(f); show(); setTimeout(() => f.querySelector('#usPass').focus(), 350); return;
   }
   const dice = el('div', 'us-dice');

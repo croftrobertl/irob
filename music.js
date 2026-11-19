@@ -15,10 +15,19 @@ function takeKey(){
   put(KEY, m[1]);
   const rest = location.hash.replace(/(^#|&)music=[A-Za-z0-9_-]+/, '$1').replace(/^#&/, '#');
   try { history.replaceState(null, '', location.pathname + location.search + (rest === '#' ? '' : rest)); } catch {}
-  cryptoKey = null; build();
+  cryptoKey = null; kHash = null; build();
   setTimeout(() => window.iRob && window.iRob.toast('🎶 Your playlist is unlocked. Tap ♫ at the top.'), 1500);
 }
 
+// Private files come from storage behind the relay, which only hands them to a phone holding the key.
+// (Falls back to the old public copies only while those still exist.)
+const RELAY = 'https://irob-ai.croftrobertl.workers.dev';
+let kHash = null;
+async function keyCheck(){ if (kHash) return kHash; const k = get(KEY, ''); kHash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k)))].map(b => b.toString(16).padStart(2, '0')).join(''); return kHash; }
+async function pfetch(name){
+  try { const r = await fetch(`${RELAY}/f/${name}?k=${await keyCheck()}`); if (r.ok) return r; } catch {}
+  return fetch('music/' + name, {cache:'no-cache'});
+}
 let cryptoKey = null, songs = [], allSongs = [], idx = get(POS, 0), audio = null, url = null, loading = false;
 async function key(){
   if (cryptoKey) return cryptoKey;
@@ -28,7 +37,7 @@ async function key(){
 async function open(bytes){ const k = await key(); return crypto.subtle.decrypt({name:'AES-GCM', iv:bytes.slice(0, 12)}, k, bytes.slice(12)); }
 async function loadList(){
   if (songs.length) return songs;
-  const r = await fetch('music/playlist.bin', {cache:'no-cache'}); if (!r.ok) throw new Error('list');
+  const r = await pfetch('playlist.bin'); if (!r.ok) throw new Error('list');
   const j = JSON.parse(new TextDecoder().decode(await open(new Uint8Array(await r.arrayBuffer()))));
   allSongs = (j.songs || []).filter(s => s.file);        // songs still waiting for their file are skipped
   songs = allSongs.filter(s => !s.tag);                  // tagged songs (e.g. 'mad') only play on their cue, never in the playlist
@@ -91,7 +100,7 @@ async function playTag(tag){
   const a = ensureAudio(); if (a.paused){ a.src = SILENCE; a.play().catch(() => {}); }
   try {
     await loadList(); const s = allSongs.find(x => x.tag === tag); if (!s) return;
-    const r = await fetch('music/' + s.file); if (!r.ok) return;
+    const r = await pfetch(s.file); if (!r.ok) return;
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
     if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
     if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
@@ -104,7 +113,7 @@ async function playAt(i){
     await loadList(); if (!songs.length) throw new Error('empty');
     idx = (i + songs.length) % songs.length; put(POS, idx);
     const s = songs[idx];
-    const r = await fetch('music/' + s.file); if (!r.ok) throw new Error('song');
+    const r = await pfetch(s.file); if (!r.ok) throw new Error('song');
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
     if (url) URL.revokeObjectURL(url);
     url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
@@ -145,7 +154,7 @@ function unlockPrompt(){
   const go = async () => {
     const v = inp.value.trim(), m = v.match(/music=([A-Za-z0-9_-]{40,})/) || v.match(/^([A-Za-z0-9_-]{40,})$/);
     if (!m){ msg.textContent = 'That doesn\'t look like the music link. Copy the whole link and try again.'; return; }
-    const old = get(KEY, null); put(KEY, m[1]); cryptoKey = null; songs = [];
+    const old = get(KEY, null); put(KEY, m[1]); cryptoKey = null; kHash = null; songs = [];
     try { await loadList(); } catch { if (old) put(KEY, old); else try { localStorage.removeItem(KEY); } catch {} cryptoKey = null; msg.textContent = 'That link didn\'t unlock the music. Make sure it\'s the newest one.'; return; }
     close(); build(); if (window.iRob) window.iRob.toast('🎶 Unlocked! Tap ♫ at the top any time.'); window.iRobMusic.open();
   };
@@ -155,7 +164,7 @@ function unlockPrompt(){
 let notesList = null, vnAudio = null, vnTick = null; const vnUrls = new Map();
 async function notes(){
   if (notesList) return notesList; if (!get(KEY, null)) return [];
-  try { const r = await fetch('music/notes.bin', {cache:'no-cache'}); if (!r.ok) return []; notesList = (JSON.parse(new TextDecoder().decode(await open(new Uint8Array(await r.arrayBuffer())))).notes || []); }
+  try { const r = await pfetch('notes.bin'); if (!r.ok) return []; notesList = (JSON.parse(new TextDecoder().decode(await open(new Uint8Array(await r.arrayBuffer())))).notes || []); }
   catch { return []; }
   return notesList;
 }
@@ -170,7 +179,7 @@ function playNote(id, onTick){
   return (async () => {
     const n = (await notes()).find(x => x.id === id); if (!n) throw new Error('missing');
     let u = vnUrls.get(id);
-    if (!u){ const r = await fetch('music/' + n.file); if (!r.ok) throw new Error('fetch'); u = URL.createObjectURL(new Blob([await open(new Uint8Array(await r.arrayBuffer()))], {type:'audio/mp4'})); vnUrls.set(id, u); }
+    if (!u){ const r = await pfetch(n.file); if (!r.ok) throw new Error('fetch'); u = URL.createObjectURL(new Blob([await open(new Uint8Array(await r.arrayBuffer()))], {type:'audio/mp4'})); vnUrls.set(id, u); }
     if (vnTick !== (onTick || null)) return;          // another note was tapped meanwhile
     a.ontimeupdate = () => { if (vnTick && a.duration) vnTick(a.currentTime / a.duration, true); };
     a.onended = () => { const t = vnTick; vnTick = null; t && t(1, false); };

@@ -1,7 +1,7 @@
 // iRob offline support: the app opens even with no signal.
 // Pages/scripts: network first (so updates arrive right away), cached copy when offline.
 // Fonts/images: cache first. Never caches AI, photos from other sites, or anything that isn't a plain GET.
-const CACHE = 'irob-v21';
+const CACHE = 'irob-v22';
 const SHELL = ['./', './index.html', './cards.js', './cards.css', './life.js', './fun.js', './fun.css', './music.js', './cat.js', './rob.jpg', './icon-180.png?v=2', './favicon-32.png?v=3',
   './fonts/cinzel-latin.woff2', './fonts/lora-400-latin.woff2', './fonts/lora-italic-400-latin.woff2', './fonts/cormorant-600-latin.woff2'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

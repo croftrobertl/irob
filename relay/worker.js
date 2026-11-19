@@ -2,12 +2,63 @@
 // Order: Groq (fast, free tier) → Cloudflare Workers AI (free daily allowance) → error (the app then falls back on its own).
 // Secrets/bindings set in the Cloudflare dashboard: GROQ_API_KEY (secret), AI (Workers AI binding),
 // LOG (optional KV namespace binding: stores anonymous app error reports for 30 days; no chat text is ever sent).
+// FILES (R2 bucket binding, bucket "irob-private"): the private, already-encrypted files (music, voice notes, Just Us),
+//   kept out of the public GitHub repo. Music/voice files are handed only to a phone that holds the music key;
+//   the Just Us file only after the password check below.
+// US_CHECK (secret): a slow hash of the Just Us password. Wrong guesses are limited per visitor, so the file can't be
+//   downloaded and password-guessed offline.
 const ALLOWED_ORIGINS = ['https://croftrobertl.github.io'];
 const GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant', 'llama-3.3-70b-versatile'];
 const CF_MODELS = ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct-fast', '@cf/meta/llama-3.1-8b-instruct', '@cf/meta/llama-3.2-3b-instruct'];
 const MAX_MESSAGES = 30, MAX_CHARS = 24000, MAX_TOKENS = 600;
 const PER_MINUTE = 20;            // per visitor IP, per Worker instance — keeps strangers from burning the free quota
 const hits = new Map();
+const MUSIC_CHECK = 'c0a4bad02b127849d5cebc1f1e85be950c59fbd347d65fbb73059f6673bad5f7';          // SHA-256 of the music key (safe to publish: the key is 256 random bits)
+const PRIVATE_NAME = /^(playlist\.bin|notes\.bin|v-[0-9a-f]{16}\.bin|[0-9a-f]{16}\.bin)$/;
+const US_FAILS_PER_HOUR = 8;
+const SITE = 'https://croftrobertl.github.io/irob/';
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+const sha256 = async str => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
+function same(a, b){ if (typeof a !== 'string' || a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
+const fileHeaders = origin => ({ 'Content-Type': 'application/octet-stream', 'Cache-Control': 'private, max-age=86400', ...cors(origin) });
+
+// Music, playlist and voice notes: only for a phone that proves it holds the music key.
+async function privateFile(name, url, env, origin){
+  if (!env.FILES) return json({ error: 'no_storage' }, 503, origin);
+  if (!PRIVATE_NAME.test(name)) return json({ error: 'not_found' }, 404, origin);
+  if (!same(url.searchParams.get('k') || '', MUSIC_CHECK)) return json({ error: 'forbidden' }, 403, origin);
+  const obj = await env.FILES.get('music/' + name);
+  return obj ? new Response(obj.body, { headers: fileHeaders(origin) }) : json({ error: 'not_found' }, 404, origin);
+}
+// Just Us: the password is checked here (never stored, only a slow hash of it), with a cap on wrong guesses.
+async function usFile(request, env, origin){
+  if (!env.FILES || !env.US_CHECK) return json({ error: 'no_storage' }, 503, origin);
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown', rk = 'rl:us:' + ip;
+  const fails = env.LOG ? parseInt(await env.LOG.get(rk) || '0', 10) : 0;
+  if (fails >= US_FAILS_PER_HOUR) return json({ error: 'too_many' }, 429, origin);
+  let body; try { body = await request.json(); } catch { return json({ error: 'bad_json' }, 400, origin); }
+  if (typeof body.check !== 'string' || !same(await sha256(body.check), env.US_CHECK)){
+    if (env.LOG) await env.LOG.put(rk, String(fails + 1), { expirationTtl: 3600 });
+    return json({ error: 'wrong' }, 403, origin);
+  }
+  const obj = await env.FILES.get('us.enc.json');
+  return obj ? new Response(obj.body, { headers: { ...fileHeaders(origin), 'Content-Type': 'application/json' } }) : json({ error: 'not_found' }, 404, origin);
+}
+// One-time move: copies the encrypted files from the public site into R2. Safe to open more than once.
+async function migrate(env, origin){
+  if (!env.FILES) return json({ error: 'no_storage: add the R2 binding named FILES first' }, 503, origin);
+  const done = [], skipped = [], failed = [];
+  const put = async (path, key) => {
+    if (await env.FILES.head(key)) { skipped.push(key); return; }
+    const r = await fetch(SITE + path, { cf: { cacheTtl: 0 } });
+    if (!r.ok) { failed.push(key + ' (' + r.status + ')'); return; }
+    await env.FILES.put(key, r.body); done.push(key);
+  };
+  await put('us.enc.json', 'us.enc.json');
+  for (const n of FILE_LIST) await put('music/' + n, 'music/' + n);
+  return json({ ok: !failed.length, copied: done.length, alreadyThere: skipped.length, failed }, failed.length ? 500 : 200, origin);
+}
+const FILE_LIST = ["2c18c354f36ed01f.bin", "3bac6021f470d474.bin", "45f9adc8fa149b16.bin", "4fe78bb26c77f0b7.bin", "5116af470e75ef3b.bin", "936db31c85b39a9e.bin", "a564197ac4bd2fd6.bin", "aa5903f37449d80b.bin", "be2271f18c46d886.bin", "bfe426d57a75e374.bin", "f073be2077c9d775.bin", "notes.bin", "playlist.bin", "v-4dc7f7e61680d9e6.bin", "v-61a69b8851ffc5ff.bin", "v-69991ad143834c65.bin", "v-6b11ddc79d4963c1.bin", "v-affc75c402c4099d.bin"];
 
 function cors(origin){
   const ok = ALLOWED_ORIGINS.includes(origin);
@@ -80,12 +131,16 @@ export default {
     const origin = request.headers.get('Origin') || '';
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
+    if (request.method === 'GET' && url.pathname.startsWith('/f/')) return privateFile(url.pathname.slice(3), url, env, origin);
+    if (request.method === 'GET' && url.pathname === '/migrate') return migrate(env, origin);
+    if (request.method === 'POST' && url.pathname === '/us') return usFile(request, env, origin);
     if (request.method === 'GET') {
       if (url.searchParams.get('deep') !== '1') return json({ ok: true, groq: !!env.GROQ_API_KEY, workersAI: !!env.AI }, 200, origin);
       const probe = [{ role: 'user', content: 'Reply with one short friendly sentence.' }];
       const g = await tryGroq(env, probe, 300), c = await tryCloudflare(env, probe, 60);
       const errors7d = await countErrors(env);
-      return json({ ok: !!(g || c), groq: g ? g.model : null, cloudflare: c ? c.model : null, errors7d }, g || c ? 200 : 503, origin);
+      const storage = env.FILES ? (await env.FILES.list({ limit: 100 })).objects.length : null;
+      return json({ ok: !!(g || c), groq: g ? g.model : null, cloudflare: c ? c.model : null, errors7d, storage, usCheck: !!env.US_CHECK }, g || c ? 200 : 503, origin);
     }
     if (request.method === 'POST' && url.pathname === '/log') return logError(request, env, origin);
     if (request.method !== 'POST' || url.pathname !== '/chat') return json({ error: 'not_found' }, 404, origin);
