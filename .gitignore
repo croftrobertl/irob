@@ -1,0 +1,4 @@
+# test screenshots never belong in the app
+/*.png
+!/favicon-*.png
+!/icon-*.png
