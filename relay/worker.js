@@ -5,6 +5,7 @@
 // FILES (R2 bucket binding, bucket "irob-private"): the private, already-encrypted files (music, voice notes, Just Us),
 //   kept out of the public GitHub repo. Music/voice files are handed only to a phone that holds the music key;
 //   the Just Us file only after the password check below.
+//   It also holds each phone's automatic backup (b/<id>/latest and /prev), encrypted on the phone before upload.
 // US_CHECK (secret): a slow hash of the Just Us password. Wrong guesses are limited per visitor, so the file can't be
 //   downloaded and password-guessed offline.
 const ALLOWED_ORIGINS = ['https://croftrobertl.github.io'];
@@ -16,7 +17,6 @@ const hits = new Map();
 const MUSIC_CHECK = 'c0a4bad02b127849d5cebc1f1e85be950c59fbd347d65fbb73059f6673bad5f7';          // SHA-256 of the music key (safe to publish: the key is 256 random bits)
 const PRIVATE_NAME = /^(playlist\.bin|notes\.bin|v-[0-9a-f]{16}\.bin|[0-9a-f]{16}\.bin)$/;
 const US_FAILS_PER_HOUR = 8;
-const SITE = 'https://croftrobertl.github.io/irob/';
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 const sha256 = async str => hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
 function same(a, b){ if (typeof a !== 'string' || a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
@@ -44,25 +44,38 @@ async function usFile(request, env, origin){
   const obj = await env.FILES.get('us.enc.json');
   return obj ? new Response(obj.body, { headers: { ...fileHeaders(origin), 'Content-Type': 'application/json' } }) : json({ error: 'not_found' }, 404, origin);
 }
-// One-time move: copies the encrypted files from the public site into R2, a few per visit
-// (free Workers allow ~50 sub-requests per visit, and R2 needs each file's size up front, so files are read fully first).
-// Safe to open again and again: it reports how many are left.
-async function migrate(env, origin){
-  if (!env.FILES) return json({ error: 'no_storage: add the R2 binding named FILES first' }, 503, origin);
+// Automatic backups. The phone encrypts everything before upload with a key that never leaves it (except inside the
+// restore link its owner saves), so this only ever stores scrambled data. The backup's address and the proof needed to
+// read or replace it are both derived from that key, so only the key holder can touch it. The previous copy is kept.
+const BK_MAX_BYTES = 4 * 1024 * 1024, BK_WRITES_PER_DAY = 12, BK_MAX_OBJECTS = 400;
+async function backup(request, url, env, origin){
+  if (!env.FILES) return json({ error: 'no_storage' }, 503, origin);
+  const id = url.pathname.slice(3), proof = url.searchParams.get('a') || '';
+  if (!/^[0-9a-f]{32}$/.test(id) || !/^[0-9a-f]{64}$/.test(proof)) return json({ error: 'not_found' }, 404, origin);
+  const auth = await sha256(proof), key = 'b/' + id;
   try {
-    const have = new Set((await env.FILES.list({ limit: 1000 })).objects.map(o => o.key));
-    const want = ['us.enc.json', ...FILE_LIST.map(n => 'music/' + n)].filter(k => !have.has(k));
-    const done = [], failed = [];
-    for (const key of want.slice(0, 6)){
-      const r = await fetch(SITE + key, { cf: { cacheTtl: 0 } });
-      if (!r.ok) { failed.push(key + ' (' + r.status + ')'); continue; }
-      await env.FILES.put(key, await r.arrayBuffer()); done.push(key);
+    if (request.method === 'GET'){
+      const obj = await env.FILES.get(key + (url.searchParams.get('v') === 'prev' ? '/prev' : '/latest'));
+      if (!obj) return json({ error: 'not_found' }, 404, origin);
+      if (!same(obj.customMetadata && obj.customMetadata.auth || '', auth)) return json({ error: 'forbidden' }, 403, origin);
+      return new Response(obj.body, { headers: { ...fileHeaders(origin), 'Cache-Control': 'no-store' } });
     }
-    const remaining = want.length - done.length;
-    return json({ ok: !failed.length, copied: done.length, alreadyThere: have.size, remaining, failed, next: remaining && !failed.length ? 'open this link again' : 'done' }, 200, origin);
-  } catch (e) { return json({ error: 'migrate_failed', detail: String(e && e.message || e) }, 500, origin); }
+    if (!ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, origin);
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown', rk = 'rl:bk:' + ip + ':' + new Date().toISOString().slice(0, 10);
+    const used = env.LOG ? parseInt(await env.LOG.get(rk) || '0', 10) : 0;
+    if (used >= BK_WRITES_PER_DAY) return json({ error: 'slow_down' }, 429, origin);
+    const body = await request.arrayBuffer();
+    if (body.byteLength < 40 || body.byteLength > BK_MAX_BYTES) return json({ error: 'bad_size' }, 413, origin);
+    const cur = await env.FILES.get(key + '/latest');
+    if (cur){
+      if (!same(cur.customMetadata && cur.customMetadata.auth || '', auth)) return json({ error: 'forbidden' }, 403, origin);
+      await env.FILES.put(key + '/prev', await cur.arrayBuffer(), { customMetadata: cur.customMetadata });
+    } else if ((await env.FILES.list({ prefix: 'b/', limit: 1000 })).objects.length >= BK_MAX_OBJECTS) return json({ error: 'full' }, 507, origin);
+    await env.FILES.put(key + '/latest', body, { customMetadata: { auth, t: new Date().toISOString() } });
+    if (env.LOG) await env.LOG.put(rk, String(used + 1), { expirationTtl: 2 * 86400 });
+    return json({ ok: true, bytes: body.byteLength }, 200, origin);
+  } catch (e) { return json({ error: 'backup_failed', detail: String(e && e.message || e) }, 500, origin); }
 }
-const FILE_LIST = ["2c18c354f36ed01f.bin", "3bac6021f470d474.bin", "45f9adc8fa149b16.bin", "4fe78bb26c77f0b7.bin", "5116af470e75ef3b.bin", "936db31c85b39a9e.bin", "a564197ac4bd2fd6.bin", "aa5903f37449d80b.bin", "be2271f18c46d886.bin", "bfe426d57a75e374.bin", "f073be2077c9d775.bin", "notes.bin", "playlist.bin", "v-4dc7f7e61680d9e6.bin", "v-61a69b8851ffc5ff.bin", "v-69991ad143834c65.bin", "v-6b11ddc79d4963c1.bin", "v-affc75c402c4099d.bin"];
 
 function cors(origin){
   const ok = ALLOWED_ORIGINS.includes(origin);
@@ -136,7 +149,7 @@ export default {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(origin) });
     if (request.method === 'GET' && url.pathname.startsWith('/f/')) return privateFile(url.pathname.slice(3), url, env, origin);
-    if (request.method === 'GET' && url.pathname === '/migrate') return migrate(env, origin);
+    if ((request.method === 'GET' || request.method === 'POST') && url.pathname.startsWith('/b/')) return backup(request, url, env, origin);
     if (request.method === 'POST' && url.pathname === '/us') return usFile(request, env, origin);
     if (request.method === 'GET') {
       if (url.searchParams.get('deep') !== '1') return json({ ok: true, groq: !!env.GROQ_API_KEY, workersAI: !!env.AI }, 200, origin);

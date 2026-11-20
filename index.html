@@ -610,7 +610,10 @@ select{font-size:16px;padding:9px 10px;border-radius:12px;border:1px solid var(-
       <div class="row"><span>Test the voice</span><button class="btn ghost" id="voiceTest">Play</button></div>
       <div class="row"><span>Photo<small>Saved on this phone only</small></span><span><button class="btn ghost" id="photoChange">Change</button> <button class="btn ghost" id="photoReset">Reset</button></span></div>
       <div class="row"><span>Add to Home Screen<small>In Safari: Share → Add to Home Screen. Keeps everything saved.</small></span></div>
-      <div class="row"><span>Save a backup<small>Chat, Pocket, Ledger and photo in one file</small></span><button class="btn ghost" id="backupBtn">Save</button></div>
+      <div class="row"><span>Automatic backup<small id="bkStatus">Backs up by itself once a day</small></span><button class="btn ghost" id="bkNow">Back up now</button></div>
+      <div class="row"><span>Restore link<small id="bkLinkNote">Needed to get everything back on a new phone</small></span><button class="btn ghost" id="bkLink">Save link</button></div>
+      <div class="row"><span>Restore from link<small>Copy your restore link, then tap Restore</small></span><button class="btn ghost" id="bkRestore">Restore</button></div>
+      <div class="row"><span>Save a backup file<small>Chat, Ledger, kitten and photo in one file</small></span><button class="btn ghost" id="backupBtn">Save</button></div>
       <div class="row"><span>Restore a backup<small>Replaces what's on this phone</small></span><button class="btn ghost" id="restoreBtn">Restore</button><input type="file" id="restoreIn" accept="application/json,.json" hidden></div>
       <div class="row"><span>Storage used<small id="storageUsed">Checking…</small></span></div>
       <div class="row"><span>Clear everything<small>Chat, Pocket, Ledger, photo — all erased from this phone</small></span><button class="btn warn" id="wipe">Clear</button></div>
@@ -891,7 +894,7 @@ addEventListener('online', () => setOnline(true)); addEventListener('offline', (
 /* ================= Avatar ================= */
 const DEFAULT_AVATAR = 'rob.jpg';
 // Everything worth keeping goes in the backup file (the "Just us" password never does).
-const BACKUP_KEYS = [...Object.values(K), 'try_pocketkitten', 'try_pp', 'try_catchbest', 'try_matchbest2', 'try_brags', 'try_notes', 'try_coupons', 'try_secrets_found', 'try_dates_sent', 'try_alerts_seen', 'try_lastbackup', 'try_searches'];
+const BACKUP_KEYS = [...Object.values(K), 'try_pocketkitten', 'try_pp', 'try_catchbest', 'try_matchbest2', 'try_brags', 'try_notes', 'try_coupons', 'try_secrets_found', 'try_dates_sent', 'try_alerts_seen', 'try_lastbackup', 'try_searches', 'try_music_key', 'try_music_pos', 'try_vn'];
 function showPhoto(){ const src = load(K.photo, null) || DEFAULT_AVATAR; $('avatarImg').src = src; $('miniImg').src = src; }
 showPhoto();
 const pickPhoto = () => $('photoIn').click();
@@ -1834,11 +1837,21 @@ $('wipe').onclick = async () => {
   chat = []; pocket = []; ledger = []; showPhoto(); renderChat(); close(); toast('Everything has been cleared');
 };
 const pad2 = n => String(n).padStart(2, '0');
-$('backupBtn').onclick = async () => {
+async function collectBackup(){
   const data = {}; BACKUP_KEYS.filter(k => k !== K.lpass).forEach(k => { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch {} });
-  const d = new Date(), name = `rob-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
   let idb = null; try { if (window.iRobCards) idb = await window.iRobCards.exportData(); } catch {}
-  const blob = new Blob([JSON.stringify({app:'the-rob-you-want', v:2, saved:d.toISOString(), data, idb})], {type:'application/json'});
+  return {app:'the-rob-you-want', v:2, saved:new Date().toISOString(), data, idb};
+}
+const validBackup = j => !!(j && j.app === 'the-rob-you-want' && j.data && typeof j.data === 'object' && Object.keys(j.data).every(k => BACKUP_KEYS.includes(k) && typeof j.data[k] === 'string'));
+async function applyBackup(j){
+  BACKUP_KEYS.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  try { Object.entries(j.data).forEach(([k, v]) => localStorage.setItem(k, v)); } catch { toast('Not enough space on this phone to restore'); return false; }
+  try { if (j.idb && window.iRobCards) await window.iRobCards.importData(j.idb); } catch {}
+  return true;
+}
+$('backupBtn').onclick = async () => {
+  const d = new Date(), name = `rob-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`;
+  const blob = new Blob([JSON.stringify(await collectBackup())], {type:'application/json'});
   save('try_lastbackup', Date.now()); hideBanner('backup');
   const file = new File([blob], name, {type:'application/json'});
   try { if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); toast('Backup ready — keep it in Files'); return; } }
@@ -1849,14 +1862,87 @@ $('restoreBtn').onclick = () => $('restoreIn').click();
 $('restoreIn').onchange = async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
   let j = null; try { j = JSON.parse(await f.text()); } catch {}
-  const keys = BACKUP_KEYS;
-  if (!j || j.app !== 'the-rob-you-want' || !j.data || typeof j.data !== 'object' || !Object.keys(j.data).every(k => keys.includes(k) && typeof j.data[k] === 'string')){ toast('That file isn\'t a backup from this app'); return; }
+  if (!validBackup(j)){ toast('That file isn\'t a backup from this app'); return; }
   if (!await askConfirm(`Replace everything on this phone with the backup from ${fmtDate(j.saved)}?`, 'Restore', true)) return;
-  keys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
-  try { Object.entries(j.data).forEach(([k, v]) => localStorage.setItem(k, v)); } catch { toast('Not enough space on this phone to restore'); return; }
-  try { if (j.idb && window.iRobCards) await window.iRobCards.importData(j.idb); } catch {}
-  location.reload();
+  if (await applyBackup(j)) location.reload();
 };
+
+/* ================= Automatic backup =================
+   Once a day the phone locks a copy of everything (AES-GCM, key made on this phone) and sends it to private storage.
+   Only the restore link holds the key, so nobody else, including Rob and the storage itself, can read it.
+   The storage keeps the newest copy and the one before it. */
+const BK = {key:'try_bk_key', last:'try_bk_last', hash:'try_bk_hash', saved:'try_bk_linksaved'};
+const BK_RELAY = 'https://irob-ai.croftrobertl.workers.dev';
+const hexOf = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+const shaHex = async str => hexOf(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)));
+const b64uToBytes = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - t.length % 4) % 4)), c => c.charCodeAt(0));
+const bytesToB64u = b => btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+async function bkParts(k){ return {id:(await shaHex('id:' + k)).slice(0, 32), proof:await shaHex('auth:' + k), aes:await crypto.subtle.importKey('raw', b64uToBytes(k), 'AES-GCM', false, ['encrypt', 'decrypt'])}; }
+const restoreLink = () => `${location.origin}${location.pathname}#restore=${load(BK.key, '')}`;
+async function gz(bytes, dir){ const cs = dir === 'in' ? new CompressionStream('gzip') : new DecompressionStream('gzip'); return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer()); }
+let bkBusy = false;
+async function cloudBackup(force){
+  if (bkBusy || !crypto.subtle) return false;
+  if (!force && Date.now() - load(BK.last, 0) < 20 * 36e5) return false;
+  if (!force && chat.filter(m => m.role === 'user').length < 3 && !load('try_pocketkitten', null)) return false;   // nothing worth saving yet
+  bkBusy = true;
+  try {
+    let k = load(BK.key, null); if (!k){ k = bytesToB64u(crypto.getRandomValues(new Uint8Array(32))); save(BK.key, k); }
+    const j = await collectBackup(), body = JSON.stringify({d:{...j.data, try_lastbackup:undefined}, idb:j.idb}), h = await shaHex(body);
+    if (!force && h === load(BK.hash, '')){ save(BK.last, Date.now()); return true; }       // nothing changed since the last copy
+    let plain = new TextEncoder().encode(JSON.stringify(j)), flag = 0;
+    if (window.CompressionStream){ try { plain = await gz(plain, 'in'); flag = 1; } catch {} }
+    const {id, proof, aes} = await bkParts(k), iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, aes, plain));
+    const out = new Uint8Array(13 + ct.length); out[0] = flag; out.set(iv, 1); out.set(ct, 13);
+    const r = await fetch(`${BK_RELAY}/b/${id}?a=${proof}`, {method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:out});
+    if (!r.ok) throw new Error('upload ' + r.status);
+    save(BK.last, Date.now()); save(BK.hash, h); save('try_lastbackup', Date.now()); hideBanner('backup'); paintBackup();
+    if (!load(BK.saved, false)) showBanner('bklink', '<b>Your chats now back up by themselves.</b> Save your restore link somewhere safe, in case you ever get a new phone.', {icon:'<img src="icons/196.webp" alt="" style="width:26px;height:26px;display:block">', kind:'soft', action:['Save link', saveRestoreLink]});
+    return true;
+  } catch (e){ if (force) toast('Couldn\'t back up right now. Check your connection.'); return false; }
+  finally { bkBusy = false; }
+}
+async function saveRestoreLink(){
+  if (!load(BK.key, null)){ if (!await cloudBackup(true)) return; }
+  const link = restoreLink(), done = () => { save(BK.saved, true); hideBanner('bklink'); paintBackup(); };
+  try { if (navigator.share){ await navigator.share({title:'My iRob restore link', text:'My iRob restore link. Keep this private: it opens my backup.\n' + link}); done(); return; } } catch (e){ if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(link); toast('Restore link copied. Paste it into Notes or Passwords.'); done(); } catch { prompt('Copy your restore link and keep it somewhere safe:', link); done(); }
+}
+async function cloudRestore(k){
+  k = String(k || '').trim(); const m = k.match(/restore=([A-Za-z0-9_-]{43})/) || k.match(/^([A-Za-z0-9_-]{43})$/);
+  if (!m){ toast('That doesn\'t look like a restore link.'); return false; }
+  try {
+    const {id, proof, aes} = await bkParts(m[1]);
+    const r = await fetch(`${BK_RELAY}/b/${id}?a=${proof}`, {cache:'no-store'});
+    if (r.status === 404){ toast('No backup found for that link yet.'); return false; }
+    if (!r.ok) throw new Error('fetch');
+    const buf = new Uint8Array(await r.arrayBuffer());
+    let plain = new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv:buf.slice(1, 13)}, aes, buf.slice(13)));
+    if (buf[0] === 1) plain = await gz(plain, 'out');
+    const j = JSON.parse(new TextDecoder().decode(plain));
+    if (!validBackup(j)){ toast('That backup can\'t be read.'); return false; }
+    if (!await askConfirm(`Replace everything on this phone with the backup from ${fmtDate(j.saved)}?`, 'Restore', true)) return false;
+    if (!await applyBackup(j)) return false;
+    save(BK.key, m[1]); save(BK.saved, true); save(BK.last, Date.now());
+    location.reload(); return true;
+  } catch { toast('Couldn\'t restore right now. Check the link and your connection.'); return false; }
+}
+function paintBackup(){
+  const el = $('bkStatus'); if (!el) return; const t = load(BK.last, 0);
+  el.textContent = t ? `Last backed up ${new Date(t).toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}` : 'Backs up by itself once a day';
+  const l = $('bkLinkNote'); if (l) l.textContent = load(BK.saved, false) ? 'Saved. You can save it again anytime.' : 'Needed to get everything back on a new phone';
+}
+$('bkNow').onclick = async () => { $('bkNow').disabled = true; if (await cloudBackup(true)) toast('Backed up'); $('bkNow').disabled = false; };
+$('bkLink').onclick = saveRestoreLink;
+$('bkRestore').onclick = async () => { let v = ''; try { v = await navigator.clipboard.readText(); } catch {} if (!/restore=|^[A-Za-z0-9_-]{43}$/.test(v.trim())) v = prompt('Paste your restore link:') || ''; if (v) cloudRestore(v); };
+(() => {     // a restore link opened in the browser
+  const m = location.hash.match(/(?:^#|&)restore=([A-Za-z0-9_-]{43})/); if (!m) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch {}
+  setTimeout(() => cloudRestore(m[1]), 1200);
+})();
+setTimeout(() => { paintBackup(); cloudBackup(false); }, 9000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(() => cloudBackup(false), 4000); });
 
 /* ================= Extra words for modes ================= */
 const DISTRACT = ["Quick, important question: if our kitchen appliances could talk, which one would be the most dramatic? I say the blender.", "New game: tell me the three best snacks of all time, in order. I'll judge harshly.", "Fun fact: otters hold hands while they sleep so they don't drift apart. Now tell me something that made you smile this week.", "Okay, distraction mode: describe your perfect lazy Saturday, minute by minute. Don't skip the snacks.", "Would you rather have a tiny pet elephant or a giant hamster? Defend your answer."];
@@ -2353,6 +2439,7 @@ function hideBanner(id){ const b = document.querySelector(`.banner[data-id="${CS
 function backupReminder(){
   const last = load('try_lastbackup', 0), nagged = load('try_backupnag', 0);
   if (chat.filter(m => m.role === 'user').length < 10 && !load('try_pocketkitten', null)) return;
+  if (Date.now() - load('try_bk_last', 0) < 3 * 864e5) return;      // automatic backup is doing its job
   if (Date.now() - last < 30 * 864e5 || Date.now() - nagged < 7 * 864e5) return;
   showBanner('backup', '<b>Quick favor:</b> save a backup so nothing gets lost if your phone does.', {icon:'<img src="icons/196.webp" alt="" style="width:26px;height:26px;display:block">', kind:'soft', action:['Back up', () => { open('sheetSettings'); }], onDismiss:() => save('try_backupnag', Date.now())});
 }
