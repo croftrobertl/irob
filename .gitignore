@@ -2,3 +2,7 @@
 /*.png
 !/favicon-*.png
 !/icon-*.png
+# private files live in R2 now, never in the repo
+/music/
+/us.enc.json
+/profile.enc.json

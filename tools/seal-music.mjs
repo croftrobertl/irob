@@ -2,7 +2,8 @@
 // Usage: node tools/seal-music.mjs <playlist.json> <key base64url | "new">
 // playlist.json: [{"title":"…","artist":"…","src":"/path/to/song.mp3"}, …]  (order = play order)
 // Optional "tag" (e.g. "mad") keeps a song out of the normal playlist; the app plays it only on that cue.
-// Writes music/<n>.bin per song and music/playlist.bin (the encrypted list). Erica's phone gets the key once via …/irob/#music=<key>.
+// NOTE: music/ is no longer in the repo (it's git-ignored). After sealing, upload the new .bin files and playlist.bin to the R2 bucket
+// "irob-private" under music/. Writes music/<n>.bin per song and music/playlist.bin (the encrypted list). Erica's phone gets the key once via …/irob/#music=<key>.
 import fs from 'node:fs';
 import { webcrypto as crypto, createHash } from 'node:crypto';
 const [listPath, keyArg] = process.argv.slice(2);
