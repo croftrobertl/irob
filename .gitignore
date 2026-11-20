@@ -6,3 +6,6 @@
 /music/
 /us.enc.json
 /profile.enc.json
+# Rob's private hand-off folder (keys, plaintext sources): never commit
+/private/
+.DS_Store
