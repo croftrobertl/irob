@@ -582,3 +582,8 @@ img.sq-arm{height:auto}
 .mb-play{background:radial-gradient(circle at 35% 30%,#fffaf0,#efe4d2)}
 .mb-play img{width:24px;height:24px}
 .mb-play:not(.on) img{margin-left:3px}
+
+/* ================= Balanced wrapping for centered text =================
+   Lines of a centered message come out about the same length (no lone last word). Left-aligned text keeps normal wrapping. */
+.empty,.tile,.toast,.fun-sheet .body,.dare,.reason,.vattr,.viewer .vmsg,.none{text-wrap:balance}
+.fun-sheet .body :is(.cp-card,.cp-row,.sw-row,.tg-name,.tg-h,.pc-card,.mm-thumb span,input,textarea){text-wrap:wrap}
