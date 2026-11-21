@@ -18,7 +18,7 @@ for (const s of list){
   const data = fs.readFileSync(s.src);
   const id = createHash('sha256').update(data).digest('hex').slice(0, 16);   // stable, reveals nothing about the song
   if (!fs.existsSync(`music/${id}.bin`)) fs.writeFileSync(`music/${id}.bin`, await seal(data));   // already sealed songs stay untouched
-  songs.push({title: s.title, artist: s.artist, file: `${id}.bin`, ...(s.tag ? {tag: s.tag} : {}), ...(s.cues ? {cues: s.cues} : {})});   // tag: plays only on its cue (e.g. "mad")
+  songs.push({title: s.title, artist: s.artist, file: `${id}.bin`, ...(s.tag ? {tag: s.tag} : {}), ...(s.cues ? {cues: s.cues} : {}), ...(s.why ? {why: s.why} : {}), ...(s.type ? {type: s.type} : {}), ...(s.md ? {md: s.md} : {})});   // why: Rob's one-line note; type: e.g. audio/mp4 for .m4a   // tag: plays only on its cue (e.g. "mad")
 }
 fs.writeFileSync('music/playlist.bin', await seal(new TextEncoder().encode(JSON.stringify({v: 1, songs}))));
 console.log(keyArg === 'new' ? 'KEY=' + Buffer.from(keyBytes).toString('base64url') : 'sealed with existing key');

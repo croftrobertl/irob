@@ -94,18 +94,53 @@ function ensureAudio(){
   return audio;
 }
 const SILENCE = 'data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
-let cue = null;
+let cue = null, lastPick = {};
+// A cue can have several songs (tag, or "cues" on a playlist song); it rotates so the same one doesn't repeat back to back.
+// Resolves to the song that started, or null.
 async function playTag(tag){
-  if (!get(KEY, null)) return;
+  if (!get(KEY, null)) return null;
   const a = ensureAudio(); if (a.paused){ a.src = SILENCE; a.play().catch(() => {}); }
   try {
-    await loadList(); const s = allSongs.find(x => x.tag === tag) || allSongs.find(x => (x.cues || []).includes(tag)); if (!s) return;   // "cues": a playlist song that also answers a cue
-    const r = await pfetch(s.file); if (!r.ok) return;
+    await loadList();
+    let pool = allSongs.filter(x => x.tag === tag); if (!pool.length) pool = allSongs.filter(x => (x.cues || []).includes(tag));   // "cues": a playlist song that also answers a cue
+    if (!pool.length) return null;
+    const fresh = pool.length > 1 ? pool.filter(x => x.file !== lastPick[tag]) : pool;
+    const s = fresh[Math.floor(Math.random() * fresh.length)]; lastPick[tag] = s.file;
+    return await playSong(s, a);
+  } catch { return null; }
+}
+async function playSong(s, a){
+  a = a || ensureAudio(); if (a.paused){ a.src = SILENCE; a.play().catch(() => {}); }
+  try {
+    const r = await pfetch(s.file); if (!r.ok) return null;
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
-    if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
+    if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(new Blob([plain], {type:s.type || 'audio/mpeg'}));
     if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
     cue = s; a.src = url; await a.play(); session(s); build(); if (title) paintTitle();
-  } catch {}
+    if (s.why) whyChip(s);
+    return s;
+  } catch { return null; }
+}
+// "Why this song?": a small chip under the header for a while after a cue starts. Tap it for Rob's note and a replay.
+let chip = null, chipT = null;
+function whyChip(s){
+  if (chip) chip.remove(); clearTimeout(chipT);
+  chip = document.createElement('button'); chip.type = 'button'; chip.className = 'why-chip'; chip.innerHTML = '<span aria-hidden="true">🎵</span> Why this song?';
+  chip.onclick = e => { e.stopPropagation(); whyCard(s); };
+  document.getElementById('app').appendChild(chip);
+  chipT = setTimeout(() => { if (chip){ chip.remove(); chip = null; } }, 45000);
+}
+function whyCard(s){
+  if (chip){ chip.remove(); chip = null; }
+  const back = document.createElement('div'); back.className = 'why-back';
+  const card = document.createElement('div'); card.className = 'why-card'; card.setAttribute('role', 'dialog'); card.setAttribute('aria-label', 'Why this song');
+  card.innerHTML = '<b></b><small></small><p></p><span class="why-btns"><button type="button" class="why-replay">Play it again</button><button type="button" class="why-close">Close</button></span>';
+  card.querySelector('b').textContent = s.title; card.querySelector('small').textContent = s.artist || ''; card.querySelector('p').textContent = '“' + s.why + '” — Rob';
+  const close = () => back.remove();
+  back.onclick = e => { if (e.target === back) close(); };
+  card.querySelector('.why-close').onclick = close;
+  card.querySelector('.why-replay').onclick = () => { close(); playSong(s); };
+  back.append(card); document.body.appendChild(back); card.querySelector('.why-close').focus();
 }
 async function playAt(i){
   if (loading) return; loading = true; paintTitle();
@@ -116,7 +151,7 @@ async function playAt(i){
     const r = await pfetch(s.file); if (!r.ok) throw new Error('song');
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
     if (url) URL.revokeObjectURL(url);
-    url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));
+    url = URL.createObjectURL(new Blob([plain], {type:s.type || 'audio/mpeg'}));
     ensureAudio(); cue = null;
     if (window.iRob && window.iRob.stopSpeaking) window.iRob.stopSpeaking();
     audio.src = url; await audio.play();
@@ -186,8 +221,10 @@ function playNote(id, onTick){
     a.src = u; await a.play(); vnTick && vnTick(0, true);
   })().catch(e => { const t = vnTick; vnTick = null; t && t(0, false); throw e; });
 }
-function init(){ takeKey(); if (get(KEY, null)) build(); }
+function init(){ takeKey(); if (get(KEY, null)){ build(); loadList().catch(() => {}); } }   // the list loads early so calendar cues (e.g. her birthday) know today's song
+// A cue-only song can carry a date ("md":"MM-DD", e.g. her birthday) in the private playlist; that day her first message plays it.
+function datedTag(md){ const s = allSongs.find(x => x.md === md && x.tag); return s ? s.tag : null; }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 addEventListener('hashchange', takeKey);
-window.iRobMusic = {unlockPrompt, playTag, notes, playNote, stopNote, unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return cue || songs[idx] || null; }};
+window.iRobMusic = {unlockPrompt, playTag, datedTag, notes, playNote, stopNote, unlocked:() => !!get(KEY, null), open(){ build(); if (bar){ bar.hidden = false; paintTitle(); poke(); } if (!audio || audio.paused) toggle(); }, playAt, toggle, next, prev, list:() => loadList(), get playing(){ return !!(audio && !audio.paused); }, get current(){ return cue || songs[idx] || null; }};
 })();

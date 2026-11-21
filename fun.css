@@ -275,6 +275,22 @@
 .mb-title.loading b{animation:mbPulse 1s ease-in-out infinite}
 @keyframes mbPulse{50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.music-btn.playing,.mb-title.loading b{animation:none}.mb-ring .pr{transition:none}}
+/* "Why this song?" chip and card (song cues) */
+.why-chip{position:absolute;top:calc(var(--safe-t, 0px) + 62px);left:50%;transform:translateX(-50%);z-index:15;display:flex;align-items:center;gap:6px;min-height:36px;padding:7px 14px;border-radius:999px;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--title);font:600 13px/1.2 var(--body);
+  box-shadow:0 6px 18px rgba(60,40,10,.16);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:whyIn .35s ease both}
+.music-bar:not([hidden]) ~ .why-chip{top:calc(var(--safe-t, 0px) + 128px)}
+@keyframes whyIn{from{opacity:0;transform:translate(-50%,-6px)}}
+.why-back{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:rgba(20,16,10,.38)}
+.why-card{width:min(340px,100%);display:flex;flex-direction:column;gap:4px;padding:20px 20px 16px;border-radius:18px;background:var(--card);border-top:4px solid var(--bronze);box-shadow:0 18px 40px rgba(30,20,5,.3);text-align:center}
+.why-card b{font:600 17px/1.3 var(--body);color:var(--ink);text-wrap:balance}
+.why-card small{font:400 13px/1.3 var(--body);color:var(--ink-soft)}
+.why-card p{margin:12px 0 14px;font:400 16px/1.45 var(--body);color:var(--ink);text-wrap:balance}
+.why-btns{display:flex;gap:8px;justify-content:center}
+.why-btns button{min-height:44px;padding:0 16px;border-radius:999px;font:600 14px var(--body);cursor:pointer;border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+.why-btns .why-replay{background:var(--bronze);border-color:var(--bronze);color:#fff}
+.why-chip:focus-visible,.why-btns button:focus-visible{outline:2px solid var(--bronze);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.why-chip{animation:none}}
 
 /* Full-screen games: content grows to fill the screen */
 .fun-sheet.full .body{justify-content:flex-start;gap:14px;padding-bottom:calc(var(--safe-b,0px) + 18px)}

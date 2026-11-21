@@ -1070,53 +1070,155 @@ const SECRETS = [
   [/\b(goodnight|good night|night night)\b/i, 'good night', 'The lights go down and the stars come out.', () => FX.stars()],
 ];
 // "She's mad at me" → Separate Ways + raining broken hearts. Not listed on the Secret Words page.
+// Escalation: the third "mad" within a week swaps Journey's Separate Ways for Who's Crying Now or Don't Speak.
 const MAD = /\b((mad|angry|pissed( off)?|upset|annoyed|furious|irritated|ticked( off)?) (at|with) (you|u|rob)|i hate you|you'?re in (so much |big )?trouble|not (talking|speaking) to (you|u)|you (made|make) me (so )?(mad|angry))\b/i;
-function madAtRob(){ FX.dim(5200, .35); FX.rain(['💔', '💔', '😭', '😢'], 46); if (window.iRobMusic && window.iRobMusic.playTag) window.iRobMusic.playTag('mad'); }
+const NOT_TALKING = /\bnot (talking|speaking) to (you|u)\b/i;
+function madAtRob(text){
+  FX.dim(5200, .35); FX.rain(['💔', '💔', '😭', '😢'], 46);
+  const now = Date.now(), log = get('try_mad_log', []).filter(t => now - t < 7 * 864e5); log.push(now); put('try_mad_log', log);
+  playCue(NOT_TALKING.test(text || '') ? 'dontspeak' : log.length >= 3 ? 'mad3' : 'mad');
+}
 // Song cues: something she types starts one of Rob's picked songs (sealed, tagged, never in the normal playlist).
 // First match wins, so the specific ones come first. [tag, pattern, effect when no secret word fires, extra pattern that must also match]
 const WANT = /\b(go|going|back|visit|miss|missing|wish|want|wanna|take me|trip|return|again|move|someday|let'?s|dream)\b/i;
+const TRAVEL = /\b(go|going|visit|want|wanna|wish|take me|trip|travel|vacation|honeymoon|someday|let'?s|dream|love|miss|again|move|fly)\b/i;
+const TIRED = /\b(tired|exhausted|worn out|wiped( out)?|beat|sleepy|drained|so done|long day|can'?t keep my eyes open)\b/i;
 const SONG_CUES = [
   ['divorce', /\b(divorc(e|ed|ing)|i'?m leaving you|leaving you)\b/i, () => FX.rain(['👋', '🧳', '💍'], 20)],
+  ['low', /\b(i'?m (crying|sobbing|in tears|a mess)|can'?t stop crying|been crying|crying (so hard|my eyes out|again)|i (just )?cried|(i feel|feeling|i'?m feeling) (so |really |just |pretty |kind of |kinda )?(low|down|hopeless|broken|worthless|empty|depressed|miserable|defeated)|i'?m (so |really |just )?(hopeless|depressed|miserable|devastated|heartbroken|defeated|worthless)|falling apart|breaking down|worst day|i can'?t do this anymore|(nobody|no one) cares)\b/i, () => FX.dim(4000, .25)],
+  ['okay', /\b((is|will) (everything|it|it all|this|things|we) (be |going to be |gonna be )(ok|okay|alright|all right|fine)|tell me (it'?s|it is|everything'?s|everything is|it will be|it'?ll be) (going to be |gonna be )?(ok|okay|alright|all right|fine))\b/i, () => FX.rise(['🐦', '☀️', '💛'], 18)],
+  ['xmas', /\b(merry (christmas|xmas)|happy christmas|christmas (day|morning))\b/i, () => FX.rain(['❄️', '🎄', '🎁'], 30)],
+  ['christmas', /\b(christmas|xmas|santa|ornaments?|stockings?|snowman|eggnog|gingerbread)\b/i, () => FX.rain(['❄️', '🎄', '🎁'], 26)],
+  ['halloween', /\b(halloween|spooky|trick or treat(ing)?|costumes?|jack[- ]?o[- ]?lanterns?|haunted|pumpkin patch)\b/i, () => FX.rain(['🎃', '👻', '🦇'], 26)],
+  ['birthday', /\b((it'?s|its|today'?s|today is) my (birth)?day|my birthday|happy birthday to me|my bday)\b/i, () => FX.rise(['🎈', '🎈', '🎉'], 26)],
+  ['stilllove', /\b(do (you|u) (still |even |really )?love me|(would|will) (you|u) (still )?marry me again|(you|u) still love me|would you do it (all )?again)\b/i, () => FX.rise(['💍', '❤️', '💛'], 26)],
+  ['bestfriend', /\b(you'?re|you are|ur|youre) my (best friend|bestie|bff|favorite person|person)\b/i, () => FX.rise(['👯‍♀️', '💛'], 20)],
+  ['sleepy', /\b(good ?night|g'?night|nighty? ?night|going to (bed|sleep)|head(ed|ing) to bed|bed ?time|time for bed|off to bed|go to sleep)\b/i, () => FX.stars(), TIRED],
+  ['comehome', /\b(when (are|r|will) (you|u) (be )?(coming |getting )?home|come home|coming home soon|what time (are you|will you be|r u) (getting |coming )?home|get home soon|hurry home)\b/i, () => FX.across('🚗', {size:72, y:.6, speed:7})],
   ['tennessee', /\b(dollywood|gatlinburg|cosby|pigeon forge|smok(y|ey|ies) mountains?|the smokies)\b/i, () => FX.rise(['⛰️', '🌲', '🦋', '🎢'], 22)],
   ['croatia', /\b(croatia|dubrovnik|hvar|lokrum|kor[cč]ula|the adriatic)\b/i, () => FX.wave(), WANT],
+  ['disney', /\b(disney( ?world| ?land)?|magic kingdom|epcot|hollywood studios|animal kingdom|cinderella'?s castle|aladdin)\b/i, () => FX.fireworks()],
+  ['paris', /\b(paris|france|the eiffel tower)\b/i, () => FX.rise(['🗼', '🥐', '💛'], 22), TRAVEL],
+  ['miami', /\b(miami|south beach)\b/i, () => FX.rise(['🌴', '🕶️', '🍹'], 22), TRAVEL],
+  ['hawaii', /\b(hawaii|maui|oahu|honolulu|kauai|waikiki)\b/i, () => FX.rise(['🌺', '🌴', '🌋'], 22), TRAVEL],
+  ['tokyo', /\b(tokyo|japan|kyoto)\b/i, () => FX.across('🏎️', {size:72, y:.62, speed:12}), TRAVEL],
+  ['newyork', /\b(new york|nyc|manhattan|the big apple|times square)\b/i, () => FX.rise(['🗽', '🍎', '🌃'], 22), TRAVEL],
+  ['italy', /\b(italy|rome|venice|florence|tuscany|amalfi|sicily|lake como|positano)\b/i, () => FX.rise(['🍝', '🌙', '🛵'], 22), TRAVEL],
+  ['vacation', /\b(need (a|another) (vacation|holiday|getaway|break from (everything|life|it all))|(want|wanna|let'?s) (go on |take )?(a )?(vacation|getaway)|take me away|run away (with me|together)|vacation mode)\b/i, () => FX.rise(['🌴', '🍹', '🏝️'], 22)],
   ['bike', /\b(bike ride|ride (my|our|the|a) bikes?|go(ing)? biking|biking|bicycl(e|es|ing)|cycling)\b/i, () => FX.across('🚲', {size:72, y:.6, speed:8})],
   ['sea', /\b(beach|ocean|the sea|seaside|the shore|the coast|the gulf)\b/i, () => FX.wave()],
   ['medicine', /\b(medicine|medication|meds|pills?|vitamins?|supplements?|ibuprofen|tylenol|advil|antibiotics?|prescriptions?|probiotics?|melatonin|magnesium)\b/i, () => FX.rain(['🥄', '🍬', '☂️'], 22)],
+  ['sick', /\b((i'?m|im|i am|feeling|feel|i feel) (so |really |kinda |kind of |a little |still )?(sick|ill|congested|feverish|stuffy)(?! of| and tired)|(have|got|caught|getting) (a |the )?(cold|cough|fever|flu|sore throat|stomach bug|bug|sinus infection|covid)|coughing|sniffl(es|ing)|under the weather)\b/i, () => FX.rain(['🤒', '🍲', '🧣'], 20)],
+  ['cold', /\b((i'?m|im|i am|it'?s|its|it is) (so |really |freezing |super |kinda |too )?(cold|freezing|chilly)|so cold|freezing (in here|out there|outside)|my (hands|feet|toes) are (so )?(cold|frozen))\b/i, () => FX.rain(['❄️', '🧣', '🔥'], 24)],
   ['smoke', /\b(get(ting)? high|smoke (a |some |weed|pot)|need (to|a) smoke|want (to|a) smoke|wanna smoke|gotta smoke|pack a bowl|a bowl|a joint|a blunt|wake and bake|toke|420)\b/i, () => FX.rise(['🍃', '💨', '🌿'], 22)],
   ['wish', /\b(wish (you|u) (were|was) (here|home|with me)|wish i (was|were) (there|with (you|u))|wish we were together|wish (you|u) could be here|(want|need) (you|u) here)\b/i, () => FX.stars()],
   ['home', /\b(build(ing)? (a|our) (home|house|life|family|future)|start(ing)? (a|our) family|our (future|forever|dream|own) (home|house)|dream (home|house)|(home|family|life|future) with (you|u)|grow(ing)? old with (you|u))\b/i, () => FX.rise(['🧱', '🏡', '💛'], 22)],
   ['love', /\b(i (really |truly |just |so |still |do |freaking |fucking )*(love|adore) (you|u|rob|my husband)|love (you|u|ya) (so much|more|forever|to the moon)|(happy|glad|lucky) (i'?m |to be |being )?married to (you|u)|love being (married|your wife)|glad i married (you|u)|love our (life|marriage))\b/i, () => FX.rise(['💛', '💚', '❤️'], 26)],
+  ['sorry', /\b((i'?m|im|i am) (so |really |very |truly )?sorry(?! (you|that|to hear|for (you|your)|about (your|you))|,? (babe|baby|love|honey) (that|you))|my bad|i apologi[sz]e|forgive me)\b/i, () => FX.rise(['🫶', '💛'], 18)],
+  ['stupid', /\b(i (said|did|texted|sent) something (so |really )?(stupid|dumb|embarrassing)|(i'?m|im|i am|i feel) (so |really )?(embarrassed|mortified|stupid|dumb)|so embarrassing|that was (so )?(stupid|dumb) of me|why did i (say|do|send) that)\b/i, () => FX.rise(['🙈', '💛'], 16)],
+  ['notme', /\b(did (you|u) (eat|take|drink|finish|use|move|break|steal|hide|lose|touch) my|who (ate|took|drank|finished|used|moved|broke|stole|left|hid) (my|the|this|that)|was (it|that) (you|u))\b/i, () => FX.rain(['🙅‍♂️', '🤷‍♂️'], 20)],
+  ['jolene', /\b(who (is|was|'?s) she|who'?s that (girl|woman|lady|chick)|(she|that girl|that woman|that lady|some (girl|woman|lady)) (is|was|keeps|kept) (flirting|hitting on|checking you out|all over you)|flirt(ing|ed) with (you|u)|hit(ting)? on (you|u)|jolene)\b/i, () => FX.rain(['💅', '👀', '💛'], 20)],
+  ['fight', /\b(i'?ll (fight|punch|kick|smack|slap|strangle|murder|kill) (you|u)|i'?m (gonna|going to) (fight|punch|kick|smack|slap|strangle|murder|kill) (you|u)|fight me|square up|catch these hands)\b/i, () => { FX.shake(); FX.burst(['🥋', '👊', '💥'], 20); }],
+  ['dontspeak', /\b(shut up|stop talking|zip it|don'?t speak|don'?t talk to me)\b/i, () => { FX.dim(3000, .3); FX.bigText('🤐'); }],
+  ['quit', /\b(stop playing|quit (playing|messing|joking)( around)?|stop (messing|joking|playing) (with me|around)|are (you|u) kidding( me)?|you'?re (kidding|joking))\b/i, () => FX.rain(['🎮', '💔'], 18)],
+  ['promise', /(\bpromise\s*\?|\b(do (you|u)|pinky) (promise|swear)\b|\bpromise me\b|\bdon'?t (ever )?let me down\b)/i, () => FX.rise(['🤞', '💛'], 18)],
+  ['letitgo', /\b(can'?t let (it|this|that) go|can'?t stop thinking about (it|this|that|what)|still (thinking|stewing|upset|annoyed|hung up) about|let it go|can'?t get over (it|this|that))\b/i, () => FX.rain(['❄️', '⛄'], 30)],
   ['another', /\b((another|one more) (one |thing |task |project |chore )?(is )?(done|down|finished|complete|completed|checked off|crossed off|in the books)|(finished|completed|knocked out|checked off|crossed off|wrapped up|done with) (yet )?another|bites the dust)\b/i, () => FX.rain(['✅', '💥'], 22)],
   ['gangster', /\b(nailed it|crushed it|killed it|smashed it|aced (it|that)|pulled it off|i did it|like a boss|knocked it out of the park|i'?m (a |such a )?(boss|badass|legend|genius))\b/i, () => FX.rain(['😎', '💵', '🕶️'], 24)],
-  ['winning', /\b(i'?m (so |feeling |really )?(confident|unstoppable|strong|powerful|invincible|on fire|on a roll|winning)|feeling (confident|unstoppable|strong|powerful|invincible)|i won|i'?m (a |the )?(winner|champion|champ)|can'?t be stopped|(i'?ve|i) got this|still got it)\b/i, () => FX.rise(['🏆', '💪', '👑'], 22)],
+  ['goodday', /\b((had|having) (the |such a |a )?(best|great|amazing|awesome|perfect|really good|wonderful|fantastic) day|(best|great|amazing|perfect) day ever|today was (so |such a |a )?(great|amazing|awesome|perfect|the best|good|wonderful))\b/i, () => FX.rise(['☀️', '😎', '✨'], 22)],
+  ['winning', /\b(i'?m (so |feeling |really )?(confident|unstoppable|strong|powerful|invincible|on fire|on a roll|winning)|feeling (confident|unstoppable|strong|powerful|invincible)|i won(?!'|’|t)|i'?m (a |the )?(winner|champion|champ)|can'?t be stopped|(i'?ve|i) got this|still got it)\b/i, () => FX.rise(['🏆', '💪', '👑'], 22)],
   ['better', /\b(i'?m|i am|im) (so much |way |just |clearly |obviously |still )?(better|smarter|cooler|funnier) than (you|u|him|her|them|everyone|everybody|anyone|anybody|rob)\b|\bi'?m the best\b/i, () => FX.rain(['🌹'], 30)],
   ['hype', /\b(hyp(e|ing) (myself|me) up|psych(e|ing)? myself up|pump(ing)? myself up|pump me up|need (some |a little )?(motivation|hype)|need a pep talk|motivate me|talk(ing)? myself into|work(ing)? up the (nerve|courage)|i can do this|let'?s do this|here goes nothing)\b/i, () => { FX.shake(); FX.rise(['🔥', '🥊', '⚡'], 20); }],
   ['getup', /\b(resilien(t|ce)|persever(e|es|ed|ing|ance)|persist(ence|ent)?|keep going|(not|never) giving up|(won'?t|can'?t|don'?t|never) give up|get(ting)? back up|bounce back|push(ing)? through|hang(ing)? in there|keep trying)\b/i, () => FX.rise(['🌈', '💪', '✨'], 22)],
   ['alive', /\b(you only live once|yolo|life'?s (too )?short|life is (too )?short|while (i'?m|we'?re|i am|we are) (still )?(young|alive)|before (i|we) die|before (i'?m|we'?re) (too )?old|bucket list|live my life|live a little|feel alive|(want|need) (an |more |some )?adventures?|go on an adventure|seize the day|carpe diem)\b/i, () => FX.rain(['❄️', '🏔️', '✨'], 26)],
   ['crazy', /\b((i'?m|i am|im|am i|i feel|i must be|i'?m going|going|i sound) (so |totally |completely |literally |actually |a little |kind of |kinda )?(crazy|insane|nuts|bonkers|psycho|unhinged|mental)|(losing|lost) my mind|out of my mind|call me crazy|driv(e|es|ing) me (crazy|insane|nuts))\b/i, () => FX.rain(['🤪', '🌀', '❤️'], 24)],
+  ['lazy', /\b(don'?t (want|wanna|feel like) (to )?do(ing)? anything|lazy day|feel(ing)? (so )?lazy|i'?m (being )?(so )?lazy|do nothing (today|all day)|couch day|stay(ing)? in bed all day|pajama day)\b/i, () => FX.rain(['🛋️', '😴'], 16)],
   ['calm', /\b(stress(ed|ful|ing)?|anxious|anxiety|overwhelm(ed|ing)|panick?(y|ed|ing)?|panic attacks?|freaking out|on edge|nervous)\b/i, () => { FX.dim(5200, .35); FX.rise(['🎹', '🎵', '🌙'], 12); }],
   ['longrun', /\b(won'?t (even |really )?matter|doesn'?t (even |really )?matter|does it even matter|not (a|that) big (of a |a )?deal|no big deal|in the long run|in the grand scheme|not worth (stressing|worrying|the stress)|who cares)\b/i, () => FX.rise(['🤷‍♀️', '⏳'], 16)],
   ['shouldnt', /\b(you (shouldn'?t|should not|should never) have|i told you not to|you weren'?t supposed to|why (did|would) you|what did you do|how could you|i can'?t believe you)\b/i, () => FX.rain(['🙈', '😬'], 20)],
   ['help', /\b(i need (some |your |a little )?help|help me|can you help|could you help|need a hand|give me a hand)\b/i, () => FX.rain(['🆘', '🛟'], 20)],
+  ['lonely', /\b((i'?m|im|i am|i feel|feeling) (so |really |kinda |kind of |a little )?(lonely|alone)|the house is (so )?(quiet|empty)|it'?s (so )?quiet (here|without you))\b/i, () => { FX.dim(3000, .3); FX.rise(['💛'], 10); }],
+  ['friends', /\b(girls'? (night|trip|weekend|day|dinner)|ladies'? night|my (bestie|bff|girls|best friend)|(hanging out|going out|out|dinner|drinks|brunch) with (my |the )?(girls|friends|bestie|bff)|galentine'?s?)\b/i, () => FX.rise(['👯‍♀️', '🥂', '💃'], 22)],
+  ['weezy', /\bweez(y|ie)\b/i, () => FX.rise(['🐾', '🤍', '🐱'], 20)],
+  ['coffee', /\b(coffee|latte|espresso|cappuccino|caffeine|starbucks|dunkin'?|frappuccino|cold brew)\b/i, () => FX.rise(['☕', '🤎'], 16)],
+  ['veggie', /\b(salads?|eat(ing)? (healthy|clean|better)|on a diet|dieting|veggies|vegetables|broccoli|kale)\b/i, () => FX.rain(['🥦', '🥕', '🥗'], 24)],
+  ['traffic', /\b(traffic|rush hour|gridlock(ed)?|bumper to bumper)\b/i, () => FX.across('🚗', {size:64, y:.62, speed:4})],
+  ['work', /\b(my (boss|manager)|(long|rough|crazy|awful|hard|exhausting) (shift|day at work|work ?day)|work (sucks|was (so )?(long|hard|awful|rough|crazy|exhausting))|(hate|sick of) (my )?(job|work)|work(ing)? late|double shift|overtime)\b/i, () => FX.rain(['💼', '⏰', '☕'], 20)],
+  ['waiting', /\b(hurry up|i'?m (still )?waiting (on|for) (you|u)|(still )?waiting on (you|u)|what'?s taking (you|so) long|taking (you )?forever)\b/i, () => FX.rain(['⏳', '🕰️'], 16)],
+  ['dance', /\b(dance|dancing|disco|boogie)\b/i, () => FX.disco()],
+  ['rain', /\b(rain(?! check)(ing|y|s|ed)?|storm(s|ing|y)?|thunder(storms?)?|lightning|pouring|downpour|umbrella)\b/i, () => FX.storm()],
+  ['thanks', /\b(thank (you|u)|thanks|thx|tysm)\b/i, () => FX.rise(['💐', '💛'], 14)],
 ];
-// A message that reads as a real emergency never gets a jokey song.
+// Calendar cues: on these days the first message she sends starts the song (a tap is needed before a phone will play sound).
+const DATE_FX = {xmas:() => FX.rain(['❄️', '🎄', '🎁'], 30), halloween:() => FX.rain(['🎃', '👻', '🦇'], 26), croatia2:() => FX.wave(), birthday:() => FX.rise(['🎈', '🎈', '🎉'], 26)};
+function dateCue(){
+  const now = new Date(), mo = now.getMonth() + 1, d = now.getDate();
+  if (mo === 12 && d === 25) return 'xmas';
+  if (mo === 10 && d === 31) return 'halloween';
+  if (mo === 9 && d >= 12 && d <= 26 && now.getFullYear() > 2025) return 'croatia2';   // the Croatia "on this day" fortnight
+  const m = window.iRobMusic, md = String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  return m && m.datedTag ? m.datedTag(md) : null;   // e.g. her birthday, kept in the private playlist
+}
+// Quiet rules: emergencies never get a song; on a hard message only the gentle songs can play; a pause between any two cues;
+// everyday words (coffee, Weezy, thank you…) wait a day or more before their song plays again.
 const SERIOUS = /\b(suicid\w*|kill myself|hurt myself|want to die|emergency|911|hospital|ambulance|\ber\b|can'?t breathe|bleeding|accident|crash(ed)?|died|dying|funeral|passed away)\b/i;
-const CUE_GAP = 2 * 3600e3;   // the same song won't start again within two hours
+const DISTRESS = /\b(crying|cried|tears|sobbing|depressed|hopeless|heartbroken|devastated|miserable|falling apart|breaking down|worst day|can'?t do this|scared|terrified|panic attacks?|hurting|in pain|grief|grieving|so sad|really sad)\b/i;
+// "I'm crying 😂" is laughing, not crying.
+const LAUGH = /😂|🤣|😆|💀|\b(lol|lmao|lmfao|rofl|haha\w*|hehe\w*|dying laughing)\b/i;
+const GENTLE = new Set(['low', 'okay', 'calm', 'wish', 'love', 'stilllove', 'comehome', 'sleepy', 'bestfriend', 'home']);
+const CUE_PAUSE = 10 * 60e3;
+const GAP_H = {weezy:24, coffee:24, thanks:72, work:24, traffic:24, sorry:24, rain:24, cold:24, sick:24, veggie:24, disney:24, dontspeak:24, quit:24, friends:24, waiting:24,
+  dance:12, lonely:12, letitgo:12, birthday:20, croatia2:20, halloween:20, christmas:24, xmas:20};
+function playCue(tag){
+  const m = window.iRobMusic; if (!m || !m.playTag) return;
+  Promise.resolve(m.playTag(tag)).then(s => { if (!s) return; const f = get('try_cues_found', {}); const k = s.tag || tag; if (!f[k]){ f[k] = {t:s.title, a:s.artist || ''}; put('try_cues_found', f); } }).catch(() => {});
+}
 function songCue(text){
   if (SERIOUS.test(text)) return null;
-  const hit = SONG_CUES.find(c => c[1].test(text) && (!c[3] || c[3].test(text))); if (!hit) return null;
   const last = get('try_cue_last', {}), now = Date.now();
-  if (now - (last[hit[0]] || 0) < CUE_GAP) return null;
-  last[hit[0]] = now; put('try_cue_last', last);
-  if (window.iRobMusic && window.iRobMusic.playTag) window.iRobMusic.playTag(hit[0]);
+  if (now - (last._any || 0) < CUE_PAUSE) return null;
+  const laugh = LAUGH.test(text), sad = DISTRESS.test(text) && !laugh;
+  let hit = SONG_CUES.find(c => c[1].test(text) && (!c[3] || c[3].test(text)) && (!sad || GENTLE.has(c[0])) && !(laugh && c[0] === 'low'));
+  if (!hit && !sad){ const tag = dateCue(); if (tag) hit = [tag, null, DATE_FX[tag] || (() => {})]; }
+  if (!hit) return null;
+  if (now - (last[hit[0]] || 0) < (GAP_H[hit[0]] || 2) * 3600e3) return null;
+  last[hit[0]] = now; last._any = now; put('try_cue_last', last);
+  playCue(hit[0]);
   return hit;
 }
 function secretWord(text){
-  if (MAD.test(text)){ madAtRob(); return true; }
+  if (MAD.test(text)){ madAtRob(text); return true; }
   const cued = songCue(text);
   const hit = SECRETS.find(s => s[0].test(text)); if (!hit){ if (cued) cued[2](); return !!cued; }
   hit[3](); const found = get('try_secrets_found', []); if (!found.includes(hit[1])){ found.push(hit[1]); put('try_secrets_found', found); if (found.length === 1 && A()) A().toast('🤫 You found a secret word! See them all in More fun.'); }
   return true;
+}
+// Song cue collection: how many she has found. Found ones show the song and play again on a tap.
+const CUE_HINTS = [['mad', 'Being mad at Rob'], ['divorce', 'Threatening to leave him'], ['low', 'A really hard moment'], ['okay', 'Asking if it will all be OK'], ['calm', 'Feeling stressed'],
+  ['stilllove', 'Asking if he still loves you'], ['love', 'Telling him you love him'], ['bestfriend', 'Your best friend'], ['sleepy', 'Tired at bedtime'], ['comehome', 'Wanting him home'],
+  ['wish', 'Wishing he were there'], ['home', 'Building a home together'], ['lonely', 'Feeling lonely'], ['croatia', 'Croatia'], ['croatia2', 'A September memory'], ['tennessee', 'The Smoky Mountains'],
+  ['disney', 'Disney'], ['paris', 'Paris'], ['miami', 'Miami'], ['hawaii', 'Hawaii'], ['tokyo', 'Tokyo'], ['newyork', 'New York'], ['italy', 'Italy'], ['vacation', 'Needing a vacation'],
+  ['sea', 'The beach'], ['bike', 'A bike ride'], ['alive', 'Living while you’re young'], ['medicine', 'Taking your vitamins'], ['sick', 'Feeling sick'], ['cold', 'Feeling cold'],
+  ['smoke', 'Needing to smoke'], ['sorry', 'Saying sorry'], ['stupid', 'Feeling embarrassed'], ['notme', 'A petty accusation'], ['jolene', 'Another woman'], ['fight', 'Threatening to fight him'],
+  ['dontspeak', 'Telling him to hush'], ['quit', '“Are you kidding me?”'], ['promise', 'Making him promise'], ['letitgo', 'Something you can’t let go'], ['shouldnt', 'Something he shouldn’t have done'],
+  ['help', 'Asking for help'], ['another', 'Finishing another thing'], ['gangster', 'Nailing it'], ['goodday', 'A really good day'], ['winning', 'Feeling confident'], ['better', 'Being better than everyone'],
+  ['hype', 'Hyping yourself up'], ['getup', 'Not giving up'], ['crazy', 'Feeling a little crazy'], ['longrun', 'Something that won’t matter'], ['lazy', 'A lazy day'], ['friends', 'Your girls'],
+  ['weezy', 'Weezy'], ['coffee', 'Coffee'], ['veggie', 'Eating healthy'], ['traffic', 'Traffic'], ['work', 'A long day at work'], ['waiting', 'Waiting on him'], ['dance', 'Dancing'],
+  ['rain', 'Rain'], ['thanks', 'Saying thank you'], ['birthday', 'Your birthday'], ['halloween', 'Halloween'], ['christmas', 'Christmas'], ['xmas', 'Christmas Day']];
+function songCues(){
+  const {body, show} = sheet('funCues', 'Song cues');
+  const found = get('try_cues_found', {}), n = CUE_HINTS.filter(([t]) => found[t]).length;
+  body.append(el('p', 'note', `Some things you say start one of Rob's songs. You've found ${n} of ${CUE_HINTS.length}. Each hint tells you the subject; the words are up to you.`));
+  const list = el('div', 'sw-list');
+  [...CUE_HINTS.filter(([t]) => found[t]), ...CUE_HINTS.filter(([t]) => !found[t])].forEach(([tag, hint]) => {
+    const f = found[tag], row = el(f ? 'button' : 'div', 'sw-row' + (f ? ' found' : ''));
+    row.innerHTML = '<span class="sw-word"></span><span class="sw-desc"></span>' + (f ? '<span class="sw-try" aria-hidden="true">Play</span>' : '');
+    row.querySelector('.sw-word').textContent = hint; row.querySelector('.sw-desc').textContent = f ? f.t + (f.a ? ' · ' + f.a : '') : 'Not found yet';
+    if (f){ row.type = 'button'; row.setAttribute('aria-label', `Play ${f.t}`); row.onclick = () => { A().close(); if (window.iRobMusic) window.iRobMusic.playTag(tag); }; }
+    list.append(row); });
+  body.append(list);
+  if (!(window.iRobMusic && window.iRobMusic.unlocked())) body.append(el('p', 'note', 'The songs need the music unlocked first (Music in the menu).'));
+  show();
 }
 // 1B. Effects on Rob's replies
 const REPLY_FX = [
@@ -1271,6 +1373,6 @@ function petStatus(){
 function fortuneOfDay(){ const d = new Date(); return FORTUNES[(d.getFullYear() * 400 + d.getMonth() * 31 + d.getDate()) % FORTUNES.length]; }
 
 new MutationObserver(() => { if (roamer && document.querySelector('.sheet.show')){ roamer.k.remove(); roamer = null; } }).observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['class']});
-window.iRobFun = {petStatus, fortuneOfDay, petTile, secretWord, replyEffect, secretWords, loveCoupons, couponBadge, roam, FX, puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, photoPuzzle, whichFirst, zoomDetective, tripTimeline, bragButton, moreFun, croatiaGames, confetti, stop:stopAll,
+window.iRobFun = {petStatus, fortuneOfDay, petTile, secretWord, replyEffect, secretWords, songCues, loveCoupons, couponBadge, roam, FX, puppyPower, kittenCuddles, pocketKitten, catchKittens, fortuneCookie, dateNight, memoryMatch, photoPuzzle, whichFirst, zoomDetective, tripTimeline, bragButton, moreFun, croatiaGames, confetti, stop:stopAll,
   petName:() => (get(PK, null) || {}).name || null};
 })();
