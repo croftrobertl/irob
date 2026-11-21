@@ -603,3 +603,55 @@ img.sq-arm{height:auto}
    Lines of a centered message come out about the same length (no lone last word). Left-aligned text keeps normal wrapping. */
 .empty,.tile,.toast,.fun-sheet .body,.dare,.reason,.vattr,.viewer .vmsg,.none{text-wrap:balance}
 .fun-sheet .body :is(.cp-card,.cp-row,.sw-row,.tg-name,.tg-h,.pc-card,.mm-thumb span,input,textarea){text-wrap:wrap}
+
+/* ================= Pocket Kitten: shelf mischief, biscuits, bakery, catnip, bigger jumps ================= */
+.tg-cat{transition:left .3s linear,bottom .45s cubic-bezier(.3,1.3,.5,1)}
+/* wall shelf on the left wall (the window is on the right) */
+.tg-shelf{position:absolute;left:6%;width:30%;bottom:42%;height:9px;border-radius:3px;background:linear-gradient(#cf9c63,#a8743f);box-shadow:0 5px 7px rgba(60,35,10,.22);z-index:1}
+.tg-shelf i{position:absolute;top:9px;width:6px;height:15px;border-radius:0 0 4px 4px;background:#9a6735}
+.tg-shelf i.l{left:12%}.tg-shelf i.r{right:12%}
+.tg-room.lights-off .tg-shelf,.tg-room.lights-off .tg-sitems{filter:brightness(.7)}
+.tg-sitems{position:absolute;inset:0;pointer-events:none;z-index:1}
+.tg-sitem{position:absolute;bottom:calc(42% + 8px);font-size:26px;line-height:1;transform:translateX(-50%) translateX(var(--nudge,0px));transition:transform .3s ease-out;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
+.tg-sitem.falling{animation:shelfFall .56s cubic-bezier(.55,0,.9,.6) forwards}
+@keyframes shelfFall{to{transform:translateX(-50%) translateX(calc(var(--nudge,0px) * 3)) translateY(var(--drop,80px)) rotate(220deg)}}
+.tg-cat.up{bottom:calc(42% + 5px)}
+/* broken pieces on the floor: three clipped shards of the same thing; tap to sweep */
+.tg-mess{position:absolute;bottom:4%;width:58px;height:44px;transform:translateX(-50%);border:0;padding:0;background:none;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent}
+.tg-mess .sh{position:absolute;bottom:0;font-size:24px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+.tg-mess .s0{left:0;clip-path:polygon(0 0,58% 0,40% 100%,0 100%);transform:rotate(-28deg)}
+.tg-mess .s1{left:17px;bottom:9px;clip-path:polygon(58% 0,100% 0,100% 52%,44% 60%);transform:rotate(34deg)}
+.tg-mess .s2{left:30px;clip-path:polygon(40% 52%,100% 48%,100% 100%,28% 100%);transform:rotate(82deg)}
+.tg-mess::after{content:"";position:absolute;left:4px;right:4px;bottom:-2px;height:5px;border-radius:50%;background:rgba(60,40,20,.15)}
+.tg-mess.sweeping{opacity:0;transition:opacity .4s .25s}
+.tg-broom{position:absolute;bottom:5%;font-size:32px;line-height:1;pointer-events:none;z-index:4;animation:sweepIt .65s ease-in-out}
+@keyframes sweepIt{0%,100%{transform:translateX(-80%) rotate(-22deg)}50%{transform:translateX(-20%) rotate(18deg)}}
+/* making biscuits: chef hat, kneading, biscuits flying up */
+.tg-body .acc.chef{font-size:calc(46px * var(--s,1));transform:translate(-50%,-80%);z-index:2}
+.tg-body .plane-ears{position:absolute;transform:translate(-50%,-85%);font-size:calc(44px * var(--s,1));line-height:0;z-index:2;pointer-events:none}
+.pose-knead .tg-body{animation:knead .48s ease-in-out infinite}
+@keyframes knead{0%,100%{transform:scaleX(var(--face,1)) rotate(-2.5deg) translateY(0)}50%{transform:scaleX(var(--face,1)) rotate(2.5deg) translateY(3px)}}
+.tg-blanket{position:absolute;bottom:3%;width:150px;height:30px;transform:translateX(-50%);border-radius:40% 40% 14px 14px;background:repeating-linear-gradient(45deg,#f4c6d0 0 10px,#fbe1e6 10px 20px);box-shadow:0 3px 6px rgba(0,0,0,.15);z-index:1}
+.tg-bisc{position:absolute;bottom:26%;font-size:32px;line-height:1;pointer-events:none;z-index:4;animation:biscFly 1.3s cubic-bezier(.3,.6,.6,1) forwards}
+@keyframes biscFly{0%{transform:translate(-50%,0) scale(.6);opacity:0}15%{opacity:1}50%{transform:translate(calc(-50% + var(--dx) / 2),calc(var(--up) * -1)) rotate(180deg) scale(1)}100%{transform:translate(calc(-50% + var(--dx)),-10px) rotate(360deg);opacity:0}}
+/* Biscuit Bakery conveyor */
+.tg-game.bakery{pointer-events:none}
+.tg-belt{position:absolute;left:21%;right:0;bottom:5%;height:16px;border-radius:8px 0 0 8px;background:repeating-linear-gradient(90deg,#76716b 0 12px,#948e87 12px 24px);background-size:24px 100%;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2),0 3px 6px rgba(0,0,0,.2);animation:belt var(--belt,1.6s) linear infinite}
+@keyframes belt{to{background-position:24px 0}}
+.tg-bk{position:absolute;bottom:calc(5% + 12px);width:46px;height:46px;transform:translateX(-50%);border:0;padding:0;background:none;font-size:30px;line-height:46px;cursor:pointer;pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.tg-bk.boxed{animation:boxIt .45s ease-in forwards;pointer-events:none}
+@keyframes boxIt{to{transform:translate(-50%,-140px) scale(.3);opacity:0}}
+.tg-bk.fall{animation:beltFall .5s ease-in forwards;pointer-events:none}
+@keyframes beltFall{to{transform:translate(-50%,70px) rotate(120deg);opacity:0}}
+.tg-boxed{position:absolute;top:8px;right:10px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.85);color:#5b3a12;font:700 15px/1.2 var(--body);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+/* catnip: cartoon smoke out the back, clouds in flight */
+.tg-puff{position:absolute;font-size:34px;line-height:1;pointer-events:none;z-index:1;animation:puffOut .8s ease-out forwards}
+@keyframes puffOut{0%{transform:translateX(-50%) scaleX(var(--f,1)) scale(.5);opacity:.95}100%{transform:translateX(calc(-50% - var(--f,1) * 34px)) scaleX(var(--f,1)) scale(1.5);opacity:0}}
+.tg-cat.flying .tg-body{animation:flyBob .55s ease-in-out infinite}
+@keyframes flyBob{0%,100%{transform:scaleX(var(--face,1)) rotate(calc(var(--face,1) * -10deg))}50%{transform:scaleX(var(--face,1)) rotate(calc(var(--face,1) * -6deg)) translateY(-5px)}}
+/* bigger jumps while playing (height set from the room's size in JS) */
+.tg-cat.playing.pose-leap .tg-body{animation:bigLeap .8s cubic-bezier(.2,.85,.35,1)}
+@keyframes bigLeap{45%{transform:scaleX(var(--face,1)) translateY(calc(var(--jump,90px) * -1)) rotate(calc(var(--face,1) * -10deg)) scaleY(1.05)}75%{transform:scaleX(var(--face,1)) translateY(calc(var(--jump,90px) * -.35))}}
+.tg-cat.playing.pose-pounce .tg-body{animation:bigPounce .5s ease-out}
+@keyframes bigPounce{40%{transform:scaleX(var(--face,1)) translateY(calc(var(--jump,90px) * -.4)) scaleY(1.06)}}
+@media (prefers-reduced-motion:reduce){.tg-bisc,.tg-puff,.tg-broom,.tg-belt{animation:none}.tg-bisc,.tg-puff{display:none}}
