@@ -99,7 +99,7 @@ async function playTag(tag){
   if (!get(KEY, null)) return;
   const a = ensureAudio(); if (a.paused){ a.src = SILENCE; a.play().catch(() => {}); }
   try {
-    await loadList(); const s = allSongs.find(x => x.tag === tag); if (!s) return;
+    await loadList(); const s = allSongs.find(x => x.tag === tag) || allSongs.find(x => (x.cues || []).includes(tag)); if (!s) return;   // "cues": a playlist song that also answers a cue
     const r = await pfetch(s.file); if (!r.ok) return;
     const plain = await open(new Uint8Array(await r.arrayBuffer()));
     if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(new Blob([plain], {type:'audio/mpeg'}));

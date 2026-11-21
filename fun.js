@@ -1072,9 +1072,49 @@ const SECRETS = [
 // "She's mad at me" → Separate Ways + raining broken hearts. Not listed on the Secret Words page.
 const MAD = /\b((mad|angry|pissed( off)?|upset|annoyed|furious|irritated|ticked( off)?) (at|with) (you|u|rob)|i hate you|you'?re in (so much |big )?trouble|not (talking|speaking) to (you|u)|you (made|make) me (so )?(mad|angry))\b/i;
 function madAtRob(){ FX.dim(5200, .35); FX.rain(['💔', '💔', '😭', '😢'], 46); if (window.iRobMusic && window.iRobMusic.playTag) window.iRobMusic.playTag('mad'); }
+// Song cues: something she types starts one of Rob's picked songs (sealed, tagged, never in the normal playlist).
+// First match wins, so the specific ones come first. [tag, pattern, effect when no secret word fires, extra pattern that must also match]
+const WANT = /\b(go|going|back|visit|miss|missing|wish|want|wanna|take me|trip|return|again|move|someday|let'?s|dream)\b/i;
+const SONG_CUES = [
+  ['divorce', /\b(divorc(e|ed|ing)|i'?m leaving you|leaving you)\b/i, () => FX.rain(['👋', '🧳', '💍'], 20)],
+  ['tennessee', /\b(dollywood|gatlinburg|cosby|pigeon forge|smok(y|ey|ies) mountains?|the smokies)\b/i, () => FX.rise(['⛰️', '🌲', '🦋', '🎢'], 22)],
+  ['croatia', /\b(croatia|dubrovnik|hvar|lokrum|kor[cč]ula|the adriatic)\b/i, () => FX.wave(), WANT],
+  ['bike', /\b(bike ride|ride (my|our|the|a) bikes?|go(ing)? biking|biking|bicycl(e|es|ing)|cycling)\b/i, () => FX.across('🚲', {size:72, y:.6, speed:8})],
+  ['sea', /\b(beach|ocean|the sea|seaside|the shore|the coast|the gulf)\b/i, () => FX.wave()],
+  ['medicine', /\b(medicine|medication|meds|pills?|vitamins?|supplements?|ibuprofen|tylenol|advil|antibiotics?|prescriptions?|probiotics?|melatonin|magnesium)\b/i, () => FX.rain(['🥄', '🍬', '☂️'], 22)],
+  ['smoke', /\b(get(ting)? high|smoke (a |some |weed|pot)|need (to|a) smoke|want (to|a) smoke|wanna smoke|gotta smoke|pack a bowl|a bowl|a joint|a blunt|wake and bake|toke|420)\b/i, () => FX.rise(['🍃', '💨', '🌿'], 22)],
+  ['wish', /\b(wish (you|u) (were|was) (here|home|with me)|wish i (was|were) (there|with (you|u))|wish we were together|wish (you|u) could be here|(want|need) (you|u) here)\b/i, () => FX.stars()],
+  ['home', /\b(build(ing)? (a|our) (home|house|life|family|future)|start(ing)? (a|our) family|our (future|forever|dream|own) (home|house)|dream (home|house)|(home|family|life|future) with (you|u)|grow(ing)? old with (you|u))\b/i, () => FX.rise(['🧱', '🏡', '💛'], 22)],
+  ['love', /\b(i (really |truly |just |so |still |do |freaking |fucking )*(love|adore) (you|u|rob|my husband)|love (you|u|ya) (so much|more|forever|to the moon)|(happy|glad|lucky) (i'?m |to be |being )?married to (you|u)|love being (married|your wife)|glad i married (you|u)|love our (life|marriage))\b/i, () => FX.rise(['💛', '💚', '❤️'], 26)],
+  ['another', /\b((another|one more) (one |thing |task |project |chore )?(is )?(done|down|finished|complete|completed|checked off|crossed off|in the books)|(finished|completed|knocked out|checked off|crossed off|wrapped up|done with) (yet )?another|bites the dust)\b/i, () => FX.rain(['✅', '💥'], 22)],
+  ['gangster', /\b(nailed it|crushed it|killed it|smashed it|aced (it|that)|pulled it off|i did it|like a boss|knocked it out of the park|i'?m (a |such a )?(boss|badass|legend|genius))\b/i, () => FX.rain(['😎', '💵', '🕶️'], 24)],
+  ['winning', /\b(i'?m (so |feeling |really )?(confident|unstoppable|strong|powerful|invincible|on fire|on a roll|winning)|feeling (confident|unstoppable|strong|powerful|invincible)|i won|i'?m (a |the )?(winner|champion|champ)|can'?t be stopped|(i'?ve|i) got this|still got it)\b/i, () => FX.rise(['🏆', '💪', '👑'], 22)],
+  ['better', /\b(i'?m|i am|im) (so much |way |just |clearly |obviously |still )?(better|smarter|cooler|funnier) than (you|u|him|her|them|everyone|everybody|anyone|anybody|rob)\b|\bi'?m the best\b/i, () => FX.rain(['🌹'], 30)],
+  ['hype', /\b(hyp(e|ing) (myself|me) up|psych(e|ing)? myself up|pump(ing)? myself up|pump me up|need (some |a little )?(motivation|hype)|need a pep talk|motivate me|talk(ing)? myself into|work(ing)? up the (nerve|courage)|i can do this|let'?s do this|here goes nothing)\b/i, () => { FX.shake(); FX.rise(['🔥', '🥊', '⚡'], 20); }],
+  ['getup', /\b(resilien(t|ce)|persever(e|es|ed|ing|ance)|persist(ence|ent)?|keep going|(not|never) giving up|(won'?t|can'?t|don'?t|never) give up|get(ting)? back up|bounce back|push(ing)? through|hang(ing)? in there|keep trying)\b/i, () => FX.rise(['🌈', '💪', '✨'], 22)],
+  ['alive', /\b(you only live once|yolo|life'?s (too )?short|life is (too )?short|while (i'?m|we'?re|i am|we are) (still )?(young|alive)|before (i|we) die|before (i'?m|we'?re) (too )?old|bucket list|live my life|live a little|feel alive|(want|need) (an |more |some )?adventures?|go on an adventure|seize the day|carpe diem)\b/i, () => FX.rain(['❄️', '🏔️', '✨'], 26)],
+  ['crazy', /\b((i'?m|i am|im|am i|i feel|i must be|i'?m going|going|i sound) (so |totally |completely |literally |actually |a little |kind of |kinda )?(crazy|insane|nuts|bonkers|psycho|unhinged|mental)|(losing|lost) my mind|out of my mind|call me crazy|driv(e|es|ing) me (crazy|insane|nuts))\b/i, () => FX.rain(['🤪', '🌀', '❤️'], 24)],
+  ['calm', /\b(stress(ed|ful|ing)?|anxious|anxiety|overwhelm(ed|ing)|panick?(y|ed|ing)?|panic attacks?|freaking out|on edge|nervous)\b/i, () => { FX.dim(5200, .35); FX.rise(['🎹', '🎵', '🌙'], 12); }],
+  ['longrun', /\b(won'?t (even |really )?matter|doesn'?t (even |really )?matter|does it even matter|not (a|that) big (of a |a )?deal|no big deal|in the long run|in the grand scheme|not worth (stressing|worrying|the stress)|who cares)\b/i, () => FX.rise(['🤷‍♀️', '⏳'], 16)],
+  ['shouldnt', /\b(you (shouldn'?t|should not|should never) have|i told you not to|you weren'?t supposed to|why (did|would) you|what did you do|how could you|i can'?t believe you)\b/i, () => FX.rain(['🙈', '😬'], 20)],
+  ['help', /\b(i need (some |your |a little )?help|help me|can you help|could you help|need a hand|give me a hand)\b/i, () => FX.rain(['🆘', '🛟'], 20)],
+];
+// A message that reads as a real emergency never gets a jokey song.
+const SERIOUS = /\b(suicid\w*|kill myself|hurt myself|want to die|emergency|911|hospital|ambulance|\ber\b|can'?t breathe|bleeding|accident|crash(ed)?|died|dying|funeral|passed away)\b/i;
+const CUE_GAP = 2 * 3600e3;   // the same song won't start again within two hours
+function songCue(text){
+  if (SERIOUS.test(text)) return null;
+  const hit = SONG_CUES.find(c => c[1].test(text) && (!c[3] || c[3].test(text))); if (!hit) return null;
+  const last = get('try_cue_last', {}), now = Date.now();
+  if (now - (last[hit[0]] || 0) < CUE_GAP) return null;
+  last[hit[0]] = now; put('try_cue_last', last);
+  if (window.iRobMusic && window.iRobMusic.playTag) window.iRobMusic.playTag(hit[0]);
+  return hit;
+}
 function secretWord(text){
   if (MAD.test(text)){ madAtRob(); return true; }
-  const hit = SECRETS.find(s => s[0].test(text)); if (!hit) return false;
+  const cued = songCue(text);
+  const hit = SECRETS.find(s => s[0].test(text)); if (!hit){ if (cued) cued[2](); return !!cued; }
   hit[3](); const found = get('try_secrets_found', []); if (!found.includes(hit[1])){ found.push(hit[1]); put('try_secrets_found', found); if (found.length === 1 && A()) A().toast('🤫 You found a secret word! See them all in More fun.'); }
   return true;
 }
